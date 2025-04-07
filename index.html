@@ -7,158 +7,153 @@
   <style>
     body {
       font-family: 'Arial', sans-serif;
-      background-color: #f4f4f9;
+      background-color: #f4f4f4;
       color: #333;
-      padding: 20px;
+      padding: 30px;
+      margin: 0;
       display: flex;
-      flex-direction: column;
+      justify-content: center;
       align-items: center;
-    }
-    header {
-      text-align: center;
-      margin-bottom: 40px;
+      height: 100vh;
+      flex-direction: column;
     }
     h1 {
       color: #ff6347;
-      font-size: 3em;
+      text-align: center;
+      font-size: 36px;
+      margin-bottom: 20px;
     }
-    p {
-      color: #666;
-      font-size: 1.2em;
+    .container {
+      max-width: 1000px;
+      width: 100%;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
     }
     .content {
       display: flex;
       flex-wrap: wrap;
       gap: 20px;
-      justify-content: center;
-      width: 100%;
-      max-width: 1200px;
-      margin-top: 30px;
+      justify-content: space-around;
     }
     .item {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      background: #ffffff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       width: 250px;
       text-align: center;
-      transition: transform 0.3s ease;
-    }
-    .item:hover {
-      transform: translateY(-10px);
     }
     .item img {
       width: 100%;
-      height: 180px;
+      height: 200px;
       object-fit: cover;
       border-radius: 8px;
-      margin-bottom: 15px;
     }
     .item p {
       font-size: 14px;
-      color: #777;
       margin-top: 10px;
+      color: #666;
     }
-    .input-section {
-      margin-top: 40px;
+    .form-container {
       display: flex;
       flex-direction: column;
-      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
     }
-    .input-section input, .input-section button {
+    input, textarea {
       padding: 10px;
-      margin: 10px;
-      font-size: 1em;
-      border: 1px solid #ccc;
+      font-size: 16px;
+      border: 1px solid #ddd;
       border-radius: 8px;
+      width: 100%;
     }
-    .input-section input {
-      width: 250px;
-    }
-    .input-section button {
+    button {
+      padding: 10px 20px;
       background-color: #ff6347;
+      border: none;
       color: white;
+      font-size: 18px;
+      border-radius: 8px;
       cursor: pointer;
-      width: 150px;
+      transition: background-color 0.3s;
     }
-    .input-section button:hover {
-      background-color: #e5533c;
-    }
-    .add-icon {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      font-size: 2em;
-      color: #ff6347;
-      cursor: pointer;
+    button:hover {
+      background-color: #e5533a;
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>Bienvenidos a mi Muro Secreto</h1>
-    <p>¡Este es mi lugar privado! Aquí iré poniendo todo lo que quiero guardar.</p>
-  </header>
+  <h1>Mi Muro Secreto</h1>
+  
+  <div class="container">
+    <div class="content" id="notesContainer">
+      <!-- Aquí se cargarán las notas y las imágenes -->
+    </div>
 
-  <!-- Sección de contenido -->
-  <div class="content" id="content">
-    <!-- Aquí se cargarán las notas e imágenes -->
+    <div class="form-container">
+      <input type="text" id="noteInput" placeholder="Escribe tu nota aquí..." />
+      <input type="text" id="imageLinkInput" placeholder="Pega el enlace de la imagen aquí..." />
+      <button onclick="addNote()">Agregar Nota</button>
+    </div>
   </div>
-
-  <!-- Sección de agregar nueva nota o imagen -->
-  <div class="input-section">
-    <input type="text" id="noteInput" placeholder="Escribe tu nota aquí...">
-    <input type="url" id="imageUrl" placeholder="Pega el enlace de una imagen...">
-    <button id="addButton">Agregar</button>
-  </div>
-
-  <!-- Botón de signo más flotante para agregar -->
-  <div class="add-icon" id="addIcon">+</div>
 
   <script>
-    // Obtener elementos
-    const contentDiv = document.getElementById('content');
-    const addButton = document.getElementById('addButton');
-    const noteInput = document.getElementById('noteInput');
-    const imageUrlInput = document.getElementById('imageUrl');
+    // Simulamos la obtención de los datos de Google Sheets
+    const notesData = [
+      { note: "Una frase inspiradora", image: "https://via.placeholder.com/200" },
+      { note: "Otra nota más", image: "https://via.placeholder.com/200" }
+    ];
 
-    // Cargar las notas guardadas desde LocalStorage
-    function loadNotes() {
-      const savedNotes = JSON.parse(localStorage.getItem('notes')) || [];
-      contentDiv.innerHTML = ''; // Limpiar contenido actual
-      savedNotes.forEach(note => {
-        const noteDiv = document.createElement('div');
-        noteDiv.classList.add('item');
-        noteDiv.innerHTML = `
-          <img src="${note.image}" alt="Imagen nota">
-          <p>${note.text}</p>
-        `;
-        contentDiv.appendChild(noteDiv);
+    // Función para mostrar las notas y las imágenes
+    function renderNotes() {
+      const notesContainer = document.getElementById('notesContainer');
+      notesContainer.innerHTML = ''; // Limpiar contenido previo
+
+      notesData.forEach(item => {
+        const div = document.createElement('div');
+        div.classList.add('item');
+
+        const img = document.createElement('img');
+        img.src = item.image;
+        img.alt = 'Imagen de nota';
+
+        const p = document.createElement('p');
+        p.textContent = item.note;
+
+        div.appendChild(img);
+        div.appendChild(p);
+
+        notesContainer.appendChild(div);
       });
     }
 
-    // Guardar la nota en LocalStorage
-    function saveNote() {
-      const text = noteInput.value.trim();
-      const image = imageUrlInput.value.trim();
+    // Función para agregar una nueva nota e imagen
+    function addNote() {
+      const noteInput = document.getElementById('noteInput');
+      const imageLinkInput = document.getElementById('imageLinkInput');
 
-      if (text && image) {
-        const newNote = { text, image };
-        const savedNotes = JSON.parse(localStorage.getItem('notes')) || [];
-        savedNotes.push(newNote);
-        localStorage.setItem('notes', JSON.stringify(savedNotes));
-        noteInput.value = '';
-        imageUrlInput.value = '';
-        loadNotes(); // Recargar las notas después de agregar
-      }
+      const newNote = {
+        note: noteInput.value,
+        image: imageLinkInput.value
+      };
+
+      // Guardar en el array (simulando la base de datos)
+      notesData.push(newNote);
+
+      // Limpiar los campos de entrada
+      noteInput.value = '';
+      imageLinkInput.value = '';
+
+      // Volver a renderizar las notas
+      renderNotes();
     }
 
-    // Agregar una nueva nota
-    addButton.addEventListener('click', saveNote);
-
-    // Cargar las notas al iniciar la página
-    loadNotes();
+    // Inicializar la página con las notas existentes
+    renderNotes();
   </script>
+
 </body>
 </html>
