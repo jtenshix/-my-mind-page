@@ -1,86 +1,94 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mi Muro Secreto</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mi Mente</title>
   <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      background-color: #f7f8fc;
+    * {
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #111;
+      color: #fff;
+      font-family: 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
     }
     header {
+      padding: 60px 20px 20px;
       text-align: center;
-      background-color: #4a90e2;
-      padding: 20px;
-      color: white;
-      font-size: 2em;
     }
-    .container {
+    header h1 {
+      font-size: 3em;
+      font-weight: 300;
+    }
+    header p {
+      font-size: 1.2em;
+      color: #aaa;
+      margin-top: 10px;
+    }
+    .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 20px;
-      padding: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 30px;
+      padding: 40px 20px;
+      max-width: 1200px;
+      margin: auto;
     }
     .card {
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      background-color: #1a1a1a;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
       padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      transition: transform 0.3s ease;
+    }
+    .card:hover {
+      transform: scale(1.02);
     }
     .card img {
-      max-width: 100%;
-      border-radius: 8px;
-    }
-    .card h3 {
-      font-size: 1.2em;
-      color: #333;
-      margin-top: 10px;
+      width: 100%;
+      border-radius: 10px;
     }
     .card p {
-      font-size: 1em;
-      color: #555;
-      margin-top: 10px;
+      margin-top: 15px;
+      color: #ccc;
+      font-size: 0.95em;
     }
-    .footer {
+    footer {
       text-align: center;
-      margin-top: 40px;
-      padding: 10px;
-      background-color: #4a90e2;
-      color: white;
+      padding: 30px;
+      font-size: 0.9em;
+      color: #555;
     }
   </style>
 </head>
 <body>
+
   <header>
-    Mi Muro Secreto
+    <h1>Mi Mente</h1>
+    <p>Guarda ideas. Recuerdos. Cosas bonitas. Solo para ti.</p>
   </header>
 
-  <div class="container">
+  <div class="grid">
     <div class="card">
-      <img src="https://via.placeholder.com/300" alt="Imagen 1">
-      <h3>Frase inspiradora 1</h3>
-      <p>Hoy es un buen día para empezar de nuevo.</p>
+      <img src="https://via.placeholder.com/400x250" alt="Idea 1" />
+      <p>Un rincón tranquilo para guardar pensamientos.</p>
     </div>
     <div class="card">
-      <img src="https://via.placeholder.com/300" alt="Imagen 2">
-      <h3>Frase inspiradora 2</h3>
-      <p>No dejes para mañana lo que puedas hacer hoy.</p>
+      <img src="https://via.placeholder.com/400x250" alt="Idea 2" />
+      <p>Frases que te inspiran. Sueños que quieres lograr.</p>
     </div>
     <div class="card">
-      <img src="https://via.placeholder.com/300" alt="Imagen 3">
-      <h3>Frase inspiradora 3</h3>
-      <p>La vida es lo que pasa mientras estamos ocupados haciendo otros planes.</p>
+      <img src="https://via.placeholder.com/400x250" alt="Idea 3" />
+      <p>Visualiza tu mente, sin distracciones. Solo tú.</p>
     </div>
   </div>
 
-  <div class="footer">
-    <p>© 2025 Mi Muro Secreto. Todos los derechos reservados.</p>
-  </div>
+  <footer>
+    Hecho con cariño por Jito 🌙
+  </footer>
+
 </body>
 </html>
