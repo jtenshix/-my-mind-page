@@ -1,146 +1,133 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Mapa Mental</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
-        }
-
-        #mind-map {
-            position: relative;
-            width: 80%;
-            height: 80%;
-            border: 1px solid #ccc;
-            background-color: #fff;
-            overflow: hidden;
-        }
-
-        .node {
-            position: absolute;
-            width: 100px;
-            height: 100px;
-            background-color: #ffcc00;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .connection {
-            position: absolute;
-            background-color: #000;
-            height: 2px;
-        }
-
-        #add-button {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            width: 40px;
-            height: 40px;
-            background-color: #4CAF50;
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            font-size: 24px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mi Mente de Jito</title>
+  <style>
+    body {
+      background-color: #111;
+      color: #fff;
+      font-family: 'Helvetica Neue', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      text-align: center;
+      padding: 60px 20px 30px;
+    }
+    header h1 {
+      font-size: 2.8em;
+      font-weight: 300;
+    }
+    header p {
+      font-size: 1.1em;
+      color: #aaa;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 30px;
+      padding: 40px 20px;
+      max-width: 1200px;
+      margin: auto;
+    }
+    .card {
+      background-color: #1a1a1a;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      transition: transform 0.3s ease;
+    }
+    .card:hover {
+      transform: scale(1.03);
+    }
+    .card img {
+      width: 100%;
+      border-radius: 8px;
+    }
+    .card p {
+      margin-top: 10px;
+      color: #ccc;
+      font-size: 0.95em;
+      line-height: 1.4;
+    }
+    .add-button {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background-color: #ff4081;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 32px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(255, 64, 129, 0.5);
+      transition: background 0.3s ease;
+    }
+    .add-button:hover {
+      background-color: #ff6699;
+    }
+    footer {
+      text-align: center;
+      padding: 30px;
+      font-size: 0.85em;
+      color: #555;
+    }
+  </style>
 </head>
 <body>
-    <div id="mind-map">
-        <div id="add-button">+</div>
+
+  <header>
+    <h1>🌙 Mi Mente</h1>
+    <p>Pequeños pensamientos, recuerdos y dibujos guardados por Jito</p>
+  </header>
+
+  <div class="grid" id="content">
+    <div class="card">
+      <p>"A veces el mundo necesita más ternura que fuerza."</p>
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const mindMap = document.getElementById('mind-map');
-            const addButton = document.getElementById('add-button');
+    <div class="card">
+      <img src="https://i.imgur.com/2b0nF8V.jpg" alt="Dibujo bonito">
+      <p>Mi primer boceto para el personaje del sueño 🌟</p>
+    </div>
+  </div>
 
-            // Crear un nodo
-            function createNode(x, y, text) {
-                const node = document.createElement('div');
-                node.classList.add('node');
-                node.style.left = `${x}px`;
-                node.style.top = `${y}px`;
-                node.innerText = text;
-                node.draggable = true;
+  <button class="add-button" onclick="addItem()">+</button>
 
-                node.addEventListener('dragstart', dragStart);
-                node.addEventListener('dragover', dragOver);
-                node.addEventListener('drop', drop);
+  <footer>
+    Diseñado con el corazón por Jito 💜
+  </footer>
 
-                mindMap.appendChild(node);
-            }
+  <script>
+    function addItem() {
+      const type = prompt("¿Qué quieres agregar?\nEscribe 'nota' o 'imagen'").toLowerCase();
+      const grid = document.getElementById('content');
 
-            // Eventos de arrastrar y soltar
-            function dragStart(event) {
-                event.dataTransfer.setData('text/plain', null);
-            }
+      if (type === 'nota') {
+        const text = prompt("Escribe tu nota:");
+        if (text) {
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = `<p>${text}</p>`;
+          grid.prepend(div);
+        }
+      } else if (type === 'imagen') {
+        const url = prompt("Pega el enlace de la imagen:");
+        const caption = prompt("Texto que acompaña la imagen:");
+        if (url) {
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = `<img src="${url}" alt="Imagen"><p>${caption || ''}</p>`;
+          grid.prepend(div);
+        }
+      } else {
+        alert("Ups, solo puedes poner 'nota' o 'imagen'.");
+      }
+    }
+  </script>
 
-            function dragOver(event) {
-                event.preventDefault();
-            }
-
-            function drop(event) {
-                event.preventDefault();
-                const target = event.target;
-                if (target && target.classList.contains('node')) {
-                    // Aquí puedes agregar lógica para conectar nodos
-                }
-            }
-
-            // Crear nodos iniciales
-            createNode(100, 100, 'Idea 1');
-            createNode(300, 300, 'Idea 2');
-
-            // Crear conexiones (esto es un ejemplo básico)
-            function createConnection(nodeA, nodeB) {
-                const rectA = nodeA.getBoundingClientRect();
-                const rectB = nodeB.getBoundingClientRect();
-
-                const x1 = rectA.left + rectA.width / 2;
-                const y1 = rectA.top + rectA.height / 2;
-                const x2 = rectB.left + rectB.width / 2;
-                const y2 = rectB.top + rectB.height / 2;
-
-                const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-                const angle = Math.atan2(y2 - y1, x2 - x1);
-
-                const connection = document.createElement('div');
-                connection.classList.add('connection');
-                connection.style.width = `${length}px`;
-                connection.style.transform = `rotate(${angle}rad)`;
-                connection.style.left = `${x1}px`;
-                connection.style.top = `${y1}px`;
-
-                mindMap.appendChild(connection);
-            }
-
-            // Conectar nodos iniciales
-            const nodes = document.querySelectorAll('.node');
-            createConnection(nodes[0], nodes[1]);
-
-            // Agregar un nuevo nodo al hacer clic en el botón "+"
-            addButton.addEventListener('click', () => {
-                const newNodeText = prompt('Ingresa el texto para el nuevo nodo:');
-                if (newNodeText) {
-                    createNode(Math.random() * 500, Math.random() * 500, newNodeText);
-                }
-            });
-        });
-    </script>
 </body>
 </html>
