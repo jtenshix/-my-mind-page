@@ -59,7 +59,7 @@
   </header>
 
   <div class="content" id="notesContainer">
-    <!-- Aquí se mostrarán las notas e imágenes -->
+    <!-- Aquí se mostrarán las notas e imágenes cargadas desde Google Sheets -->
   </div>
 
   <div class="add-note">
@@ -74,47 +74,69 @@
 
   <script>
     const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScMDod66MN56TFpTIs6a9g0k3irvjDsOXN2CmZ17v6ZjrAscw/formResponse'; // URL de tu formulario
-    const sheetUrl = 'https://docs.google.com/spreadsheets/d/16fSSIDn3qyWwBch3eoBvN92kcHoKm14FRt5jrKa7dYM/edit?usp=sharing'; // URL de tu hoja de cálculo
+    const sheetId = '16fSSIDn3qyWwBch3eoBvN92kcHoKm14FRt5jrKa7dYM'; // ID de tu hoja de cálculo
+    const sheetName = 'Sheet1'; // Nombre de la hoja dentro del documento
+
+    // Llamada a la API de Google Sheets para obtener los datos
+    function loadNotes() {
+      const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${sheetName}?key=YOUR_GOOGLE_API_KEY`;
+
+      fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+          const rows = data.values;
+          if (rows) {
+            rows.forEach(row => {
+              const noteInput = row[0]; // Primera columna (nota o link de imagen)
+              const noteType = row[1];  // Segunda columna (tipo: nota o imagen)
+
+              const newItem = document.createElement('div');
+              newItem.classList.add('item');
+
+              if (noteType === 'imagen' && noteInput.startsWith('http')) {
+                const imgElement = document.createElement('img');
+                imgElement.src = noteInput;
+                newItem.appendChild(imgElement);
+              } else {
+                const textElement = document.createElement('p');
+                textElement.textContent = noteInput;
+                newItem.appendChild(textElement);
+              }
+
+              document.getElementById('notesContainer').appendChild(newItem);
+            });
+          }
+        })
+        .catch(error => console.error('Error al cargar los datos:', error));
+    }
 
     function addNote() {
       const noteInput = document.getElementById('noteInput').value;
       const noteType = document.getElementById('noteType').value;
       if (noteInput) {
-        // Crear un nuevo div con la nota o la imagen
         const newItem = document.createElement('div');
         newItem.classList.add('item');
 
-        // Si es una imagen, mostrarla
         if (noteType === 'imagen' && noteInput.startsWith('http')) {
           const imgElement = document.createElement('img');
           imgElement.src = noteInput;
           newItem.appendChild(imgElement);
         } else {
-          // Si es una nota, mostrar el texto
           const textElement = document.createElement('p');
           textElement.textContent = noteInput;
           newItem.appendChild(textElement);
         }
 
-        // Añadir el nuevo item al contenedor de notas
         document.getElementById('notesContainer').appendChild(newItem);
-
-        // Enviar los datos al formulario de Google para guardarlos en la hoja de cálculo
         submitData(noteInput, noteType);
-
-        // Limpiar el campo de entrada
         document.getElementById('noteInput').value = '';
       }
     }
 
     function submitData(noteInput, noteType) {
-      // Enviar los datos al formulario de Google
       const formData = new FormData();
-      if (noteType === 'nota') {
-        formData.append('entry.123456', noteInput); // ID del campo para notas
-      } else if (noteType === 'imagen') {
-        formData.append('entry.654321', noteInput); // ID del campo para imágenes
-      }
+      formData.append('entry.123456', noteInput);  // ID de la columna para notas
+      formData.append('entry.654321', noteType);  // ID de la columna para tipo (nota/imagen)
 
       fetch(formUrl, {
         method: 'POST',
@@ -124,6 +146,9 @@
       .then(data => console.log('Datos enviados a Google Sheets:', data))
       .catch(error => console.error('Error al enviar los datos:', error));
     }
+
+    // Cargar las notas desde Google Sheets cuando la página se carga
+    window.onload = loadNotes;
   </script>
 </body>
 </html>
