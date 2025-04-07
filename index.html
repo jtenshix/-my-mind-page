@@ -3,35 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mi Mente</title>
+  <title>Mi Mente de Jito</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
     body {
       background-color: #111;
       color: #fff;
       font-family: 'Helvetica Neue', sans-serif;
-      line-height: 1.6;
+      margin: 0;
+      padding: 0;
     }
     header {
-      padding: 60px 20px 20px;
       text-align: center;
+      padding: 60px 20px 30px;
     }
     header h1 {
-      font-size: 3em;
+      font-size: 2.8em;
       font-weight: 300;
     }
     header p {
-      font-size: 1.2em;
+      font-size: 1.1em;
       color: #aaa;
-      margin-top: 10px;
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 30px;
       padding: 40px 20px;
       max-width: 1200px;
@@ -40,26 +35,27 @@
     .card {
       background-color: #1a1a1a;
       border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
       padding: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
       transition: transform 0.3s ease;
     }
     .card:hover {
-      transform: scale(1.02);
+      transform: scale(1.03);
     }
     .card img {
       width: 100%;
-      border-radius: 10px;
+      border-radius: 8px;
     }
     .card p {
-      margin-top: 15px;
+      margin-top: 10px;
       color: #ccc;
       font-size: 0.95em;
+      line-height: 1.4;
     }
     footer {
       text-align: center;
       padding: 30px;
-      font-size: 0.9em;
+      font-size: 0.85em;
       color: #555;
     }
   </style>
@@ -67,27 +63,36 @@
 <body>
 
   <header>
-    <h1>Mi Mente</h1>
-    <p>Guarda ideas. Recuerdos. Cosas bonitas. Solo para ti.</p>
+    <h1>🌙 Mi Mente</h1>
+    <p>Pequeños pensamientos, recuerdos y dibujos guardados por Jito</p>
   </header>
 
   <div class="grid">
+    <!-- NOTA PERSONAL -->
     <div class="card">
-      <img src="https://via.placeholder.com/400x250" alt="Idea 1" />
-      <p>Un rincón tranquilo para guardar pensamientos.</p>
+      <p>"A veces el mundo necesita más ternura que fuerza."</p>
     </div>
+
+    <!-- NOTA CON DIBUJO -->
     <div class="card">
-      <img src="https://via.placeholder.com/400x250" alt="Idea 2" />
-      <p>Frases que te inspiran. Sueños que quieres lograr.</p>
+      <img src="https://i.imgur.com/2b0nF8V.jpg" alt="Dibujo bonito">
+      <p>Mi primer boceto para el personaje del sueño 🌟</p>
     </div>
+
+    <!-- OTRA NOTA -->
     <div class="card">
-      <img src="https://via.placeholder.com/400x250" alt="Idea 3" />
-      <p>Visualiza tu mente, sin distracciones. Solo tú.</p>
+      <p>Lista de cosas que me hacen feliz:<br>- Lluvia suave<br>- Un café calentito<br>- Dibujar sola con música lo-fi</p>
+    </div>
+
+    <!-- OTRO DIBUJO -->
+    <div class="card">
+      <img src="https://i.imgur.com/YOUR_IMAGE.jpg" alt="Otro dibujo">
+      <p>Este dibujo lo hice pensando en alguien que extraño...</p>
     </div>
   </div>
 
   <footer>
-    Hecho con cariño por Jito 🌙
+    Diseñado con el corazón por Jito 💜
   </footer>
 
 </body>
