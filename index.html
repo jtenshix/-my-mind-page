@@ -1,119 +1,86 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Mapa Mental</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
-        }
-
-        #mind-map {
-            position: relative;
-            width: 80%;
-            height: 80%;
-            border: 1px solid #ccc;
-            background-color: #fff;
-            overflow: hidden;
-        }
-
-        .node {
-            position: absolute;
-            width: 100px;
-            height: 100px;
-            background-color: #ffcc00;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .connection {
-            position: absolute;
-            background-color: #000;
-            height: 2px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Muro Secreto</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f7f8fc;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      text-align: center;
+      background-color: #4a90e2;
+      padding: 20px;
+      color: white;
+      font-size: 2em;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .card img {
+      max-width: 100%;
+      border-radius: 8px;
+    }
+    .card h3 {
+      font-size: 1.2em;
+      color: #333;
+      margin-top: 10px;
+    }
+    .card p {
+      font-size: 1em;
+      color: #555;
+      margin-top: 10px;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding: 10px;
+      background-color: #4a90e2;
+      color: white;
+    }
+  </style>
 </head>
 <body>
-    <div id="mind-map"></div>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const mindMap = document.getElementById('mind-map');
+  <header>
+    Mi Muro Secreto
+  </header>
 
-            // Crear un nodo
-            function createNode(x, y, text) {
-                const node = document.createElement('div');
-                node.classList.add('node');
-                node.style.left = `${x}px`;
-                node.style.top = `${y}px`;
-                node.innerText = text;
-                node.draggable = true;
+  <div class="container">
+    <div class="card">
+      <img src="https://via.placeholder.com/300" alt="Imagen 1">
+      <h3>Frase inspiradora 1</h3>
+      <p>Hoy es un buen día para empezar de nuevo.</p>
+    </div>
+    <div class="card">
+      <img src="https://via.placeholder.com/300" alt="Imagen 2">
+      <h3>Frase inspiradora 2</h3>
+      <p>No dejes para mañana lo que puedas hacer hoy.</p>
+    </div>
+    <div class="card">
+      <img src="https://via.placeholder.com/300" alt="Imagen 3">
+      <h3>Frase inspiradora 3</h3>
+      <p>La vida es lo que pasa mientras estamos ocupados haciendo otros planes.</p>
+    </div>
+  </div>
 
-                node.addEventListener('dragstart', dragStart);
-                node.addEventListener('dragover', dragOver);
-                node.addEventListener('drop', drop);
-
-                mindMap.appendChild(node);
-            }
-
-            // Eventos de arrastrar y soltar
-            function dragStart(event) {
-                event.dataTransfer.setData('text/plain', null);
-            }
-
-            function dragOver(event) {
-                event.preventDefault();
-            }
-
-            function drop(event) {
-                event.preventDefault();
-                const target = event.target;
-                if (target && target.classList.contains('node')) {
-                    // Aquí puedes agregar lógica para conectar nodos
-                }
-            }
-
-            // Crear nodos iniciales
-            createNode(100, 100, 'Idea 1');
-            createNode(300, 300, 'Idea 2');
-
-            // Crear conexiones (esto es un ejemplo básico)
-            function createConnection(nodeA, nodeB) {
-                const rectA = nodeA.getBoundingClientRect();
-                const rectB = nodeB.getBoundingClientRect();
-
-                const x1 = rectA.left + rectA.width / 2;
-                const y1 = rectA.top + rectA.height / 2;
-                const x2 = rectB.left + rectB.width / 2;
-                const y2 = rectB.top + rectB.height / 2;
-
-                const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-                const angle = Math.atan2(y2 - y1, x2 - x1);
-
-                const connection = document.createElement('div');
-                connection.classList.add('connection');
-                connection.style.width = `${length}px`;
-                connection.style.transform = `rotate(${angle}rad)`;
-                connection.style.left = `${x1}px`;
-                connection.style.top = `${y1}px`;
-
-                mindMap.appendChild(connection);
-            }
-
-            // Conectar nodos iniciales
-            const nodes = document.querySelectorAll('.node');
-            createConnection(nodes[0], nodes[1]);
-        });
-    </script>
+  <div class="footer">
+    <p>© 2025 Mi Muro Secreto. Todos los derechos reservados.</p>
+  </div>
 </body>
 </html>
