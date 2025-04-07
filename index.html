@@ -6,49 +6,34 @@
   <title>Mi Muro Secreto</title>
   <style>
     body {
-      font-family: 'Arial', sans-serif;
-      background-color: #f4f4f4;
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
       color: #333;
-      padding: 30px;
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      flex-direction: column;
+      padding: 20px;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 40px;
     }
     h1 {
       color: #ff6347;
-      text-align: center;
-      font-size: 36px;
-      margin-bottom: 20px;
-    }
-    .container {
-      max-width: 1000px;
-      width: 100%;
-      background-color: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
     }
     .content {
       display: flex;
       flex-wrap: wrap;
       gap: 20px;
-      justify-content: space-around;
     }
     .item {
-      background: #ffffff;
-      padding: 15px;
+      background: white;
+      padding: 10px;
       border-radius: 8px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      width: 250px;
+      width: 200px;
       text-align: center;
     }
     .item img {
       width: 100%;
-      height: 200px;
-      object-fit: cover;
+      height: auto;
       border-radius: 8px;
     }
     .item p {
@@ -56,104 +41,89 @@
       margin-top: 10px;
       color: #666;
     }
-    .form-container {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    .add-note {
       margin-top: 20px;
+      text-align: center;
     }
-    input, textarea {
+    .add-note input, .add-note button {
       padding: 10px;
       font-size: 16px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      width: 100%;
-    }
-    button {
-      padding: 10px 20px;
-      background-color: #ff6347;
-      border: none;
-      color: white;
-      font-size: 18px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    button:hover {
-      background-color: #e5533a;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
+  <header>
+    <h1>Bienvenidos a mi Muro Secreto</h1>
+    <p>¡Este es mi lugar privado! Aquí iré poniendo todo lo que quiero guardar.</p>
+  </header>
 
-  <h1>Mi Muro Secreto</h1>
-  
-  <div class="container">
-    <div class="content" id="notesContainer">
-      <!-- Aquí se cargarán las notas y las imágenes -->
-    </div>
+  <div class="content" id="notesContainer">
+    <!-- Aquí se mostrarán las notas e imágenes -->
+  </div>
 
-    <div class="form-container">
-      <input type="text" id="noteInput" placeholder="Escribe tu nota aquí..." />
-      <input type="text" id="imageLinkInput" placeholder="Pega el enlace de la imagen aquí..." />
-      <button onclick="addNote()">Agregar Nota</button>
-    </div>
+  <div class="add-note">
+    <h2>Agregar Nueva Nota o Imagen</h2>
+    <input type="text" id="noteInput" placeholder="Escribe una nota o link de imagen" />
+    <select id="noteType">
+      <option value="nota">Nota</option>
+      <option value="imagen">Imagen</option>
+    </select>
+    <button onclick="addNote()">Agregar</button>
   </div>
 
   <script>
-    // Simulamos la obtención de los datos de Google Sheets
-    const notesData = [
-      { note: "Una frase inspiradora", image: "https://via.placeholder.com/200" },
-      { note: "Otra nota más", image: "https://via.placeholder.com/200" }
-    ];
+    const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScMDod66MN56TFpTIs6a9g0k3irvjDsOXN2CmZ17v6ZjrAscw/formResponse'; // URL de tu formulario
+    const sheetUrl = 'https://docs.google.com/spreadsheets/d/16fSSIDn3qyWwBch3eoBvN92kcHoKm14FRt5jrKa7dYM/edit?usp=sharing'; // URL de tu hoja de cálculo
 
-    // Función para mostrar las notas y las imágenes
-    function renderNotes() {
-      const notesContainer = document.getElementById('notesContainer');
-      notesContainer.innerHTML = ''; // Limpiar contenido previo
-
-      notesData.forEach(item => {
-        const div = document.createElement('div');
-        div.classList.add('item');
-
-        const img = document.createElement('img');
-        img.src = item.image;
-        img.alt = 'Imagen de nota';
-
-        const p = document.createElement('p');
-        p.textContent = item.note;
-
-        div.appendChild(img);
-        div.appendChild(p);
-
-        notesContainer.appendChild(div);
-      });
-    }
-
-    // Función para agregar una nueva nota e imagen
     function addNote() {
-      const noteInput = document.getElementById('noteInput');
-      const imageLinkInput = document.getElementById('imageLinkInput');
+      const noteInput = document.getElementById('noteInput').value;
+      const noteType = document.getElementById('noteType').value;
+      if (noteInput) {
+        // Crear un nuevo div con la nota o la imagen
+        const newItem = document.createElement('div');
+        newItem.classList.add('item');
 
-      const newNote = {
-        note: noteInput.value,
-        image: imageLinkInput.value
-      };
+        // Si es una imagen, mostrarla
+        if (noteType === 'imagen' && noteInput.startsWith('http')) {
+          const imgElement = document.createElement('img');
+          imgElement.src = noteInput;
+          newItem.appendChild(imgElement);
+        } else {
+          // Si es una nota, mostrar el texto
+          const textElement = document.createElement('p');
+          textElement.textContent = noteInput;
+          newItem.appendChild(textElement);
+        }
 
-      // Guardar en el array (simulando la base de datos)
-      notesData.push(newNote);
+        // Añadir el nuevo item al contenedor de notas
+        document.getElementById('notesContainer').appendChild(newItem);
 
-      // Limpiar los campos de entrada
-      noteInput.value = '';
-      imageLinkInput.value = '';
+        // Enviar los datos al formulario de Google para guardarlos en la hoja de cálculo
+        submitData(noteInput, noteType);
 
-      // Volver a renderizar las notas
-      renderNotes();
+        // Limpiar el campo de entrada
+        document.getElementById('noteInput').value = '';
+      }
     }
 
-    // Inicializar la página con las notas existentes
-    renderNotes();
-  </script>
+    function submitData(noteInput, noteType) {
+      // Enviar los datos al formulario de Google
+      const formData = new FormData();
+      if (noteType === 'nota') {
+        formData.append('entry.123456', noteInput); // ID del campo para notas
+      } else if (noteType === 'imagen') {
+        formData.append('entry.654321', noteInput); // ID del campo para imágenes
+      }
 
+      fetch(formUrl, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => console.log('Datos enviados a Google Sheets:', data))
+      .catch(error => console.error('Error al enviar los datos:', error));
+    }
+  </script>
 </body>
 </html>
