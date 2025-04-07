@@ -1,133 +1,120 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mi Mente de Jito</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Muro Secreto</title>
   <style>
     body {
-      background-color: #111;
-      color: #fff;
-      font-family: 'Helvetica Neue', sans-serif;
-      margin: 0;
-      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      color: #333;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     header {
       text-align: center;
-      padding: 60px 20px 30px;
+      margin-bottom: 40px;
     }
-    header h1 {
-      font-size: 2.8em;
-      font-weight: 300;
+    h1 {
+      color: #ff6347;
     }
-    header p {
-      font-size: 1.1em;
-      color: #aaa;
+    .content {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
     }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 30px;
-      padding: 40px 20px;
-      max-width: 1200px;
-      margin: auto;
+    .item {
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      width: 200px;
+      text-align: center;
     }
-    .card {
-      background-color: #1a1a1a;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-      transition: transform 0.3s ease;
-    }
-    .card:hover {
-      transform: scale(1.03);
-    }
-    .card img {
+    .item img {
       width: 100%;
+      height: auto;
       border-radius: 8px;
     }
-    .card p {
+    .item p {
+      font-size: 14px;
       margin-top: 10px;
-      color: #ccc;
-      font-size: 0.95em;
-      line-height: 1.4;
+      color: #666;
     }
-    .add-button {
-      position: fixed;
-      bottom: 30px;
-      right: 30px;
-      background-color: #ff4081;
+    .input-section {
+      margin-top: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .input-section input {
+      padding: 10px;
+      width: 300px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .input-section button {
+      padding: 10px;
+      background-color: #ff6347;
       color: white;
       border: none;
-      border-radius: 50%;
-      width: 60px;
-      height: 60px;
-      font-size: 32px;
+      border-radius: 5px;
       cursor: pointer;
-      box-shadow: 0 4px 20px rgba(255, 64, 129, 0.5);
-      transition: background 0.3s ease;
     }
-    .add-button:hover {
-      background-color: #ff6699;
-    }
-    footer {
-      text-align: center;
-      padding: 30px;
-      font-size: 0.85em;
-      color: #555;
+    .input-section button:hover {
+      background-color: #e5533b;
     }
   </style>
 </head>
 <body>
-
   <header>
-    <h1>🌙 Mi Mente</h1>
-    <p>Pequeños pensamientos, recuerdos y dibujos guardados por Jito</p>
+    <h1>Bienvenidos a mi Muro Secreto</h1>
+    <p>¡Este es mi lugar privado! Aquí iré poniendo todo lo que quiero guardar.</p>
   </header>
 
-  <div class="grid" id="content">
-    <div class="card">
-      <p>"A veces el mundo necesita más ternura que fuerza."</p>
-    </div>
-    <div class="card">
-      <img src="https://i.imgur.com/2b0nF8V.jpg" alt="Dibujo bonito">
-      <p>Mi primer boceto para el personaje del sueño 🌟</p>
-    </div>
+  <div class="input-section">
+    <input type="text" id="imageUrl" placeholder="Ingresa el link de la imagen">
+    <textarea id="imageNote" placeholder="Agrega una nota aquí..." rows="3"></textarea>
+    <button onclick="addItem()">Agregar al muro</button>
   </div>
 
-  <button class="add-button" onclick="addItem()">+</button>
-
-  <footer>
-    Diseñado con el corazón por Jito 💜
-  </footer>
+  <div class="content" id="contentArea">
+    <!-- Las imágenes y notas se agregan aquí -->
+  </div>
 
   <script>
     function addItem() {
-      const type = prompt("¿Qué quieres agregar?\nEscribe 'nota' o 'imagen'").toLowerCase();
-      const grid = document.getElementById('content');
+      const imageUrl = document.getElementById('imageUrl').value;
+      const imageNote = document.getElementById('imageNote').value;
 
-      if (type === 'nota') {
-        const text = prompt("Escribe tu nota:");
-        if (text) {
-          const div = document.createElement('div');
-          div.className = 'card';
-          div.innerHTML = `<p>${text}</p>`;
-          grid.prepend(div);
-        }
-      } else if (type === 'imagen') {
-        const url = prompt("Pega el enlace de la imagen:");
-        const caption = prompt("Texto que acompaña la imagen:");
-        if (url) {
-          const div = document.createElement('div');
-          div.className = 'card';
-          div.innerHTML = `<img src="${url}" alt="Imagen"><p>${caption || ''}</p>`;
-          grid.prepend(div);
-        }
+      if (imageUrl) {
+        const contentArea = document.getElementById('contentArea');
+        const newItem = document.createElement('div');
+        newItem.classList.add('item');
+
+        const imgElement = document.createElement('img');
+        imgElement.src = imageUrl;
+
+        const noteElement = document.createElement('p');
+        noteElement.textContent = imageNote || 'Sin nota';
+
+        newItem.appendChild(imgElement);
+        newItem.appendChild(noteElement);
+
+        contentArea.appendChild(newItem);
+
+        // Limpiar campos
+        document.getElementById('imageUrl').value = '';
+        document.getElementById('imageNote').value = '';
       } else {
-        alert("Ups, solo puedes poner 'nota' o 'imagen'.");
+        alert('Por favor, ingresa un enlace válido para la imagen');
       }
     }
   </script>
-
 </body>
 </html>
