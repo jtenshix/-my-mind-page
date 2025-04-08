@@ -26,6 +26,9 @@
       max-width: 100%;
       border-radius: 5px;
     }
+    #muro {
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -41,47 +44,57 @@
   <script>
     const urlScript = "https://script.google.com/macros/s/AKfycbyCZCeJ9aoEgyYwdHhLAL-Igb2LKvoGs0HwHTv3G8751Px6z96FDlzzssQTIzZB0duFxQ/exec";
 
+    // Esta función se llama cuando el usuario presiona el botón para guardar
     function guardarNota() {
       const nota = document.getElementById("nota").value;
       const imagen = document.getElementById("imagen").value;
 
+      // Solo guardamos si hay contenido (ya sea una nota o una imagen)
       if (!nota && !imagen) return;
 
+      // Crear un objeto de datos para enviar al Google Script (como formulario)
       const datos = new FormData();
       datos.append("nota", nota);
       datos.append("imagen", imagen);
 
+      // Enviar los datos al script de Google (esto guarda en la hoja de cálculo)
       fetch(urlScript, {
         method: "POST",
         body: datos
       })
       .then(res => res.text())
       .then(() => {
-        mostrarNota(nota, imagen);
-        document.getElementById("nota").value = "";
-        document.getElementById("imagen").value = "";
-      });
+        mostrarNota(nota, imagen); // Mostrar la nota en el muro de la página
+        document.getElementById("nota").value = "";  // Limpiar el área de texto
+        document.getElementById("imagen").value = ""; // Limpiar el campo de imagen
+      })
+      .catch(error => console.error("Error al guardar la nota:", error));
     }
 
+    // Esta función muestra la nota en el muro
     function mostrarNota(nota, imagen) {
       const muro = document.getElementById("muro");
       const div = document.createElement("div");
-      div.className = "card";
+      div.className = "card"; // Añadir clase para estilo
 
+      // Si hay una imagen, se muestra
       if (imagen) {
         const img = document.createElement("img");
         img.src = imagen;
         div.appendChild(img);
       }
 
+      // Mostrar la nota en el muro
       if (nota) {
         const p = document.createElement("p");
         p.textContent = nota;
         div.appendChild(p);
       }
 
+      // Insertar la nueva nota al principio del muro
       muro.prepend(div);
     }
   </script>
+
 </body>
 </html>
