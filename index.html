@@ -41,7 +41,7 @@
             var nota = document.getElementById('nota').value;
             var imagen = document.getElementById('imagen').value;
 
-            fetch('https://script.google.com/macros/s/AKfycbz9KpuuG2fWnb15sThyEPLU3jLkU_uTFnhvQnhhU_RDagfgt4IPrX2VVWWg0UzZc637Dg/exec', {
+            fetch('https://script.google.com/macros/s/AKfycbwpBz9EBJ4gZU-W-IGJdsEBV4NaRkag2yfFxuuRTMKsX48e4_O7pP0hwTKUf9OP5H5AVg/exec', {
                 method: 'POST',
                 body: new URLSearchParams({
                     'nota': nota,
@@ -59,7 +59,7 @@
         });
 
         function cargarNotas() {
-            fetch('https://script.google.com/macros/s/AKfycbz9KpuuG2fWnb15sThyEPLU3jLkU_uTFnhvQnhhU_RDagfgt4IPrX2VVWWg0UzZc637Dg/exec')
+            fetch('https://script.google.com/macros/s/AKfycbwpBz9EBJ4gZU-W-IGJdsEBV4NaRkag2yfFxuuRTMKsX48e4_O7pP0hwTKUf9OP5H5AVg/exec')
                 .then(response => response.json())
                 .then(data => {
                     var notasGuardadas = document.getElementById('notasGuardadas');
@@ -85,7 +85,7 @@
         }
 
         function eliminarNota(id) {
-            fetch('https://script.google.com/macros/s/AKfycbz9KpuuG2fWnb15sThyEPLU3jLkU_uTFnhvQnhhU_RDagfgt4IPrX2VVWWg0UzZc637Dg/exec', {
+            fetch('https://script.google.com/macros/s/AKfycbwpBz9EBJ4gZU-W-IGJdsEBV4NaRkag2yfFxuuRTMKsX48e4_O7pP0hwTKUf9OP5H5AVg/exec', {
                 method: 'POST',
                 body: new URLSearchParams({
                     'action': 'delete',
