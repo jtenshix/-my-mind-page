@@ -23,13 +23,15 @@
     <h2>Notas Guardadas</h2>
     <div id="notasGuardadas"></div>
     <script>
+        document.addEventListener('DOMContentLoaded', cargarNotas);
+
         document.getElementById('noteForm').addEventListener('submit', function(event) {
             event.preventDefault();
 
             var nota = document.getElementById('nota').value;
             var imagen = document.getElementById('imagen').value;
 
-            fetch('https://script.google.com/macros/s/AKfycbyikP08K9KVq20Sm0llhic8_NnBc9XHPuFuyw5fqXZk-v_xYoDun_-jAL8tbAFqjlyyHA/exec', {
+            fetch('https://script.google.com/macros/s/AKfycbz9KpuuG2fWnb15sThyEPLU3jLkU_uTFnhvQnhhU_RDagfgt4IPrX2VVWWg0UzZc637Dg/exec', {
                 method: 'POST',
                 body: new URLSearchParams({
                     'nota': nota,
@@ -39,19 +41,29 @@
             .then(response => response.text())
             .then(data => {
                 console.log('Success:', data);
-                agregarNotaALista(nota, imagen);
+                cargarNotas(); // Recargar las notas después de agregar una nueva
             })
             .catch((error) => {
                 console.error('Error:', error);
             });
         });
 
-        function agregarNotaALista(nota, imagen) {
-            var notasGuardadas = document.getElementById('notasGuardadas');
-            var noteItem = document.createElement('div');
-            noteItem.className = 'note-item';
-            noteItem.innerHTML = `<strong>Nota:</strong> ${nota}<br><strong>Imagen:</strong> <a href="${imagen}" target="_blank">Ver Imagen</a>`;
-            notasGuardadas.appendChild(noteItem);
+        function cargarNotas() {
+            fetch('https://script.google.com/macros/s/AKfycbz9KpuuG2fWnb15sThyEPLU3jLkU_uTFnhvQnhhU_RDagfgt4IPrX2VVWWg0UzZc637Dg/exec')
+                .then(response => response.json())
+                .then(data => {
+                    var notasGuardadas = document.getElementById('notasGuardadas');
+                    notasGuardadas.innerHTML = ''; // Limpiar notas anteriores
+                    data.forEach(item => {
+                        var noteItem = document.createElement('div');
+                        noteItem.className = 'note-item';
+                        noteItem.innerHTML = `<strong>Nota:</strong> ${item.nota}<br><strong>Imagen:</strong> <a href="${item.imagen}" target="_blank">Ver Imagen</a>`;
+                        notasGuardadas.appendChild(noteItem);
+                    });
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
         }
     </script>
 </body>
