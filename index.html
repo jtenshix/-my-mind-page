@@ -1,154 +1,95 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mi Muro Secreto</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MiMind Clon</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
-      color: #333;
-      padding: 20px;
+      font-family: 'Helvetica Neue', sans-serif;
+      background: #0e0e0e;
+      color: #fff;
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
     }
-    header {
-      text-align: center;
-      margin-bottom: 40px;
-    }
+
     h1 {
-      color: #ff6347;
+      font-size: 2rem;
+      margin-bottom: 1rem;
     }
-    .content {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-    }
-    .item {
-      background: white;
-      padding: 10px;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      width: 200px;
-      text-align: center;
-    }
-    .item img {
+
+    input, textarea {
       width: 100%;
-      height: auto;
+      padding: 0.8rem;
+      margin: 0.5rem 0;
+      border: none;
       border-radius: 8px;
+      background: #1e1e1e;
+      color: #fff;
+      font-size: 1rem;
     }
-    .item p {
-      font-size: 14px;
-      margin-top: 10px;
-      color: #666;
+
+    button {
+      padding: 0.8rem 1.5rem;
+      background: #4e4eff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 1rem;
     }
-    .add-note {
-      margin-top: 20px;
-      text-align: center;
+
+    .note {
+      margin-top: 2rem;
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 1rem;
     }
-    .add-note input, .add-note button {
-      padding: 10px;
-      font-size: 16px;
-      margin-top: 10px;
+
+    .note img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-top: 0.5rem;
     }
+
   </style>
 </head>
 <body>
-  <header>
-    <h1>Bienvenidos a mi Muro Secreto</h1>
-    <p>¡Este es mi lugar privado! Aquí iré poniendo todo lo que quiero guardar.</p>
-  </header>
+  <h1>✨ MiMente</h1>
 
-  <div class="content" id="notesContainer">
-    <!-- Aquí se mostrarán las notas e imágenes cargadas desde Google Sheets -->
-  </div>
+  <textarea id="nota" placeholder="Escribe tu nota aquí..."></textarea>
+  <input type="text" id="imagen" placeholder="Pega el link de una imagen (opcional)" />
+  <button onclick="guardarNota()">Guardar</button>
 
-  <div class="add-note">
-    <h2>Agregar Nueva Nota o Imagen</h2>
-    <input type="text" id="noteInput" placeholder="Escribe una nota o link de imagen" />
-    <select id="noteType">
-      <option value="nota">Nota</option>
-      <option value="imagen">Imagen</option>
-    </select>
-    <button onclick="addNote()">Agregar</button>
-  </div>
+  <div id="notas"></div>
 
   <script>
-    const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScMDod66MN56TFpTIs6a9g0k3irvjDsOXN2CmZ17v6ZjrAscw/formResponse'; // URL de tu formulario
-    const sheetId = '16fSSIDn3qyWwBch3eoBvN92kcHoKm14FRt5jrKa7dYM'; // ID de tu hoja de cálculo
-    const sheetName = 'Sheet1'; // Nombre de la hoja dentro del documento
+    const API_URL = "https://script.google.com/macros/s/AKfycbzM0tdRdV8ZxDESmP1q366xtjIpIK1A390cXLzrGl64gYQ2-davmwhqD0V-PY-g35YhsA/exec";
 
-    // Llamada a la API de Google Sheets para obtener los datos
-    function loadNotes() {
-      const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${sheetName}?key=YOUR_GOOGLE_API_KEY`;
+    function guardarNota() {
+      const nota = document.getElementById("nota").value.trim();
+      const imagen = document.getElementById("imagen").value.trim();
 
-      fetch(apiUrl)
-        .then(response => response.json())
-        .then(data => {
-          const rows = data.values;
-          if (rows) {
-            rows.forEach(row => {
-              const noteInput = row[0]; // Primera columna (nota o link de imagen)
-              const noteType = row[1];  // Segunda columna (tipo: nota o imagen)
+      if (!nota && !imagen) return;
 
-              const newItem = document.createElement('div');
-              newItem.classList.add('item');
-
-              if (noteType === 'imagen' && noteInput.startsWith('http')) {
-                const imgElement = document.createElement('img');
-                imgElement.src = noteInput;
-                newItem.appendChild(imgElement);
-              } else {
-                const textElement = document.createElement('p');
-                textElement.textContent = noteInput;
-                newItem.appendChild(textElement);
-              }
-
-              document.getElementById('notesContainer').appendChild(newItem);
-            });
-          }
-        })
-        .catch(error => console.error('Error al cargar los datos:', error));
+      fetch(API_URL + `?nota=${encodeURIComponent(nota)}&imagen=${encodeURIComponent(imagen)}`)
+        .then(res => res.text())
+        .then(() => {
+          mostrarNota(nota, imagen);
+          document.getElementById("nota").value = "";
+          document.getElementById("imagen").value = "";
+        });
     }
 
-    function addNote() {
-      const noteInput = document.getElementById('noteInput').value;
-      const noteType = document.getElementById('noteType').value;
-      if (noteInput) {
-        const newItem = document.createElement('div');
-        newItem.classList.add('item');
-
-        if (noteType === 'imagen' && noteInput.startsWith('http')) {
-          const imgElement = document.createElement('img');
-          imgElement.src = noteInput;
-          newItem.appendChild(imgElement);
-        } else {
-          const textElement = document.createElement('p');
-          textElement.textContent = noteInput;
-          newItem.appendChild(textElement);
-        }
-
-        document.getElementById('notesContainer').appendChild(newItem);
-        submitData(noteInput, noteType);
-        document.getElementById('noteInput').value = '';
-      }
+    function mostrarNota(nota, imagen) {
+      const contenedor = document.getElementById("notas");
+      const div = document.createElement("div");
+      div.className = "note";
+      if (nota) div.innerHTML += `<p>${nota}</p>`;
+      if (imagen) div.innerHTML += `<img src="${imagen}" alt="Imagen" />`;
+      contenedor.prepend(div);
     }
-
-    function submitData(noteInput, noteType) {
-      const formData = new FormData();
-      formData.append('entry.123456', noteInput);  // ID de la columna para notas
-      formData.append('entry.654321', noteType);  // ID de la columna para tipo (nota/imagen)
-
-      fetch(formUrl, {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => console.log('Datos enviados a Google Sheets:', data))
-      .catch(error => console.error('Error al enviar los datos:', error));
-    }
-
-    // Cargar las notas desde Google Sheets cuando la página se carga
-    window.onload = loadNotes;
   </script>
 </body>
 </html>
