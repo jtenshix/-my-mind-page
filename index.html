@@ -4,24 +4,128 @@
     <meta charset="UTF-8">
     <title>Notas e Imágenes</title>
     <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 2rem;
+            color: #4A90E2;
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 50px;
+            font-size: 1.5rem;
+            color: #4A90E2;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .note-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .note-form input,
+        .note-form button {
+            padding: 15px;
+            font-size: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .note-form input:focus,
+        .note-form button:hover {
+            border-color: #4A90E2;
+            outline: none;
+        }
+
+        .note-form button {
+            background-color: #4A90E2;
+            color: #fff;
+            cursor: pointer;
+            border: none;
+        }
+
+        .note-form button:active {
+            background-color: #357ABD;
+        }
+
         .note-item {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 10px 0;
+            background-color: #fafafa;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+        }
+
+        .note-item:hover {
+            transform: scale(1.02);
+        }
+
+        .note-item img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .note-item p {
+            color: #333;
+        }
+
+        .note-item a {
+            text-decoration: none;
+            color: #4A90E2;
+            font-weight: bold;
+        }
+
+        .note-item a:hover {
+            text-decoration: underline;
+        }
+
+        .note-item strong {
+            color: #4A90E2;
         }
     </style>
 </head>
 <body>
-    <h1>Agregar Nota o Imagen</h1>
-    <form id="noteForm">
-        <label for="nota">Nota:</label>
-        <input type="text" id="nota" name="nota"><br>
-        <label for="imagen">URL de Imagen:</label>
-        <input type="url" id="imagen" name="imagen"><br>
-        <button type="submit">Guardar</button>
-    </form>
-    <h2>Notas Guardadas</h2>
-    <div id="notasGuardadas"></div>
+    <div class="container">
+        <h1>📌 Agregar Nota o Imagen</h1>
+
+        <form id="noteForm" class="note-form">
+            <label for="nota">Nota:</label>
+            <input type="text" id="nota" name="nota" placeholder="Escribe tu nota" required>
+
+            <label for="imagen">URL de Imagen:</label>
+            <input type="url" id="imagen" name="imagen" placeholder="Pega la URL de la imagen">
+
+            <button type="submit">Guardar Nota</button>
+        </form>
+
+        <h2>Notas Guardadas</h2>
+        <div id="notasGuardadas"></div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', cargarNotas);
 
@@ -57,7 +161,11 @@
                     data.forEach(item => {
                         var noteItem = document.createElement('div');
                         noteItem.className = 'note-item';
-                        noteItem.innerHTML = `<strong>Nota:</strong> ${item.nota}<br><strong>Imagen:</strong> <a href="${item.imagen}" target="_blank">Ver Imagen</a>`;
+                        noteItem.innerHTML = `
+                            <strong>Nota:</strong> ${item.nota}<br>
+                            <strong>Imagen:</strong> 
+                            ${item.imagen ? `<img src="${item.imagen}" alt="Imagen">` : 'No hay imagen'}
+                        `;
                         notasGuardadas.appendChild(noteItem);
                     });
                 })
