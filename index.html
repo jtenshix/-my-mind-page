@@ -1,181 +1,104 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Mi Mural de Notas</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f5f5f5;
-      margin: 0;
-      padding: 0;
-    }
-
-    h1 {
-      text-align: center;
-      padding: 20px;
-      color: #333;
-    }
-
-    .mural {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      padding: 20px;
-      gap: 15px;
-    }
-
-    .note-item {
-      background: white;
-      border-radius: 12px;
-      padding: 15px;
-      width: 200px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      position: relative;
-      word-break: break-word;
-    }
-
-    .note-item img {
-      max-width: 100%;
-      border-radius: 6px;
-      margin-top: 10px;
-    }
-
-    .note-item button {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-      background: transparent;
-      border: none;
-      font-weight: bold;
-      color: #c00;
-      cursor: pointer;
-    }
-
-    .add-button {
-      position: fixed;
-      bottom: 25px;
-      right: 25px;
-      width: 60px;
-      height: 60px;
-      font-size: 36px;
-      color: white;
-      background-color: #5c67f2;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    }
-
-    #modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.4);
-      justify-content: center;
-      align-items: center;
-    }
-
-    .modal-content {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      width: 300px;
-    }
-
-    .modal-content input {
-      width: 100%;
-      padding: 10px;
-      margin: 5px 0;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-
-    .modal-content button {
-      margin-top: 10px;
-      padding: 10px;
-      width: 100%;
-      border: none;
-      border-radius: 6px;
-      background: #5c67f2;
-      color: white;
-      cursor: pointer;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Notas e Imágenes</title>
+    <style>
+        .note-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .note-item button {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-  <h1>Mi Mural de Notas</h1>
-  <div class="mural" id="notasGuardadas"></div>
+    <h1>Agregar Nota o Imagen</h1>
+    <form id="noteForm">
+        <label for="nota">Nota:</label>
+        <input type="text" id="nota" name="nota"><br>
+        <label for="imagen">URL de Imagen:</label>
+        <input type="url" id="imagen" name="imagen"><br>
+        <button type="submit">Guardar</button>
+    </form>
+    <h2>Notas Guardadas</h2>
+    <div id="notasGuardadas"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', cargarNotas);
 
-  <button class="add-button" onclick="abrirModal()">+</button>
+        document.getElementById('noteForm').addEventListener('submit', function(event) {
+            event.preventDefault();
 
-  <div id="modal">
-    <div class="modal-content">
-      <input type="text" id="nota" placeholder="Escribe tu nota...">
-      <input type="url" id="imagen" placeholder="URL de imagen (opcional)">
-      <button onclick="guardarNota()">Guardar</button>
-    </div>
-  </div>
+            var nota = document.getElementById('nota').value;
+            var imagen = document.getElementById('imagen').value;
 
-  <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxIGIRFmqqy-XcZ4omcxFnLqYrIN3LB3AGljdUr-aruO2hQfL2RL-y6vbuPpd3B9AoclQ/exec';
-
-    function abrirModal() {
-      document.getElementById('modal').style.display = 'flex';
-    }
-
-    function cerrarModal() {
-      document.getElementById('modal').style.display = 'none';
-      document.getElementById('nota').value = '';
-      document.getElementById('imagen').value = '';
-    }
-
-    function guardarNota() {
-      const nota = document.getElementById('nota').value;
-      const imagen = document.getElementById('imagen').value;
-
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        body: new URLSearchParams({ nota, imagen })
-      })
-      .then(res => res.text())
-      .then(() => {
-        cerrarModal();
-        cargarNotas();
-      });
-    }
-
-    function eliminarNota(index) {
-      fetch(SCRIPT_URL + `?eliminar=${index}`, { method: 'GET' })
-        .then(() => cargarNotas());
-    }
-
-    function cargarNotas() {
-      fetch(SCRIPT_URL)
-        .then(res => res.json())
-        .then(data => {
-          const mural = document.getElementById('notasGuardadas');
-          mural.innerHTML = '';
-          data.forEach((item, index) => {
-            const div = document.createElement('div');
-            div.className = 'note-item';
-            div.innerHTML = `
-              <button onclick="eliminarNota(${index})">×</button>
-              <strong>${item.nota}</strong>
-              ${item.imagen ? `<img src="${item.imagen}" alt="Imagen">` : ''}
-            `;
-            mural.appendChild(div);
-          });
+            fetch('https://script.google.com/macros/s/AKfycbwpBz9EBJ4gZU-W-IGJdsEBV4NaRkag2yfFxuuRTMKsX48e4_O7pP0hwTKUf9OP5H5AVg/exec', {
+                method: 'POST',
+                body: new URLSearchParams({
+                    'nota': nota,
+                    'imagen': imagen
+                })
+            })
+            .then(response => response.text())
+            .then(data => {
+                console.log('Success:', data);
+                cargarNotas(); // Recargar las notas después de agregar una nueva
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
         });
-    }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      cargarNotas();
-      document.getElementById('modal').addEventListener('click', e => {
-        if (e.target.id === 'modal') cerrarModal();
-      });
-    });
-  </script>
+        function cargarNotas() {
+            fetch('https://script.google.com/macros/s/AKfycbwpBz9EBJ4gZU-W-IGJdsEBV4NaRkag2yfFxuuRTMKsX48e4_O7pP0hwTKUf9OP5H5AVg/exec')
+                .then(response => response.json())
+                .then(data => {
+                    var notasGuardadas = document.getElementById('notasGuardadas');
+                    notasGuardadas.innerHTML = ''; // Limpiar notas anteriores
+                    data.forEach(item => {
+                        var noteItem = document.createElement('div');
+                        noteItem.className = 'note-item';
+                        noteItem.innerHTML = `<span><strong>Nota:</strong> ${item.nota}<br><strong>Imagen:</strong> <a href="${item.imagen}" target="_blank">Ver Imagen</a></span>`;
+                        var deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Eliminar';
+                        deleteButton.addEventListener('click', function() {
+                            eliminarNota(item.id);
+                        });
+                        noteItem.appendChild(deleteButton);
+                        notasGuardadas.appendChild(noteItem);
+                    });
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function eliminarNota(id) {
+            fetch('https://script.google.com/macros/s/AKfycbwpBz9EBJ4gZU-W-IGJdsEBV4NaRkag2yfFxuuRTMKsX48e4_O7pP0hwTKUf9OP5H5AVg/exec', {
+                method: 'POST',
+                body: new URLSearchParams({
+                    'action': 'delete',
+                    'id': id
+                })
+            })
+            .then(response => response.text())
+            .then(data => {
+                console.log('Deleted:', data);
+                cargarNotas(); // Recargar las notas después de eliminar una
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
 </body>
 </html>
