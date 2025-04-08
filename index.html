@@ -26,9 +26,9 @@
     <h1>Agregar Nota o Imagen</h1>
     <form id="noteForm">
         <label for="nota">Nota:</label>
-        <input type="text" id="nota" name="nota" required><br>
+        <input type="text" id="nota" name="nota"><br>
         <label for="imagen">URL de Imagen:</label>
-        <input type="url" id="imagen" name="imagen" required><br>
+        <input type="url" id="imagen" name="imagen"><br>
         <button type="submit">Guardar</button>
     </form>
 
@@ -36,7 +36,7 @@
     <div id="notasGuardadas"></div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCin_1oSvr3Xrxey3fAPkaemAHLiIwiQPfozh087iXHjkL4-rsn1kF2LM3XABLaZ9X/exec';  // URL del script
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwWPJ25S3ngHxzaBg5RHozuW8rX99WVWaI-PU6jW_r5hODQq6aW6GVultNDjqRnoU0M/exec';
 
         document.addEventListener('DOMContentLoaded', cargarNotas);
 
@@ -64,7 +64,7 @@
                 .then(data => {
                     const notasGuardadas = document.getElementById('notasGuardadas');
                     notasGuardadas.innerHTML = '';
-                    data.forEach((item) => {
+                    data.forEach((item, index) => {
                         const noteItem = document.createElement('div');
                         noteItem.className = 'note-item';
                         noteItem.innerHTML = `
