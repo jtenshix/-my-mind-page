@@ -41,7 +41,7 @@
             var nota = document.getElementById('nota').value;
             var imagen = document.getElementById('imagen').value;
 
-            fetch('https://script.google.com/macros/s/AKfycbwpBz9EBJ4gZU-W-IGJdsEBV4NaRkag2yfFxuuRTMKsX48e4_O7pP0hwTKUf9OP5H5AVg/exec', {
+            fetch('https://script.google.com/macros/s/AKfycbz9KpuuG2fWnb15sThyEPLU3jLkU_uTFnhvQnhhU_RDagfgt4IPrX2VVWWg0UzZc637Dg/exec', {
                 method: 'POST',
                 body: new URLSearchParams({
                     'nota': nota,
@@ -59,7 +59,7 @@
         });
 
         function cargarNotas() {
-            fetch('https://script.google.com/macros/s/AKfycbwpBz9EBJ4gZU-W-IGJdsEBV4NaRkag2yfFxuuRTMKsX48e4_O7pP0hwTKUf9OP5H5AVg/exec')
+            fetch('https://script.google.com/macros/s/AKfycbz9KpuuG2fWnb15sThyEPLU3jLkU_uTFnhvQnhhU_RDagfgt4IPrX2VVWWg0UzZc637Dg/exec')
                 .then(response => response.json())
                 .then(data => {
                     var notasGuardadas = document.getElementById('notasGuardadas');
@@ -68,12 +68,14 @@
                         var noteItem = document.createElement('div');
                         noteItem.className = 'note-item';
                         noteItem.innerHTML = `<span><strong>Nota:</strong> ${item.nota}<br><strong>Imagen:</strong> <a href="${item.imagen}" target="_blank">Ver Imagen</a></span>`;
+
                         var deleteButton = document.createElement('button');
                         deleteButton.textContent = 'Eliminar';
                         deleteButton.addEventListener('click', function() {
                             eliminarNota(item.id);
                         });
                         noteItem.appendChild(deleteButton);
+
                         notasGuardadas.appendChild(noteItem);
                     });
                 })
@@ -83,7 +85,7 @@
         }
 
         function eliminarNota(id) {
-            fetch('https://script.google.com/macros/s/AKfycbwpBz9EBJ4gZU-W-IGJdsEBV4NaRkag2yfFxuuRTMKsX48e4_O7pP0hwTKUf9OP5H5AVg/exec', {
+            fetch('https://script.google.com/macros/s/AKfycbz9KpuuG2fWnb15sThyEPLU3jLkU_uTFnhvQnhhU_RDagfgt4IPrX2VVWWg0UzZc637Dg/exec', {
                 method: 'POST',
                 body: new URLSearchParams({
                     'action': 'delete',
