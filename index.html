@@ -1,95 +1,93 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MiMind Clon</title>
-  <style>
-    body {
-      font-family: 'Helvetica Neue', sans-serif;
-      background: #0e0e0e;
-      color: #fff;
-      padding: 2rem;
-      max-width: 600px;
-      margin: auto;
-    }
-
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 1rem;
-    }
-
-    input, textarea {
-      width: 100%;
-      padding: 0.8rem;
-      margin: 0.5rem 0;
-      border: none;
-      border-radius: 8px;
-      background: #1e1e1e;
-      color: #fff;
-      font-size: 1rem;
-    }
-
-    button {
-      padding: 0.8rem 1.5rem;
-      background: #4e4eff;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-top: 1rem;
-    }
-
-    .note {
-      margin-top: 2rem;
-      background: #1a1a1a;
-      border-radius: 12px;
-      padding: 1rem;
-    }
-
-    .note img {
-      max-width: 100%;
-      border-radius: 8px;
-      margin-top: 0.5rem;
-    }
-
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Página de Notas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 <body>
-  <h1>✨ MiMente</h1>
+    <div class="container">
+        <h1>Crear Nota</h1>
+        <form id="notaForm">
+            <textarea id="nota" rows="4" placeholder="Escribe tu nota aquí..."></textarea>
+            <input type="text" id="imagen" placeholder="Inserta el link de la imagen (opcional)">
+            <button type="submit">Guardar Nota</button>
+        </form>
 
-  <textarea id="nota" placeholder="Escribe tu nota aquí..."></textarea>
-  <input type="text" id="imagen" placeholder="Pega el link de una imagen (opcional)" />
-  <button onclick="guardarNota()">Guardar</button>
+        <div id="notasContainer"></div>
+    </div>
 
-  <div id="notas"></div>
+    <script>
+        document.getElementById('notaForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const nota = document.getElementById('nota').value;
+            const imagen = document.getElementById('imagen').value;
 
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzM0tdRdV8ZxDESmP1q366xtjIpIK1A390cXLzrGl64gYQ2-davmwhqD0V-PY-g35YhsA/exec";
-
-    function guardarNota() {
-      const nota = document.getElementById("nota").value.trim();
-      const imagen = document.getElementById("imagen").value.trim();
-
-      if (!nota && !imagen) return;
-
-      fetch(API_URL + `?nota=${encodeURIComponent(nota)}&imagen=${encodeURIComponent(imagen)}`)
-        .then(res => res.text())
-        .then(() => {
-          mostrarNota(nota, imagen);
-          document.getElementById("nota").value = "";
-          document.getElementById("imagen").value = "";
+            if (nota) {
+                // Llamar al Google Apps Script para guardar la nota y la imagen
+                google.script.run.guardarNota(nota, imagen);
+                document.getElementById('nota').value = '';
+                document.getElementById('imagen').value = '';
+                alert("Nota guardada!");
+            }
         });
-    }
 
-    function mostrarNota(nota, imagen) {
-      const contenedor = document.getElementById("notas");
-      const div = document.createElement("div");
-      div.className = "note";
-      if (nota) div.innerHTML += `<p>${nota}</p>`;
-      if (imagen) div.innerHTML += `<img src="${imagen}" alt="Imagen" />`;
-      contenedor.prepend(div);
-    }
-  </script>
+        function cargarNotas() {
+            google.script.run.withSuccessHandler(function(notas) {
+                const container = document.getElementById('notasContainer');
+                container.innerHTML = '';
+                notas.forEach(function(nota) {
+                    const div = document.createElement('div');
+                    div.innerHTML = `
+                        <p><strong>Nota:</strong> ${nota[0]}</p>
+                        <p><strong>Imagen:</strong> <img src="${nota[1]}" alt="Imagen" style="max-width: 100%;"></p>
+                    `;
+                    container.appendChild(div);
+                });
+            }).cargarNotas();
+        }
+
+        // Cargar las notas al inicio
+        window.onload = cargarNotas;
+    </script>
 </body>
 </html>
