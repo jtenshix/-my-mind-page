@@ -6,40 +6,96 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f9f9f9;
+            background-color: #f0f0f5;
             margin: 0;
             padding: 0;
             color: #333;
+            overflow: hidden;
         }
 
         h1 {
             text-align: center;
             margin-top: 30px;
-            font-size: 2rem;
+            font-size: 2.5rem;
             color: #4A90E2;
         }
 
         h2 {
             text-align: center;
             margin-top: 50px;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             color: #4A90E2;
         }
 
         .container {
-            width: 90%;
-            max-width: 800px;
+            position: relative;
+            width: 100%;
+            max-width: 900px;
             margin: 0 auto;
             padding: 20px;
             background-color: #fff;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .note-item {
+            position: absolute;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin: 10px;
+            max-width: 300px;
+            font-size: 1rem;
+            transform: translate(0, 0);
+            transition: all 0.3s ease-in-out;
+        }
+
+        .note-item:hover {
+            transform: scale(1.05) translateY(-5px);
+        }
+
+        .note-item img {
+            width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .note-item p {
+            color: #333;
+        }
+
+        .note-item a {
+            text-decoration: none;
+            color: #4A90E2;
+            font-weight: bold;
+        }
+
+        .note-item a:hover {
+            text-decoration: underline;
+        }
+
+        .note-item strong {
+            color: #4A90E2;
         }
 
         .note-form {
             display: flex;
             flex-direction: column;
             gap: 15px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 400px;
+            display: none;
+            z-index: 10;
         }
 
         .note-form input,
@@ -68,68 +124,72 @@
             background-color: #357ABD;
         }
 
-        .note-item {
-            border: 1px solid #ddd;
-            padding: 20px;
-            margin: 10px 0;
-            background-color: #fafafa;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s;
+        .floating-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #4A90E2;
+            color: white;
+            font-size: 30px;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .note-item:hover {
-            transform: scale(1.02);
+        .floating-button:hover {
+            background-color: #357ABD;
         }
 
-        .note-item img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 5px;
-            margin-top: 10px;
+        .floating-button:focus {
+            outline: none;
         }
 
-        .note-item p {
-            color: #333;
-        }
-
-        .note-item a {
-            text-decoration: none;
+        .note-form-close {
+            background-color: transparent;
+            border: none;
             color: #4A90E2;
-            font-weight: bold;
+            font-size: 24px;
+            cursor: pointer;
+            position: absolute;
+            top: 10px;
+            right: 10px;
         }
 
-        .note-item a:hover {
-            text-decoration: underline;
-        }
-
-        .note-item strong {
-            color: #4A90E2;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📌 Agregar Nota o Imagen</h1>
+        <h1>📌 Mural de Notas e Imágenes</h1>
 
-        <form id="noteForm" class="note-form">
-            <label for="nota">Nota:</label>
-            <input type="text" id="nota" name="nota" placeholder="Escribe tu nota" required>
-
-            <label for="imagen">URL de Imagen:</label>
-            <input type="url" id="imagen" name="imagen" placeholder="Pega la URL de la imagen">
-
-            <button type="submit">Guardar Nota</button>
-        </form>
-
-        <h2>Notas Guardadas</h2>
         <div id="notasGuardadas"></div>
+
+        <div id="noteForm" class="note-form">
+            <button class="note-form-close" onclick="closeForm()">X</button>
+            <h2>Agregar Nota o Imagen</h2>
+            <form id="addNoteForm">
+                <label for="nota">Nota:</label>
+                <input type="text" id="nota" name="nota" placeholder="Escribe tu nota" required>
+
+                <label for="imagen">URL de Imagen:</label>
+                <input type="url" id="imagen" name="imagen" placeholder="Pega la URL de la imagen">
+
+                <button type="submit">Guardar Nota</button>
+            </form>
+        </div>
     </div>
+
+    <button class="floating-button" onclick="openForm()">+</button>
 
     <script>
         document.addEventListener('DOMContentLoaded', cargarNotas);
 
-        document.getElementById('noteForm').addEventListener('submit', function(event) {
+        document.getElementById('addNoteForm').addEventListener('submit', function(event) {
             event.preventDefault();
 
             var nota = document.getElementById('nota').value;
@@ -146,6 +206,7 @@
             .then(data => {
                 console.log('Success:', data);
                 cargarNotas(); // Recargar las notas después de agregar una nueva
+                closeForm(); // Cerrar el formulario después de guardar la nota
             })
             .catch((error) => {
                 console.error('Error:', error);
@@ -161,6 +222,8 @@
                     data.forEach(item => {
                         var noteItem = document.createElement('div');
                         noteItem.className = 'note-item';
+                        noteItem.style.left = Math.random() * 500 + 'px'; // Posicionar las notas de forma aleatoria
+                        noteItem.style.top = Math.random() * 400 + 'px';  // Posicionar las notas de forma aleatoria
                         noteItem.innerHTML = `
                             <strong>Nota:</strong> ${item.nota}<br>
                             <strong>Imagen:</strong> 
@@ -172,6 +235,14 @@
                 .catch((error) => {
                     console.error('Error:', error);
                 });
+        }
+
+        function openForm() {
+            document.getElementById('noteForm').style.display = 'block';
+        }
+
+        function closeForm() {
+            document.getElementById('noteForm').style.display = 'none';
         }
     </script>
 </body>
