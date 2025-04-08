@@ -19,6 +19,11 @@
             padding: 5px 10px;
             cursor: pointer;
         }
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
@@ -41,7 +46,7 @@
             var nota = document.getElementById('nota').value;
             var imagen = document.getElementById('imagen').value;
 
-            fetch('https://script.google.com/macros/s/AKfycbwpBz9EBJ4gZU-W-IGJdsEBV4NaRkag2yfFxuuRTMKsX48e4_O7pP0hwTKUf9OP5H5AVg/exec', {
+            fetch('https://script.google.com/macros/s/AKfycbxvbKHXR2T_Xg89WD7luIB9CvrUC-gGhlRQ8mYC7G7HcFz6Qw5yntp1PGCSFRY91P2A0g/exec', {
                 method: 'POST',
                 body: new URLSearchParams({
                     'nota': nota,
@@ -59,31 +64,37 @@
         });
 
         function cargarNotas() {
-            fetch('https://script.google.com/macros/s/AKfycbwpBz9EBJ4gZU-W-IGJdsEBV4NaRkag2yfFxuuRTMKsX48e4_O7pP0hwTKUf9OP5H5AVg/exec')
-                .then(response => response.json())
-                .then(data => {
-                    var notasGuardadas = document.getElementById('notasGuardadas');
-                    notasGuardadas.innerHTML = ''; // Limpiar notas anteriores
-                    data.forEach(item => {
-                        var noteItem = document.createElement('div');
-                        noteItem.className = 'note-item';
-                        noteItem.innerHTML = `<span><strong>Nota:</strong> ${item.nota}<br><strong>Imagen:</strong> <a href="${item.imagen}" target="_blank">Ver Imagen</a></span>`;
-                        var deleteButton = document.createElement('button');
-                        deleteButton.textContent = 'Eliminar';
-                        deleteButton.addEventListener('click', function() {
-                            eliminarNota(item.id);
-                        });
-                        noteItem.appendChild(deleteButton);
-                        notasGuardadas.appendChild(noteItem);
+            fetch('https://script.google.com/macros/s/AKfycbxvbKHXR2T_Xg89WD7luIB9CvrUC-gGhlRQ8mYC7G7HcFz6Qw5yntp1PGCSFRY91P2A0g/exec')
+            .then(response => response.json())
+            .then(data => {
+                var notasGuardadas = document.getElementById('notasGuardadas');
+                notasGuardadas.innerHTML = ''; // Limpiar notas anteriores
+                data.forEach(item => {
+                    var noteItem = document.createElement('div');
+                    noteItem.className = 'note-item';
+                    noteItem.innerHTML = `<span><strong>Nota:</strong> ${item.nota}</span>`;
+                    if (item.imagen) {
+                        var imagePreview = document.createElement('img');
+                        imagePreview.src = item.imagen;
+                        imagePreview.className = 'image-preview';
+                        noteItem.appendChild(imagePreview);
+                    }
+                    var deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Eliminar';
+                    deleteButton.addEventListener('click', function() {
+                        eliminarNota(item.id);
                     });
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
+                    noteItem.appendChild(deleteButton);
+                    notasGuardadas.appendChild(noteItem);
                 });
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
         }
 
         function eliminarNota(id) {
-            fetch('https://script.google.com/macros/s/AKfycbwpBz9EBJ4gZU-W-IGJdsEBV4NaRkag2yfFxuuRTMKsX48e4_O7pP0hwTKUf9OP5H5AVg/exec', {
+            fetch('https://script.google.com/macros/s/AKfycbxvbKHXR2T_Xg89WD7luIB9CvrUC-gGhlRQ8mYC7G7HcFz6Qw5yntp1PGCSFRY91P2A0g/exec', {
                 method: 'POST',
                 body: new URLSearchParams({
                     'action': 'delete',
