@@ -1,106 +1,134 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Notas e Imágenes</title>
-    <style>
-        .note-item {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .note-item button {
-            background-color: red;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Notas e Imágenes</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f8f8f8;
+      margin: 0;
+      padding: 2rem;
+    }
+    #noteForm {
+      display: none;
+      background: white;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
+    }
+    .note-item {
+      background: white;
+      padding: 1rem;
+      border-radius: 12px;
+      margin: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      width: 250px;
+      position: relative;
+    }
+    .note-item button {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: crimson;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+    #notasGuardadas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    #agregarNota {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 32px;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+  </style>
 </head>
 <body>
-    <h1>Agregar Nota o Imagen</h1>
-    <form id="noteForm">
-        <label for="nota">Nota:</label>
-        <input type="text" id="nota" name="nota"><br>
-        <label for="imagen">URL de Imagen:</label>
-        <input type="url" id="imagen" name="imagen"><br>
-        <button type="submit">Guardar</button>
-    </form>
-    <h2>Notas Guardadas</h2>
-    <div id="notasGuardadas"></div>
-    <script>
-        document.addEventListener('DOMContentLoaded', cargarNotas);
+  <h1>Mi Muro de Notas</h1>
+  <form id="noteForm">
+    <label for="nota">Nota:</label>
+    <input type="text" id="nota" name="nota"><br><br>
+    <label for="imagen">URL de Imagen:</label>
+    <input type="url" id="imagen" name="imagen"><br><br>
+    <button type="submit">Guardar</button>
+  </form>
 
-        document.getElementById('noteForm').addEventListener('submit', function(event) {
-            event.preventDefault();
+  <div id="notasGuardadas"></div>
+  <button id="agregarNota">+</button>
 
-            var nota = document.getElementById('nota').value;
-            var imagen = document.getElementById('imagen').value;
+  <script>
+    const urlScript = 'https://script.google.com/macros/s/AKfycbzfGhqkBqbCZuulNy9afRak1ae3BvgVG9ZgU1cNiLvwV6GO6xtC6_1lKGmsoHwSSVgouA/exec';
 
-            fetch('https://script.google.com/macros/s/AKfycbwpBz9EBJ4gZU-W-IGJdsEBV4NaRkag2yfFxuuRTMKsX48e4_O7pP0hwTKUf9OP5H5AVg/exec', {
-                method: 'POST',
-                body: new URLSearchParams({
-                    'nota': nota,
-                    'imagen': imagen
-                })
-            })
-            .then(response => response.text())
-            .then(data => {
-                console.log('Success:', data);
-                cargarNotas(); // Recargar las notas después de agregar una nueva
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
+    document.addEventListener('DOMContentLoaded', cargarNotas);
+
+    document.getElementById('noteForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+      var nota = document.getElementById('nota').value;
+      var imagen = document.getElementById('imagen').value;
+
+      fetch(urlScript, {
+        method: 'POST',
+        body: new URLSearchParams({ nota, imagen })
+      })
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById('nota').value = '';
+        document.getElementById('imagen').value = '';
+        document.getElementById('noteForm').style.display = 'none';
+        cargarNotas();
+      })
+      .catch((error) => console.error('Error:', error));
+    });
+
+    function cargarNotas() {
+      fetch(urlScript)
+        .then(response => response.json())
+        .then(data => {
+          const contenedor = document.getElementById('notasGuardadas');
+          contenedor.innerHTML = '';
+          data.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'note-item';
+            div.innerHTML = `
+              <button onclick="eliminarNota(${index + 2})">×</button>
+              <strong>Nota:</strong> ${item.nota}<br>
+              ${item.imagen ? `<img src="${item.imagen}" style="max-width:100%; border-radius:8px; margin-top:5px;">` : ''}
+            `;
+            contenedor.appendChild(div);
+          });
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function eliminarNota(row) {
+      fetch(urlScript + `?eliminar=${row}`)
+        .then(res => res.text())
+        .then(data => {
+          cargarNotas();
         });
+    }
 
-        function cargarNotas() {
-            fetch('https://script.google.com/macros/s/AKfycbwpBz9EBJ4gZU-W-IGJdsEBV4NaRkag2yfFxuuRTMKsX48e4_O7pP0hwTKUf9OP5H5AVg/exec')
-                .then(response => response.json())
-                .then(data => {
-                    var notasGuardadas = document.getElementById('notasGuardadas');
-                    notasGuardadas.innerHTML = ''; // Limpiar notas anteriores
-                    data.forEach(item => {
-                        var noteItem = document.createElement('div');
-                        noteItem.className = 'note-item';
-                        noteItem.innerHTML = `<span><strong>Nota:</strong> ${item.nota}<br><strong>Imagen:</strong> <a href="${item.imagen}" target="_blank">Ver Imagen</a></span>`;
-
-                        var deleteButton = document.createElement('button');
-                        deleteButton.textContent = 'Eliminar';
-                        deleteButton.addEventListener('click', function() {
-                            eliminarNota(item.id);
-                        });
-                        noteItem.appendChild(deleteButton);
-
-                        notasGuardadas.appendChild(noteItem);
-                    });
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                });
-        }
-
-        function eliminarNota(id) {
-            fetch('https://script.google.com/macros/s/AKfycbwpBz9EBJ4gZU-W-IGJdsEBV4NaRkag2yfFxuuRTMKsX48e4_O7pP0hwTKUf9OP5H5AVg/exec', {
-                method: 'POST',
-                body: new URLSearchParams({
-                    'action': 'delete',
-                    'id': id
-                })
-            })
-            .then(response => response.text())
-            .then(data => {
-                console.log('Deleted:', data);
-                cargarNotas(); // Recargar las notas después de eliminar una
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
-        }
-    </script>
+    document.getElementById('agregarNota').addEventListener('click', function () {
+      const form = document.getElementById('noteForm');
+      form.style.display = (form.style.display === 'none') ? 'block' : 'none';
+    });
+  </script>
 </body>
 </html>
