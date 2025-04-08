@@ -4,102 +4,23 @@
     <meta charset="UTF-8">
     <title>Notas e Imágenes</title>
     <style>
-        body {
-            font-family: sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-        }
-        h1, h2 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        #noteForm {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        #noteForm label {
-            font-weight: bold;
-            color: #555;
-        }
-        #noteForm input[type="text"],
-        #noteForm input[type="url"] {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        #noteForm button[type="submit"] {
-            background-color: #5cb85c;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
-        }
-        #noteForm button[type="submit"]:hover {
-            background-color: #4cae4c;
-        }
-        #notasGuardadas {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
-        }
         .note-item {
-            background-color: #fff;
-            border: 1px solid #eee;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-        .note-item strong {
-            color: #333;
-            margin-bottom: 5px;
-        }
-        .image-preview {
-            max-width: 100%;
-            height: auto;
-            margin-top: 10px;
-            border-radius: 4px;
-        }
-        .note-item button {
-            background-color: #d9534f;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-top: 10px;
-            transition: background-color 0.3s ease;
-        }
-        .note-item button:hover {
-            background-color: #c9302c;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
-    <h1>Tus Ideas e Imágenes</h1>
+    <h1>Agregar Nota o Imagen</h1>
     <form id="noteForm">
-        <label for="nota">Añadir Nota:</label>
-        <input type="text" id="nota" name="nota" placeholder="Escribe tu nota aquí"><br>
-        <label for="imagen">URL de la Imagen:</label>
-        <input type="url" id="imagen" name="imagen" placeholder="Pega la URL de la imagen"><br>
-        <button type="submit">Guardar Idea</button>
+        <label for="nota">Nota:</label>
+        <input type="text" id="nota" name="nota"><br>
+        <label for="imagen">URL de Imagen:</label>
+        <input type="url" id="imagen" name="imagen"><br>
+        <button type="submit">Guardar</button>
     </form>
-    <h2>Tus Ideas Guardadas</h2>
+    <h2>Notas Guardadas</h2>
     <div id="notasGuardadas"></div>
     <script>
         document.addEventListener('DOMContentLoaded', cargarNotas);
@@ -110,7 +31,7 @@
             var nota = document.getElementById('nota').value;
             var imagen = document.getElementById('imagen').value;
 
-            fetch('https://script.google.com/macros/s/AKfycbxvbKHXR2T_Xg89WD7luIB9CvrUC-gGhlRQ8mYC7G7HcFz6Qw5yntp1PGCSFRY91P2A0g/exec', {
+            fetch('https://script.google.com/macros/s/AKfycbz9KpuuG2fWnb15sThyEPLU3jLkU_uTFnhvQnhhU_RDagfgt4IPrX2VVWWg0UzZc637Dg/exec', {
                 method: 'POST',
                 body: new URLSearchParams({
                     'nota': nota,
@@ -120,8 +41,6 @@
             .then(response => response.text())
             .then(data => {
                 console.log('Success:', data);
-                document.getElementById('nota').value = ''; // Limpiar el campo de nota
-                document.getElementById('imagen').value = ''; // Limpiar el campo de imagen
                 cargarNotas(); // Recargar las notas después de agregar una nueva
             })
             .catch((error) => {
@@ -130,53 +49,21 @@
         });
 
         function cargarNotas() {
-            fetch('https://script.google.com/macros/s/AKfycbxvbKHXR2T_Xg89WD7luIB9CvrUC-gGhlRQ8mYC7G7HcFz6Qw5yntp1PGCSFRY91P2A0g/exec')
-            .then(response => response.json())
-            .then(data => {
-                var notasGuardadas = document.getElementById('notasGuardadas');
-                notasGuardadas.innerHTML = ''; // Limpiar notas anteriores
-                data.forEach(item => {
-                    var noteItem = document.createElement('div');
-                    noteItem.className = 'note-item';
-                    let content = '';
-                    if (item.nota) {
-                        content += `<strong>Nota:</strong> ${item.nota}<br>`;
-                    }
-                    if (item.imagen) {
-                        content += `<img src="${item.imagen}" class="image-preview"><br>`;
-                    }
-                    noteItem.innerHTML = content;
-
-                    var deleteButton = document.createElement('button');
-                    deleteButton.textContent = 'Eliminar';
-                    deleteButton.addEventListener('click', function() {
-                        eliminarNota(item.id);
+            fetch('https://script.google.com/macros/s/AKfycbz9KpuuG2fWnb15sThyEPLU3jLkU_uTFnhvQnhhU_RDagfgt4IPrX2VVWWg0UzZc637Dg/exec')
+                .then(response => response.json())
+                .then(data => {
+                    var notasGuardadas = document.getElementById('notasGuardadas');
+                    notasGuardadas.innerHTML = ''; // Limpiar notas anteriores
+                    data.forEach(item => {
+                        var noteItem = document.createElement('div');
+                        noteItem.className = 'note-item';
+                        noteItem.innerHTML = `<strong>Nota:</strong> ${item.nota}<br><strong>Imagen:</strong> <a href="${item.imagen}" target="_blank">Ver Imagen</a>`;
+                        notasGuardadas.appendChild(noteItem);
                     });
-                    noteItem.appendChild(deleteButton);
-                    notasGuardadas.appendChild(noteItem);
-                });
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
-        }
-
-        function eliminarNota(id) {
-            fetch('https://script.google.com/macros/s/AKfycbxvbKHXR2T_Xg89WD7luIB9CvrUC-gGhlRQ8mYC7G7HcFz6Qw5yntp1PGCSFRY91P2A0g/exec', {
-                method: 'POST',
-                body: new URLSearchParams({
-                    'action': 'delete',
-                    'id': id
                 })
-            })
-            .then(response => response.text())
-            .then(data => {
-                console.log('Deleted:', data);
-                cargarNotas(); // Recargar las notas después de eliminar una
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
         }
     </script>
 </body>
