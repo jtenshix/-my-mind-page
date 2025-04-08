@@ -1,93 +1,87 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Página de Notas</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        input, textarea {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Notas y Enlaces</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f2f2f2;
+    }
+    input, textarea, button {
+      display: block;
+      margin: 10px 0;
+      width: 100%;
+      padding: 10px;
+    }
+    .card {
+      background: white;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 10px;
+    }
+    img {
+      max-width: 100%;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Crear Nota</h1>
-        <form id="notaForm">
-            <textarea id="nota" rows="4" placeholder="Escribe tu nota aquí..."></textarea>
-            <input type="text" id="imagen" placeholder="Inserta el link de la imagen (opcional)">
-            <button type="submit">Guardar Nota</button>
-        </form>
 
-        <div id="notasContainer"></div>
-    </div>
+  <h1>📌 Muro de Notas</h1>
 
-    <script>
-        document.getElementById('notaForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            
-            const nota = document.getElementById('nota').value;
-            const imagen = document.getElementById('imagen').value;
+  <textarea id="nota" placeholder="Escribe tu nota..."></textarea>
+  <input type="text" id="imagen" placeholder="Pega el link de imagen (opcional)" />
+  <button onclick="guardarNota()">Guardar</button>
 
-            if (nota) {
-                // Llamar al Google Apps Script para guardar la nota y la imagen
-                google.script.run.guardarNota(nota, imagen);
-                document.getElementById('nota').value = '';
-                document.getElementById('imagen').value = '';
-                alert("Nota guardada!");
-            }
-        });
+  <div id="muro"></div>
 
-        function cargarNotas() {
-            google.script.run.withSuccessHandler(function(notas) {
-                const container = document.getElementById('notasContainer');
-                container.innerHTML = '';
-                notas.forEach(function(nota) {
-                    const div = document.createElement('div');
-                    div.innerHTML = `
-                        <p><strong>Nota:</strong> ${nota[0]}</p>
-                        <p><strong>Imagen:</strong> <img src="${nota[1]}" alt="Imagen" style="max-width: 100%;"></p>
-                    `;
-                    container.appendChild(div);
-                });
-            }).cargarNotas();
-        }
+  <script>
+    const urlScript = "https://script.google.com/macros/s/AKfycbzMunq9Jdsl6UCl1bhnGBQbvz4eRfHxbKZoaiRsqKD7puvy8MpbA30ov2gbH1gx_bmXCg/exec";
 
-        // Cargar las notas al inicio
-        window.onload = cargarNotas;
-    </script>
+    function guardarNota() {
+      const nota = document.getElementById("nota").value;
+      const imagen = document.getElementById("imagen").value;
+
+      if (!nota && !imagen) return;
+
+      const datos = new FormData();
+      datos.append("nota", nota);
+      datos.append("imagen", imagen);
+
+      fetch(urlScript, {
+        method: "POST",
+        body: datos
+      })
+      .then(res => res.text())
+      .then(() => {
+        mostrarNota(nota, imagen);
+        document.getElementById("nota").value = "";
+        document.getElementById("imagen").value = "";
+      });
+    }
+
+    function mostrarNota(nota, imagen) {
+      const muro = document.getElementById("muro");
+      const div = document.createElement("div");
+      div.className = "card";
+
+      if (imagen) {
+        const img = document.createElement("img");
+        img.src = imagen;
+        div.appendChild(img);
+      }
+
+      if (nota) {
+        const p = document.createElement("p");
+        p.textContent = nota;
+        div.appendChild(p);
+      }
+
+      muro.prepend(div);
+    }
+  </script>
 </body>
 </html>
