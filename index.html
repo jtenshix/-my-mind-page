@@ -35,9 +35,18 @@
     function mostrarNotaEnPantalla(doc) {
       const nota = doc.data().nota;
       const notaDiv = document.createElement('div'); // Use a div to group note and delete button
-      const newNote = document.createElement('p');
-      newNote.textContent = nota;
-      notaDiv.appendChild(newNote);
+
+      // Check if the note is a URL (very basic check)
+      if (nota.startsWith('http://') || nota.startsWith('https://')) {
+        const img = document.createElement('img');
+        img.src = nota;
+        img.style.maxWidth = '300px'; // Basic styling to limit image width
+        notaDiv.appendChild(img);
+      } else {
+        const newNote = document.createElement('p');
+        newNote.textContent = nota;
+        notaDiv.appendChild(newNote);
+      }
 
       const deleteButton = document.createElement('button');
       deleteButton.textContent = 'Eliminar';
