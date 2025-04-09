@@ -4,75 +4,54 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Notas</title>
-  <script type="module">
-    // Configuración de Firebase
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <script>
+    // Tu configuración de Firebase
     const firebaseConfig = {
-      apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
-      authDomain: "oasis-b036d.firebaseapp.com",
-      projectId: "oasis-b036d",
-      storageBucket: "oasis-b036d.appspot.com",
-      messagingSenderId: "141546637821",
-      appId: "1:141546637821:web:0a861aeb13831774ed3194",
-      measurementId: "G-HB2P17H5YL"
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_AUTH_DOMAIN",
+      projectId: "TU_PROJECT_ID",
+      storageBucket: "TU_STORAGE_BUCKET",
+      messagingSenderId: "TU_SENDER_ID",
+      appId: "TU_APP_ID"
     };
 
-    // Inicializar Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    // Inicializa Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore(app);
 
-    // Obtener la colección de notas
-    const notasCollection = collection(db, "notas");
+    // Función para guardar la nota
+    function guardarNota() {
+      const notaInput = document.getElementById('notaInput');
+      const nota = notaInput.value;
 
-    // Función para mostrar las notas al cargar la página
-    async function mostrarNotas() {
-      const querySnapshot = await getDocs(notasCollection);
-      const notasDiv = document.getElementById("notasDiv");
-      querySnapshot.forEach((doc) => {
-        const divNota = document.createElement("div");
-        divNota.textContent = doc.data().nota;
-        notasDiv.appendChild(divNota);
-      });
-    }
+      if (nota.trim() !== '') {
+        // Muestra la nota en la página
+        const notaDisplay = document.getElementById('notaDisplay');
+        const newNote = document.createElement('p');
+        newNote.textContent = nota;
+        notaDisplay.appendChild(newNote);
 
-    // Función para guardar la nota en Firestore
-    async function guardarNota() {
-      const nota = document.getElementById("nota").value;
-      if (nota) {
-        try {
-          // Guardar en la base de datos
-          await addDoc(notasCollection, {
-            nota: nota,
-            timestamp: new Date()  // Guardar la fecha de creación
-          });
-
-          // Mostrar la nueva nota en la página
-          const divNota = document.createElement("div");
-          divNota.textContent = nota;
-          document.getElementById("notasDiv").appendChild(divNota);
-
-          // Limpiar el campo de texto después de guardar
-          document.getElementById("nota").value = '';
-        } catch (e) {
-          alert("Error al guardar la nota: " + e);
-        }
-      } else {
-        alert("Por favor ingresa una nota");
+        // Guarda la nota en Firebase
+        db.collection('notas').add({
+          nota: nota
+        })
+        .then(() => {
+          console.log('Nota guardada en Firebase');
+          notaInput.value = '';  // Limpia el campo de texto después de guardar
+        })
+        .catch((error) => {
+          console.error('Error al guardar la nota: ', error);
+        });
       }
     }
-
-    // Mostrar las notas cuando se cargue la página
-    window.onload = mostrarNotas;
   </script>
 </head>
 <body>
   <h1>Notas</h1>
-  <input type="text" id="nota" placeholder="Escribe tu nota">
+  <textarea id="notaInput" placeholder="Escribe tu nota aquí..."></textarea>
   <button onclick="guardarNota()">Guardar Nota</button>
-
-  <h2>Notas Guardadas:</h2>
-  <div id="notasDiv"></div>  <!-- Aquí se mostrarán las notas guardadas -->
+  <div id="notaDisplay"></div> <!-- Aquí se mostrarán las notas -->
 </body>
 </html>
