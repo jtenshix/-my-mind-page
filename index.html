@@ -14,7 +14,7 @@
   <script type="module">
     // Importa las funciones necesarias de Firebase
     import { initializeApp } from "firebase/app";
-    import { getFirestore, collection, addDoc, getDocs, onSnapshot, orderBy } from "firebase/firestore";
+    import { getFirestore, collection, addDoc, onSnapshot, orderBy } from "firebase/firestore";
 
     // Tu configuración de Firebase
     const firebaseConfig = {
@@ -81,7 +81,7 @@
       }
     }
 
-    // Asigna el evento onclick al botón desde JavaScript (mejor práctica con módulos)
+    // Asigna el evento onclick al botón desde JavaScript
     guardarBtn.onclick = guardarNota;
   </script>
 </body>
