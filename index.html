@@ -1,55 +1,55 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notas</title>
-    <script type="module">
-        // Importar las funciones necesarias desde el SDK de Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notas</title>
+  <!-- Agregar Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
-        // Tu configuración de Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
-            authDomain: "oasis-b036d.firebaseapp.com",
-            projectId: "oasis-b036d",
-            storageBucket: "oasis-b036d.appspot.com",
-            messagingSenderId: "141546637821",
-            appId: "1:141546637821:web:0a861aeb13831774ed3194",
-            measurementId: "G-HB2P17H5YL"
-        };
+    const firebaseConfig = {
+      apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
+      authDomain: "oasis-b036d.firebaseapp.com",
+      projectId: "oasis-b036d",
+      storageBucket: "oasis-b036d.appspot.com",
+      messagingSenderId: "141546637821",
+      appId: "1:141546637821:web:0a861aeb13831774ed3194",
+      measurementId: "G-HB2P17H5YL"
+    };
 
-        // Inicializa Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-        // Función para guardar la nota en Firestore
-        async function saveNote() {
-            const noteText = document.getElementById("noteText").value;
-            if (noteText) {
-                try {
-                    await addDoc(collection(db, "notas"), {
-                        texto: noteText
-                    });
-                    alert("Nota guardada exitosamente.");
-                    document.getElementById("noteText").value = ''; // Limpiar el campo
-                } catch (e) {
-                    console.error("Error al agregar nota: ", e);
-                    alert("Hubo un error al guardar la nota.");
-                }
-            } else {
-                alert("Por favor, escribe una nota antes de guardar.");
-            }
-        }
+    // Función para guardar la nota
+    function saveNote() {
+      const noteText = document.getElementById("noteText").value;
 
-        // Agregar evento al botón de guardar
-        document.getElementById("saveButton").addEventListener("click", saveNote);
-    </script>
+      if (noteText.trim() === "") {
+        alert("La nota no puede estar vacía.");
+        return;
+      }
+
+      // Guardar la nota en Firestore
+      addDoc(collection(db, "notas"), {
+        nota: noteText
+      })
+      .then(() => {
+        console.log("Nota guardada correctamente!");
+        document.getElementById("noteText").value = ""; // Limpiar el campo de texto después de guardar
+      })
+      .catch((error) => {
+        console.error("Error al guardar la nota: ", error.message); // Mostrar el error detallado en la consola
+        alert("Hubo un error al guardar la nota. Intenta nuevamente.");
+      });
+    }
+  </script>
 </head>
 <body>
-    <h1>Notas</h1>
-    <textarea id="noteText" placeholder="Escribe tu nota aquí..."></textarea>
-    <button id="saveButton">Guardar Nota</button>
+  <h1>Notas</h1>
+  <textarea id="noteText" placeholder="Escribe tu nota aquí"></textarea>
+  <button onclick="saveNote()">Guardar Nota</button>
 </body>
 </html>
