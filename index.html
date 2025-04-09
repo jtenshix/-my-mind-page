@@ -7,7 +7,7 @@
   <script type="module">
     // Configuración de Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
@@ -26,15 +26,15 @@
     // Obtener la colección de notas
     const notasCollection = collection(db, "notas");
 
-    // Función para mostrar las notas en la ventana
-    function mostrarNotas() {
+    // Función para mostrar las notas al cargar la página
+    async function mostrarNotas() {
+      const querySnapshot = await getDocs(notasCollection);
       const notasDiv = document.getElementById("notasDiv");
-      const nuevaNota = document.getElementById("nota").value;
-      if (nuevaNota) {
+      querySnapshot.forEach((doc) => {
         const divNota = document.createElement("div");
-        divNota.textContent = nuevaNota;  // Mostrar la nueva nota en la ventana
+        divNota.textContent = doc.data().nota;
         notasDiv.appendChild(divNota);
-      }
+      });
     }
 
     // Función para guardar la nota en Firestore
@@ -48,8 +48,10 @@
             timestamp: new Date()  // Guardar la fecha de creación
           });
 
-          // Mostrar la nota en la ventana inmediatamente después de guardarla
-          mostrarNotas();
+          // Mostrar la nueva nota en la página
+          const divNota = document.createElement("div");
+          divNota.textContent = nota;
+          document.getElementById("notasDiv").appendChild(divNota);
 
           // Limpiar el campo de texto después de guardar
           document.getElementById("nota").value = '';
@@ -60,6 +62,9 @@
         alert("Por favor ingresa una nota");
       }
     }
+
+    // Mostrar las notas cuando se cargue la página
+    window.onload = mostrarNotas;
   </script>
 </head>
 <body>
