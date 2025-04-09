@@ -9,7 +9,8 @@
 </head>
 <body>
   <h1>Notas</h1>
-  <textarea id="notaInput" placeholder="Escribe tu nota aquí..."></textarea>
+  <textarea id="notaInput" placeholder="Escribe el link de la imagen o tu nota aquí..."></textarea>
+  <textarea id="notaTexto" placeholder="Escribe un texto para acompañar la imagen (opcional)..."></textarea>
   <button id="guardarBtn">Guardar Nota</button>
   <div id="notaDisplay"></div>
 
@@ -33,18 +34,24 @@
 
     // Función para mostrar las notas
     function mostrarNotaEnPantalla(doc) {
-      const nota = doc.data().nota;
-      const notaDiv = document.createElement('div'); // Use a div to group note and delete button
+      const notaData = doc.data().nota;
+      const notaDiv = document.createElement('div'); // Use a div to group content and delete button
 
-      // Check if the note is a URL (very basic check)
-      if (nota.startsWith('http://') || nota.startsWith('https://')) {
+      if (typeof notaData === 'object' && notaData !== null && notaData.url) {
+        // It's an image link with text
         const img = document.createElement('img');
-        img.src = nota;
+        img.src = notaData.url;
         img.style.maxWidth = '300px'; // Basic styling to limit image width
         notaDiv.appendChild(img);
+        if (notaData.texto) {
+          const textoParrafo = document.createElement('p');
+          textoParrafo.textContent = notaData.texto;
+          notaDiv.appendChild(textoParrafo);
+        }
       } else {
+        // It's a regular text note
         const newNote = document.createElement('p');
-        newNote.textContent = nota;
+        newNote.textContent = notaData;
         notaDiv.appendChild(newNote);
       }
 
@@ -86,20 +93,32 @@
     // Función para guardar la nota
     function guardarNota() {
       const notaInput = document.getElementById('notaInput');
-      const nota = notaInput.value;
+      const notaTextoInput = document.getElementById('notaTexto');
+      const notaInputValue = notaInput.value;
+      const notaTextoValue = notaTextoInput.value;
 
-      if (nota.trim() !== '') {
+      if (notaInputValue.trim() !== '') {
+        let notaToSave;
+        // Check if it looks like an image URL
+        if (notaInputValue.startsWith('http://') || notaInputValue.startsWith('https://')) {
+          notaToSave = {
+            url: notaInputValue,
+            texto: notaTextoValue.trim() !== '' ? notaTextoValue : null // Save text only if it's not empty
+          };
+        } else {
+          notaToSave = notaInputValue; // Save as regular text note
+        }
+
         // Guarda la nota en Firebase
-        db.collection('notas').add({
-          nota: nota
-        })
-        .then(() => {
-          console.log('Nota guardada en Firebase');
-          notaInput.value = '';
-        })
-        .catch((error) => {
-          console.error('Error al guardar la nota: ', error);
-        });
+        db.collection('notas').add(notaToSave)
+          .then(() => {
+            console.log('Nota guardada en Firebase');
+            notaInput.value = '';
+            notaTextoInput.value = ''; // Clear the text area as well
+          })
+          .catch((error) => {
+            console.error('Error al guardar la nota: ', error);
+          });
       }
     }
 
