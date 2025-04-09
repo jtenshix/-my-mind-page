@@ -1,48 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <base target="_top">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Web de Notas</title>
 </head>
 <body>
-  <h1>Notas</h1>
-  <textarea id="note" placeholder="Escribe tu nota aquí..."></textarea><br>
-  <input type="text" id="imageUrl" placeholder="URL de la imagen"><br>
-  <button onclick="saveNote()">Guardar Nota</button>
-  <button onclick="loadNotes()">Cargar Notas</button>
-  <div id="notes"></div>
+    <h1>Mis Notas</h1>
+    <input type="text" id="noteInput" placeholder="Escribe una nota">
+    <button id="saveNote">Guardar Nota</button>
 
-  <script>
-    function saveNote() {
-      var note = document.getElementById('note').value;
-      var imageUrl = document.getElementById('imageUrl').value;
-      google.script.run.withSuccessHandler(function(row) {
-        alert('Nota guardada en la fila ' + row);
-        loadNotes();
-      }).saveNote(note, imageUrl);
-    }
+    <ul id="notesList"></ul>
 
-    function loadNotes() {
-      google.script.run.withSuccessHandler(function(notes) {
-        var notesDiv = document.getElementById('notes');
-        notesDiv.innerHTML = '';
-        notes.forEach(function(note) {
-          var noteDiv = document.createElement('div');
-          noteDiv.innerHTML = '<p>' + note.note + '</p>';
-          if (note.imageUrl) {
-            noteDiv.innerHTML += '<img src="' + note.imageUrl + '" width="100">';
-          }
-          noteDiv.innerHTML += '<button onclick="deleteNote(' + note.row + ')">Eliminar</button>';
-          notesDiv.appendChild(noteDiv);
+    <script>
+        const notesList = document.getElementById('notesList');
+        const noteInput = document.getElementById('noteInput');
+        const saveNote = document.getElementById('saveNote');
+
+        // Guardar la nota
+        saveNote.addEventListener('click', () => {
+            const noteContent = noteInput.value;
+            if (noteContent) {
+                const noteItem = document.createElement('li');
+                noteItem.textContent = noteContent;
+                notesList.appendChild(noteItem);
+                noteInput.value = ''; // Limpiar el input después de guardar la nota
+            }
         });
-      }).getNotes();
-    }
-
-    function deleteNote(row) {
-      google.script.run.withSuccessHandler(function() {
-        alert('Nota eliminada');
-        loadNotes();
-      }).deleteNote(row);
-    }
-  </script>
+    </script>
 </body>
 </html>
