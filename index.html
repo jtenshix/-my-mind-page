@@ -263,16 +263,6 @@
         });
       });
 
-    // Obtener las notas existentes al cargar la página
-    db.collection('notas')
-      .orderBy('__name__')
-      .get()
-      .then((querySnapshot) => {
-        querySnapshot.forEach((doc) => {
-          mostrarNotaEnPantalla(doc);
-        });
-      });
-
     // Evento para mostrar/ocultar las opciones al hacer clic en el botón "+"
     addNoteButton.onclick = function() {
       addingNewNote = !addingNewNote;
@@ -344,16 +334,6 @@
     // Asigna los eventos onclick a los botones de guardar
     saveImageLinkButton.onclick = guardarLinkDeImagen;
     saveTextNoteButton.onclick = guardarNotaTexto;
-
-    // Cargar las notas existentes al inicio
-    db.collection('notas')
-      .orderBy('__name__')
-      .get()
-      .then((querySnapshot) => {
-        querySnapshot.forEach((doc) => {
-          mostrarNotaEnPantalla(doc);
-        });
-      });
   </script>
 </body>
 </html>
