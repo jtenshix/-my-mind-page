@@ -3,30 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Web de Notas</title>
-</head>
-<body>
-    <h1>Mis Notas</h1>
-    <input type="text" id="noteInput" placeholder="Escribe una nota">
-    <button id="saveNote">Guardar Nota</button>
+    <title>Mi Página de Notas</title>
 
-    <ul id="notesList"></ul>
+    <!-- Firebase App (SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <!-- Firestore SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
 
     <script>
-        const notesList = document.getElementById('notesList');
-        const noteInput = document.getElementById('noteInput');
-        const saveNote = document.getElementById('saveNote');
+      // Configuración de Firebase
+      const firebaseConfig = {
+        apiKey: "tu-apiKey",
+        authDomain: "tu-authDomain",
+        projectId: "tu-projectId",
+        storageBucket: "tu-storageBucket",
+        messagingSenderId: "tu-messagingSenderId",
+        appId: "tu-appId",
+        measurementId: "tu-measurementId"
+      };
 
-        // Guardar la nota
-        saveNote.addEventListener('click', () => {
-            const noteContent = noteInput.value;
-            if (noteContent) {
-                const noteItem = document.createElement('li');
-                noteItem.textContent = noteContent;
-                notesList.appendChild(noteItem);
-                noteInput.value = ''; // Limpiar el input después de guardar la nota
-            }
+      // Inicializar Firebase
+      const app = firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+
+      // Función para guardar notas
+      function guardarNota() {
+        const nota = document.getElementById("nota").value;
+        const urlImagen = document.getElementById("urlImagen").value;
+
+        // Verificar que haya contenido
+        if (nota === "" || urlImagen === "") {
+          alert("Por favor, llena ambos campos.");
+          return;
+        }
+
+        // Guardar la nota e imagen en Firestore
+        db.collection("notas").add({
+          texto: nota,
+          imagen: urlImagen,
+          fecha: new Date(),
+        })
+        .then(() => {
+          alert("Nota guardada exitosamente!");
+          document.getElementById("nota").value = ""; // Limpiar el formulario
+          document.getElementById("urlImagen").value = "";
+        })
+        .catch((error) => {
+          console.error("Error al guardar la nota: ", error);
         });
+      }
     </script>
+</head>
+<body>
+
+    <h1>Mi Página de Notas</h1>
+
+    <div>
+        <h2>Agregar Nota</h2>
+        <textarea id="nota" placeholder="Escribe tu nota aquí..." rows="4" cols="50"></textarea>
+        <input type="text" id="urlImagen" placeholder="URL de la imagen" />
+        <button onclick="guardarNota()">Guardar Nota</button>
+    </div>
+
 </body>
 </html>
