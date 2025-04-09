@@ -4,13 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notas</title>
-    <!-- Agregar Firebase -->
     <script type="module">
-        // Importar funciones desde Firebase SDK
+        // Importar las funciones necesarias desde el SDK de Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
-        // Configuración de Firebase
+        // Tu configuración de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
             authDomain: "oasis-b036d.firebaseapp.com",
@@ -21,53 +20,36 @@
             measurementId: "G-HB2P17H5YL"
         };
 
-        // Inicializar Firebase
+        // Inicializa Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Función para agregar notas
-        async function agregarNota() {
-            const nota = document.getElementById("nota").value;
-            if (nota === "") {
-                alert("Por favor, escribe una nota.");
-                return;
-            }
-
-            try {
-                await addDoc(collection(db, "notas"), {
-                    contenido: nota
-                });
-                alert("Nota guardada correctamente");
-                document.getElementById("nota").value = ""; // Limpiar el campo de texto
-                cargarNotas(); // Recargar las notas
-            } catch (e) {
-                console.error("Error al agregar nota: ", e);
-                alert("Hubo un error al guardar la nota.");
+        // Función para guardar la nota en Firestore
+        async function saveNote() {
+            const noteText = document.getElementById("noteText").value;
+            if (noteText) {
+                try {
+                    await addDoc(collection(db, "notas"), {
+                        texto: noteText
+                    });
+                    alert("Nota guardada exitosamente.");
+                    document.getElementById("noteText").value = ''; // Limpiar el campo
+                } catch (e) {
+                    console.error("Error al agregar nota: ", e);
+                    alert("Hubo un error al guardar la nota.");
+                }
+            } else {
+                alert("Por favor, escribe una nota antes de guardar.");
             }
         }
 
-        // Función para cargar las notas
-        async function cargarNotas() {
-            const querySnapshot = await getDocs(collection(db, "notas"));
-            const notasContainer = document.getElementById("notas-container");
-            notasContainer.innerHTML = ""; // Limpiar notas existentes
-
-            querySnapshot.forEach((doc) => {
-                const notaDiv = document.createElement("div");
-                notaDiv.textContent = doc.data().contenido;
-                notasContainer.appendChild(notaDiv);
-            });
-        }
-
-        // Cargar notas cuando se recarga la página
-        window.onload = cargarNotas;
-
+        // Agregar evento al botón de guardar
+        document.getElementById("saveButton").addEventListener("click", saveNote);
     </script>
 </head>
 <body>
     <h1>Notas</h1>
-    <textarea id="nota" placeholder="Escribe tu nota aquí..."></textarea>
-    <button onclick="agregarNota()">Guardar Nota</button>
-    <div id="notas-container"></div>
+    <textarea id="noteText" placeholder="Escribe tu nota aquí..."></textarea>
+    <button id="saveButton">Guardar Nota</button>
 </body>
 </html>
