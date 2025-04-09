@@ -9,6 +9,7 @@
     // Importa las funciones necesarias desde el SDK de Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-analytics.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     // Configuración de tu proyecto de Firebase
     const firebaseConfig = {
@@ -24,12 +25,93 @@
     // Inicializa Firebase
     const app = initializeApp(firebaseConfig);
     const analytics = getAnalytics(app);
+    const db = getFirestore(app);
+
+    // Referencia al contenedor de notas
+    const notesContainer = document.getElementById('notes-container');
+
+    // Función para agregar una nueva nota
+    async function addNote() {
+      const noteInput = document.getElementById('note-input');
+      const noteText = noteInput.value;
+      if (noteText) {
+        try {
+          await addDoc(collection(db, "notes"), {
+            text: noteText,
+            timestamp: new Date()
+          });
+          noteInput.value = ''; // Limpiar el campo de entrada
+          loadNotes(); // Recargar las notas
+        } catch (e) {
+          console.error("Error al agregar nota: ", e);
+        }
+      }
+    }
+
+    // Función para cargar las notas desde Firestore
+    async function loadNotes() {
+      const querySnapshot = await getDocs(collection(db, "notes"));
+      notesContainer.innerHTML = ''; // Limpiar el contenedor de notas
+      querySnapshot.forEach((doc) => {
+        const note = doc.data();
+        const noteElement = document.createElement('div');
+        noteElement.classList.add('note');
+        noteElement.innerText = note.text;
+        notesContainer.appendChild(noteElement);
+      });
+    }
+
+    // Cargar las notas cuando se carga la página
+    window.onload = loadNotes;
   </script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    #note-input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    #add-note-btn {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    #add-note-btn:hover {
+      background-color: #45a049;
+    }
+
+    #notes-container {
+      margin-top: 20px;
+    }
+
+    .note {
+      background-color: #f4f4f4;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 4px;
+    }
+  </style>
 </head>
 <body>
   <h1>Bienvenido a tu página de notas</h1>
-  <p>Agrega tus notas e imágenes aquí</p>
 
-  <!-- Aquí puedes agregar más contenido o formularios para notas -->
+  <input id="note-input" type="text" placeholder="Escribe tu nota aquí" />
+  <button id="add-note-btn" onclick="addNote()">Agregar Nota</button>
+
+  <div id="notes-container"></div>
+
 </body>
 </html>
