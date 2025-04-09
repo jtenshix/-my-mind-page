@@ -1,79 +1,73 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notas</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notas</title>
+    <!-- Agregar Firebase -->
+    <script type="module">
+        // Importar funciones desde Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
+            authDomain: "oasis-b036d.firebaseapp.com",
+            projectId: "oasis-b036d",
+            storageBucket: "oasis-b036d.appspot.com",
+            messagingSenderId: "141546637821",
+            appId: "1:141546637821:web:0a861aeb13831774ed3194",
+            measurementId: "G-HB2P17H5YL"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Función para agregar notas
+        async function agregarNota() {
+            const nota = document.getElementById("nota").value;
+            if (nota === "") {
+                alert("Por favor, escribe una nota.");
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, "notas"), {
+                    contenido: nota
+                });
+                alert("Nota guardada correctamente");
+                document.getElementById("nota").value = ""; // Limpiar el campo de texto
+                cargarNotas(); // Recargar las notas
+            } catch (e) {
+                console.error("Error al agregar nota: ", e);
+                alert("Hubo un error al guardar la nota.");
+            }
+        }
+
+        // Función para cargar las notas
+        async function cargarNotas() {
+            const querySnapshot = await getDocs(collection(db, "notas"));
+            const notasContainer = document.getElementById("notas-container");
+            notasContainer.innerHTML = ""; // Limpiar notas existentes
+
+            querySnapshot.forEach((doc) => {
+                const notaDiv = document.createElement("div");
+                notaDiv.textContent = doc.data().contenido;
+                notasContainer.appendChild(notaDiv);
+            });
+        }
+
+        // Cargar notas cuando se recarga la página
+        window.onload = cargarNotas;
+
+    </script>
 </head>
 <body>
-  <h1>Notas</h1>
-  
-  <!-- Formulario para agregar nota -->
-  <form id="nota-form">
-    <textarea id="nota-input" placeholder="Escribe tu nota aquí..."></textarea><br>
-    <button type="submit">Guardar Nota</button>
-  </form>
-
-  <h2>Notas Guardadas:</h2>
-  <ul id="notas-container"></ul>
-
-  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
-
-  <script type="module">
-    // Configuración de Firebase
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
-      authDomain: "oasis-b036d.firebaseapp.com",
-      projectId: "oasis-b036d",
-      storageBucket: "oasis-b036d.appspot.com",
-      messagingSenderId: "141546637821",
-      appId: "1:141546637821:web:0a861aeb13831774ed3194",
-      measurementId: "G-HB2P17H5YL"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const notasCollection = collection(db, "notas");
-
-    // Mostrar notas guardadas
-    async function mostrarNotas() {
-      const querySnapshot = await getDocs(notasCollection);
-      const notasContainer = document.getElementById("notas-container");
-      notasContainer.innerHTML = "";  // Limpiar antes de agregar las nuevas
-
-      querySnapshot.forEach((doc) => {
-        const nota = doc.data().nota;  // Se supone que cada documento tiene un campo 'nota'
-        const notaElement = document.createElement("li");
-        notaElement.textContent = nota;
-        notasContainer.appendChild(notaElement);
-      });
-    }
-
-    // Agregar nueva nota
-    const form = document.getElementById("nota-form");
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const notaInput = document.getElementById("nota-input");
-      const nuevaNota = notaInput.value.trim();
-
-      if (nuevaNota) {
-        try {
-          await addDoc(notasCollection, { nota: nuevaNota });
-          console.log("Nota guardada con éxito");
-          notaInput.value = "";  // Limpiar el input
-          mostrarNotas();  // Actualizar las notas mostradas
-        } catch (e) {
-          console.error("Error al agregar nota: ", e);
-        }
-      }
-    });
-
-    // Inicializar mostrando las notas
-    mostrarNotas();
-  </script>
+    <h1>Notas</h1>
+    <textarea id="nota" placeholder="Escribe tu nota aquí..."></textarea>
+    <button onclick="agregarNota()">Guardar Nota</button>
+    <div id="notas-container"></div>
 </body>
 </html>
