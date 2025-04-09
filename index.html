@@ -7,7 +7,7 @@
   <script type="module">
     // Configuración de Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
@@ -23,15 +23,37 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // Obtener la colección de notas
+    const notasCollection = collection(db, "notas");
+    const q = query(notasCollection, orderBy("timestamp", "desc"));  // Para ordenar las notas por fecha
+
+    // Función para mostrar las notas en la ventana
+    function mostrarNotas(documents) {
+      const notasDiv = document.getElementById("notasDiv");
+      notasDiv.innerHTML = '';  // Limpiar las notas viejas
+      documents.forEach(doc => {
+        const notaData = doc.data();
+        const divNota = document.createElement("div");
+        divNota.textContent = notaData.nota;
+        notasDiv.appendChild(divNota);
+      });
+    }
+
+    // Escuchar los cambios en la base de datos en tiempo real
+    onSnapshot(q, (snapshot) => {
+      mostrarNotas(snapshot.docs);
+    });
+
     // Función para guardar la nota
     async function guardarNota() {
       const nota = document.getElementById("nota").value;
       if (nota) {
         try {
-          await addDoc(collection(db, "notas"), {
-            nota: nota
+          await addDoc(notasCollection, {
+            nota: nota,
+            timestamp: new Date()  // Guardar la fecha de creación
           });
-          alert("Nota guardada");
+          document.getElementById("nota").value = '';  // Limpiar el campo de texto después de guardar
         } catch (e) {
           alert("Error al guardar la nota: " + e);
         }
@@ -45,5 +67,8 @@
   <h1>Notas</h1>
   <input type="text" id="nota" placeholder="Escribe tu nota">
   <button onclick="guardarNota()">Guardar Nota</button>
+
+  <h2>Notas Guardadas:</h2>
+  <div id="notasDiv"></div>  <!-- Aquí se mostrarán las notas guardadas -->
 </body>
 </html>
