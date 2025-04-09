@@ -13,6 +13,50 @@
   <button onclick="loadNotes()">Cargar Notas</button>
   <div id="notes"></div>
 
-  <script src="script.js"></script>
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzwMRBAshMn15X6nUcvr6y5vTj7fZ-ea6ulF2Jvykw/dev';
+
+    function saveNote() {
+      const note = document.getElementById('note').value;
+      const imageUrl = document.getElementById('imageUrl').value;
+
+      fetch(`${API_URL}?action=saveNote&note=${encodeURIComponent(note)}&imageUrl=${encodeURIComponent(imageUrl)}`)
+        .then(response => response.text())
+        .then(data => {
+          alert('Nota guardada');
+          loadNotes();
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function loadNotes() {
+      fetch(`${API_URL}?action=getNotes`)
+        .then(response => response.json())
+        .then(notes => {
+          const notesDiv = document.getElementById('notes');
+          notesDiv.innerHTML = '';
+          notes.forEach(note => {
+            const noteDiv = document.createElement('div');
+            noteDiv.innerHTML = `<p>${note.note}</p>`;
+            if (note.imageUrl) {
+              noteDiv.innerHTML += `<img src="${note.imageUrl}" width="100">`;
+            }
+            noteDiv.innerHTML += `<button onclick="deleteNote(${note.row})">Eliminar</button>`;
+            notesDiv.appendChild(noteDiv);
+          });
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function deleteNote(row) {
+      fetch(`${API_URL}?action=deleteNote&row=${row}`)
+        .then(response => response.text())
+        .then(data => {
+          alert('Nota eliminada');
+          loadNotes();
+        })
+        .catch(error => console.error('Error:', error));
+    }
+  </script>
 </body>
 </html>
