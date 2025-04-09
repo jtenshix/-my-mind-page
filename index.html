@@ -21,6 +21,23 @@
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore(app);
 
+    // Función para mostrar las notas guardadas en Firebase
+    function mostrarNotas() {
+      const notaDisplay = document.getElementById('notaDisplay');
+      db.collection('notas').get()
+        .then(snapshot => {
+          snapshot.forEach(doc => {
+            const nota = doc.data().nota;
+            const newNote = document.createElement('p');
+            newNote.textContent = nota;
+            notaDisplay.appendChild(newNote);
+          });
+        })
+        .catch((error) => {
+          console.error('Error al obtener las notas: ', error);
+        });
+    }
+
     // Función para guardar la nota
     function guardarNota() {
       const notaInput = document.getElementById('notaInput');
@@ -45,6 +62,11 @@
           console.error('Error al guardar la nota: ', error);
         });
       }
+    }
+
+    // Mostrar las notas cuando cargue la página
+    window.onload = function() {
+      mostrarNotas();
     }
   </script>
 </head>
