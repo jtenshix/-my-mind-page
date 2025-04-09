@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Notas</title>
-  <!-- Agregar Firebase SDK -->
   <script type="module">
+    // Configuración de Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
@@ -24,32 +24,26 @@
     const db = getFirestore(app);
 
     // Función para guardar la nota
-    function saveNote() {
-      const noteText = document.getElementById("noteText").value;
-
-      if (noteText.trim() === "") {
-        alert("La nota no puede estar vacía.");
-        return;
+    async function guardarNota() {
+      const nota = document.getElementById("nota").value;
+      if (nota) {
+        try {
+          await addDoc(collection(db, "notas"), {
+            nota: nota
+          });
+          alert("Nota guardada");
+        } catch (e) {
+          alert("Error al guardar la nota: " + e);
+        }
+      } else {
+        alert("Por favor ingresa una nota");
       }
-
-      // Guardar la nota en Firestore
-      addDoc(collection(db, "notas"), {
-        nota: noteText
-      })
-      .then(() => {
-        console.log("Nota guardada correctamente!");
-        document.getElementById("noteText").value = ""; // Limpiar el campo de texto después de guardar
-      })
-      .catch((error) => {
-        console.error("Error al guardar la nota: ", error.message); // Mostrar el error detallado en la consola
-        alert("Hubo un error al guardar la nota. Intenta nuevamente.");
-      });
     }
   </script>
 </head>
 <body>
   <h1>Notas</h1>
-  <textarea id="noteText" placeholder="Escribe tu nota aquí"></textarea>
-  <button onclick="saveNote()">Guardar Nota</button>
+  <input type="text" id="nota" placeholder="Escribe tu nota">
+  <button onclick="guardarNota()">Guardar Nota</button>
 </body>
 </html>
