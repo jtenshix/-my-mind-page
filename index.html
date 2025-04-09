@@ -25,35 +25,34 @@
 
     // Obtener la colección de notas
     const notasCollection = collection(db, "notas");
-    const q = query(notasCollection, orderBy("timestamp", "desc"));  // Para ordenar las notas por fecha
 
     // Función para mostrar las notas en la ventana
-    function mostrarNotas(documents) {
+    function mostrarNotas() {
       const notasDiv = document.getElementById("notasDiv");
-      notasDiv.innerHTML = '';  // Limpiar las notas viejas
-      documents.forEach(doc => {
-        const notaData = doc.data();
+      const nuevaNota = document.getElementById("nota").value;
+      if (nuevaNota) {
         const divNota = document.createElement("div");
-        divNota.textContent = notaData.nota;
+        divNota.textContent = nuevaNota;  // Mostrar la nueva nota en la ventana
         notasDiv.appendChild(divNota);
-      });
+      }
     }
 
-    // Escuchar los cambios en la base de datos en tiempo real
-    onSnapshot(q, (snapshot) => {
-      mostrarNotas(snapshot.docs);
-    });
-
-    // Función para guardar la nota
+    // Función para guardar la nota en Firestore
     async function guardarNota() {
       const nota = document.getElementById("nota").value;
       if (nota) {
         try {
+          // Guardar en la base de datos
           await addDoc(notasCollection, {
             nota: nota,
             timestamp: new Date()  // Guardar la fecha de creación
           });
-          document.getElementById("nota").value = '';  // Limpiar el campo de texto después de guardar
+
+          // Mostrar la nota en la ventana inmediatamente después de guardarla
+          mostrarNotas();
+
+          // Limpiar el campo de texto después de guardar
+          document.getElementById("nota").value = '';
         } catch (e) {
           alert("Error al guardar la nota: " + e);
         }
