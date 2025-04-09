@@ -206,11 +206,11 @@
 
     // Función para mostrar las notas en formato de tarjeta
     function mostrarNotaEnPantalla(doc) {
-      const notaData = doc.data().nota;
+      const notaData = doc.data();
       const notaCard = document.createElement('div');
       notaCard.classList.add('nota-card');
 
-      if (typeof notaData === 'object' && notaData !== null && notaData.url) {
+      if (notaData.url) {
         // Es un link de imagen
         const img = document.createElement('img');
         img.src = notaData.url;
@@ -220,10 +220,10 @@
           textoParrafo.textContent = notaData.texto;
           notaCard.appendChild(textoParrafo);
         }
-      } else {
+      } else if (notaData.nota) {
         // Es una nota de texto
         const newNote = document.createElement('p');
-        newNote.textContent = notaData.nota || notaData; // Handle both formats
+        newNote.textContent = notaData.nota;
         notaCard.appendChild(newNote);
       }
 
@@ -258,6 +258,16 @@
       .onSnapshot((snapshot) => {
         limpiarNotasDisplay(); // Clear existing notes to avoid duplicates
         snapshot.forEach((doc) => {
+          mostrarNotaEnPantalla(doc);
+        });
+      });
+
+    // Obtener las notas existentes al cargar la página
+    db.collection('notas')
+      .orderBy('__name__')
+      .get()
+      .then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
           mostrarNotaEnPantalla(doc);
         });
       });
@@ -333,6 +343,16 @@
     // Asigna los eventos onclick a los botones de guardar
     saveImageLinkButton.onclick = guardarLinkDeImagen;
     saveTextNoteButton.onclick = guardarNotaTexto;
+
+    // Cargar las notas existentes al inicio
+    db.collection('notas')
+      .orderBy('__name__')
+      .get()
+      .then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+          mostrarNotaEnPantalla(doc);
+        });
+      });
   </script>
 </body>
 </html>
