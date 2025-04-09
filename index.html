@@ -34,31 +34,43 @@
     // Función para mostrar las notas
     function mostrarNotaEnPantalla(doc) {
       const nota = doc.data().nota;
+      const notaDiv = document.createElement('div'); // Use a div to group note and delete button
       const newNote = document.createElement('p');
       newNote.textContent = nota;
-      newNote.dataset.id = doc.id;
-      notaDisplay.appendChild(newNote);
+      notaDiv.appendChild(newNote);
+
+      const deleteButton = document.createElement('button');
+      deleteButton.textContent = 'Eliminar';
+      deleteButton.onclick = function() {
+        eliminarNota(doc.id);
+      };
+      notaDiv.appendChild(deleteButton);
+      notaDisplay.appendChild(notaDiv);
     }
 
-    // Función para eliminar una nota de la pantalla
-    function eliminarNotaDePantalla(id) {
-      const notaElement = document.querySelector(`p[data-id="${id}"]`);
-      if (notaElement) {
-        notaDisplay.removeChild(notaElement);
-      }
+    // Función para eliminar una nota de Firebase
+    function eliminarNota(id) {
+      db.collection('notas').doc(id).delete()
+        .then(() => {
+          console.log("Nota eliminada con ID: ", id);
+        })
+        .catch((error) => {
+          console.error("Error al eliminar la nota: ", error);
+        });
+    }
+
+    // Limpia el display de notas
+    function limpiarNotasDisplay() {
+      notaDisplay.innerHTML = '';
     }
 
     // Escucha los cambios en tiempo real de la colección 'notas'
     db.collection('notas')
       .orderBy('__name__')
       .onSnapshot((snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-          if (change.type === 'added') {
-            mostrarNotaEnPantalla(change.doc);
-          }
-          if (change.type === 'removed') {
-            eliminarNotaDePantalla(change.doc.id);
-          }
+        limpiarNotasDisplay(); // Clear existing notes to avoid duplicates
+        snapshot.forEach((doc) => {
+          mostrarNotaEnPantalla(doc);
         });
       });
 
