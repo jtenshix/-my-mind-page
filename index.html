@@ -2,91 +2,17 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Notas con Imagen</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-    }
-    .note-item {
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      padding: 10px;
-      margin-bottom: 10px;
-      position: relative;
-    }
-    .delete-btn {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-      background-color: red;
-      color: white;
-      border: none;
-      padding: 5px;
-      cursor: pointer;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aplicación de Notas</title>
 </head>
 <body>
-  <h1>Agregar Nota o Imagen</h1>
-  <form id="noteForm">
-    <input type="text" id="nota" name="nota" placeholder="Escribe una nota" required><br><br>
-    <input type="url" id="imagen" name="imagen" placeholder="URL de imagen"><br><br>
-    <button type="submit">Guardar</button>
-  </form>
+  <h1>Aplicación de Notas</h1>
+  <textarea id="note" placeholder="Escribe tu nota aquí..."></textarea><br>
+  <input type="text" id="imageUrl" placeholder="URL de la imagen"><br>
+  <button onclick="saveNote()">Guardar Nota</button>
+  <button onclick="loadNotes()">Cargar Notas</button>
+  <div id="notes"></div>
 
-  <h2>Notas Guardadas</h2>
-  <div id="notasGuardadas"></div>
-
-  <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwWPJ25S3ngHxzaBg5RHozuW8rX99WVWaI-PU6jW_r5hODQq6aW6GVultNDjqRnoU0M/exec';
-
-    document.addEventListener('DOMContentLoaded', cargarNotas);
-
-    document.getElementById('noteForm').addEventListener('submit', function (e) {
-      e.preventDefault();
-      const nota = document.getElementById('nota').value;
-      const imagen = document.getElementById('imagen').value;
-
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        body: new URLSearchParams({ nota, imagen })
-      })
-        .then(res => res.text())
-        .then(() => {
-          document.getElementById('nota').value = '';
-          document.getElementById('imagen').value = '';
-          cargarNotas();
-        });
-    });
-
-    function cargarNotas() {
-      fetch(SCRIPT_URL)
-        .then(res => res.json())
-        .then(data => {
-          const contenedor = document.getElementById('notasGuardadas');
-          contenedor.innerHTML = '';
-          data.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'note-item';
-            div.innerHTML = `
-              <button class="delete-btn" onclick="eliminarNota(${item.row})">X</button>
-              <p><strong>Nota:</strong> ${item.nota}</p>
-              ${item.imagen ? `<img src="${item.imagen}" alt="imagen" width="100">` : ''}
-            `;
-            contenedor.appendChild(div);
-          });
-        });
-    }
-
-    function eliminarNota(row) {
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        body: new URLSearchParams({ delete: true, row })
-      })
-        .then(res => res.text())
-        .then(() => cargarNotas());
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
