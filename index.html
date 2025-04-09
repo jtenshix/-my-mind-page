@@ -6,13 +6,172 @@
   <title>Notas</title>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+  <style>
+    /* Estilos básicos para la nueva interfaz */
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background-color: #f4f4f4;
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    #notaDisplay {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 15px;
+      padding: 20px;
+      flex-grow: 1;
+    }
+
+    .nota-card {
+      background-color: #fff;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+
+    .nota-card p {
+      margin-bottom: 10px;
+    }
+
+    .nota-card img {
+      max-width: 100%;
+      height: auto;
+      margin-bottom: 10px;
+    }
+
+    .nota-card button {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: #888;
+    }
+
+    #addNoteButton {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      font-size: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    #addNoteOptions {
+      position: fixed;
+      bottom: 80px;
+      right: 15px;
+      display: none; /* Initially hidden */
+      flex-direction: column;
+      gap: 10px;
+      background-color: white;
+      border-radius: 5px;
+      padding: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    #addNoteOptions button {
+      padding: 8px 15px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      cursor: pointer;
+      background-color: #f9f9f9;
+    }
+
+    #inputArea {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      display: none; /* Initially hidden */
+      flex-direction: column;
+      gap: 10px;
+      width: 80%;
+      max-width: 500px;
+    }
+
+    #inputArea textarea {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      resize: vertical;
+    }
+
+    #inputArea button {
+      padding: 10px 15px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #imageLinkInputArea, #textNoteInputArea {
+      display: none; /* Initially hidden */
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Notas</h1>
-  <textarea id="notaInput" placeholder="Escribe el link de la imagen o tu nota aquí..."></textarea>
-  <textarea id="notaTexto" placeholder="Escribe un texto para acompañar la imagen (opcional)..."></textarea>
-  <button id="guardarBtn">Guardar Nota</button>
-  <div id="notaDisplay"></div>
+  <h1>Mis Notas</h1>
+  <div id="notaDisplay">
+      </div>
+
+  <button id="addNoteButton">+</button>
+
+  <div id="addNoteOptions">
+    <button id="addImageLinkOption">Guardar link de imagen</button>
+    <button id="addTextNoteOption">Subir nota</button>
+  </div>
+
+  <div id="inputArea">
+    <div id="imageLinkInputArea">
+      <div class="input-group">
+        <label for="imageLink">Link de la imagen:</label>
+        <input type="text" id="imageLink" placeholder="Ej: https://...">
+      </div>
+      <div class="input-group">
+        <label for="imageNoteText">Texto de la imagen (opcional):</label>
+        <textarea id="imageNoteText" placeholder="Descripción o nota..."></textarea>
+      </div>
+      <button id="saveImageLink">Guardar Link</button>
+    </div>
+    <div id="textNoteInputArea">
+      <textarea id="textNote" placeholder="Escribe tu nota aquí..."></textarea>
+      <button id="saveTextNote">Guardar Nota</button>
+    </div>
+  </div>
 
   <script>
     // Tu configuración de Firebase
@@ -30,38 +189,51 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const notaDisplay = document.getElementById('notaDisplay');
-    const guardarBtn = document.getElementById('guardarBtn');
+    const addNoteButton = document.getElementById('addNoteButton');
+    const addNoteOptions = document.getElementById('addNoteOptions');
+    const addImageLinkOption = document.getElementById('addImageLinkOption');
+    const addTextNoteOption = document.getElementById('addTextNoteOption');
+    const inputArea = document.getElementById('inputArea');
+    const imageLinkInputArea = document.getElementById('imageLinkInputArea');
+    const imageLinkInput = document.getElementById('imageLink');
+    const imageNoteText = document.getElementById('imageNoteText');
+    const saveImageLinkButton = document.getElementById('saveImageLink');
+    const textNoteInputArea = document.getElementById('textNoteInputArea');
+    const textNoteInput = document.getElementById('textNote');
+    const saveTextNoteButton = document.getElementById('saveTextNote');
 
-    // Función para mostrar las notas
+    let addingNewNote = false;
+
+    // Función para mostrar las notas en formato de tarjeta
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data().nota;
-      const notaDiv = document.createElement('div'); // Use a div to group content and delete button
+      const notaCard = document.createElement('div');
+      notaCard.classList.add('nota-card');
 
       if (typeof notaData === 'object' && notaData !== null && notaData.url) {
-        // It's an image link (possibly with text)
+        // Es un link de imagen
         const img = document.createElement('img');
         img.src = notaData.url;
-        img.style.maxWidth = '300px'; // Basic styling to limit image width
-        notaDiv.appendChild(img);
+        notaCard.appendChild(img);
         if (notaData.texto) {
           const textoParrafo = document.createElement('p');
           textoParrafo.textContent = notaData.texto;
-          notaDiv.appendChild(textoParrafo);
+          notaCard.appendChild(textoParrafo);
         }
       } else {
-        // It's a regular text note
+        // Es una nota de texto
         const newNote = document.createElement('p');
-        newNote.textContent = notaData;
-        notaDiv.appendChild(newNote);
+        newNote.textContent = notaData.nota || notaData; // Handle both formats
+        notaCard.appendChild(newNote);
       }
 
       const deleteButton = document.createElement('button');
-      deleteButton.textContent = 'Eliminar';
+      deleteButton.textContent = 'X';
       deleteButton.onclick = function() {
         eliminarNota(doc.id);
       };
-      notaDiv.appendChild(deleteButton);
-      notaDisplay.appendChild(notaDiv);
+      notaCard.appendChild(deleteButton);
+      notaDisplay.appendChild(notaCard);
     }
 
     // Función para eliminar una nota de Firebase
@@ -90,47 +262,77 @@
         });
       });
 
-    // Función para guardar la nota
-    function guardarNota() {
-      const notaInput = document.getElementById('notaInput');
-      const notaTextoInput = document.getElementById('notaTexto');
-      const notaInputValue = notaInput.value;
-      const notaTextoValue = notaTextoInput.value;
+    // Evento para mostrar/ocultar las opciones al hacer clic en el botón "+"
+    addNoteButton.onclick = function() {
+      addingNewNote = !addingNewNote;
+      addNoteOptions.style.display = addingNewNote ? 'flex' : 'none';
+      inputArea.style.display = 'none'; // Hide input area if it was open
+      imageLinkInputArea.style.display = 'none';
+      textNoteInputArea.style.display = 'none';
+    };
 
-      if (notaInputValue.trim() !== '' || notaTextoValue.trim() !== '') {
-        let notaToSave = {};
+    // Evento para mostrar el formulario de link de imagen
+    addImageLinkOption.onclick = function() {
+      addNoteOptions.style.display = 'none';
+      inputArea.style.display = 'flex';
+      imageLinkInputArea.style.display = 'flex';
+      textNoteInputArea.style.display = 'none';
+      addingNewNote = false;
+    };
 
-        const isImageLink = notaInputValue.startsWith('http://') || notaInputValue.startsWith('https://');
-        const hasText = notaTextoValue.trim() !== '';
+    // Evento para mostrar el formulario de nota de texto
+    addTextNoteOption.onclick = function() {
+      addNoteOptions.style.display = 'none';
+      inputArea.style.display = 'flex';
+      imageLinkInputArea.style.display = 'none';
+      textNoteInputArea.style.display = 'flex';
+      addingNewNote = false;
+    };
 
-        if (isImageLink) {
-          notaToSave.url = notaInputValue;
-          if (hasText) {
-            notaToSave.texto = notaTextoValue;
-          }
-        } else if (hasText) {
-          // If notaInput is not a link but notaTexto has content, save notaTexto as the main note
-          notaToSave = notaTextoValue;
-        } else {
-          // If notaInput is not a link and notaTexto is empty, save notaInput as the main note
-          notaToSave = notaInputValue;
-        }
+    // Función para guardar el link de imagen con su texto opcional
+    function guardarLinkDeImagen() {
+      const link = imageLinkInput.value;
+      const texto = imageNoteText.value;
 
-        // Guarda la nota en Firebase
-        db.collection('notas').add(notaToSave)
-          .then(() => {
-            console.log('Nota guardada en Firebase');
-            notaInput.value = '';
-            notaTextoInput.value = ''; // Clear the text area as well
-          })
-          .catch((error) => {
-            console.error('Error al guardar la nota: ', error);
-          });
+      if (link.trim() !== '') {
+        db.collection('notas').add({
+          url: link,
+          texto: texto.trim() !== '' ? texto : null
+        })
+        .then(() => {
+          console.log('Link de imagen guardado en Firebase');
+          imageLinkInput.value = '';
+          imageNoteText.value = '';
+          inputArea.style.display = 'none';
+        })
+        .catch((error) => {
+          console.error('Error al guardar el link de imagen: ', error);
+        });
       }
     }
 
-    // Asigna el evento onclick al botón desde JavaScript
-    guardarBtn.onclick = guardarNota;
+    // Función para guardar la nota de texto
+    function guardarNotaTexto() {
+      const nota = textNoteInput.value;
+
+      if (nota.trim() !== '') {
+        db.collection('notas').add({
+          nota: nota
+        })
+        .then(() => {
+          console.log('Nota de texto guardada en Firebase');
+          textNoteInput.value = '';
+          inputArea.style.display = 'none';
+        })
+        .catch((error) => {
+          console.error('Error al guardar la nota de texto: ', error);
+        });
+      }
+    }
+
+    // Asigna los eventos onclick a los botones de guardar
+    saveImageLinkButton.onclick = guardarLinkDeImagen;
+    saveTextNoteButton.onclick = guardarNotaTexto;
   </script>
 </body>
 </html>
