@@ -1,74 +1,85 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notas</title>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-  <script>
-    // Tu configuración de Firebase
-    const firebaseConfig = {
-      apiKey: "TU_API_KEY",
-      authDomain: "TU_AUTH_DOMAIN",
-      projectId: "TU_PROJECT_ID",
-      storageBucket: "TU_STORAGE_BUCKET",
-      messagingSenderId: "TU_SENDER_ID",
-      appId: "TU_APP_ID"
-    };
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notas</title>
+  <script type="module">
+    // Importa las funciones necesarias de Firebase
+    import { initializeApp } from "firebase/app";
+    import { getFirestore, collection, addDoc, getDocs, onSnapshot, orderBy } from "firebase/firestore";
 
-    // Inicializa Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore(app);
+    // Tu configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
+      authDomain: "oasis-b036d.firebaseapp.com",
+      projectId: "oasis-b036d",
+      storageBucket: "oasis-b036d.firebasestorage.app",
+      messagingSenderId: "141546637821",
+      appId: "1:141546637821:web:0a861aeb13831774ed3194",
+      measurementId: "G-HB2P17H5YL"
+    };
 
-    // Función para mostrar las notas guardadas en Firebase
-    function mostrarNotas() {
-      const notaDisplay = document.getElementById('notaDisplay');
-      db.collection('notas').get()
-        .then(snapshot => {
-          snapshot.forEach(doc => {
-            const nota = doc.data().nota;
-            const newNote = document.createElement('p');
-            newNote.textContent = nota;
-            notaDisplay.appendChild(newNote);
-          });
-        })
-        .catch((error) => {
-          console.error('Error al obtener las notas: ', error);
-        });
-    }
+    // Inicializa Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const notaDisplay = document.getElementById('notaDisplay');
 
-    // Función para guardar la nota
-    function guardarNota() {
-      const notaInput = document.getElementById('notaInput');
-      const nota = notaInput.value;
+    // Función para mostrar las notas
+    function mostrarNotaEnPantalla(doc) {
+      const nota = doc.data().nota;
+      const newNote = document.createElement('p');
+      newNote.textContent = nota;
+      newNote.dataset.id = doc.id;
+      notaDisplay.appendChild(newNote);
+    }
 
-      if (nota.trim() !== '') {
-        // Guarda la nota en Firebase
-        db.collection('notas').add({
-          nota: nota
-        })
-        .then(() => {
-          console.log('Nota guardada en Firebase');
-          notaInput.value = '';  // Limpia el campo de texto después de guardar
-          mostrarNotas();  // Actualiza la vista de las notas en la página
-        })
-        .catch((error) => {
-          console.error('Error al guardar la nota: ', error);
-        });
-      }
-    }
+    // Función para eliminar una nota de la pantalla
+    function eliminarNotaDePantalla(id) {
+      const notaElement = document.querySelector(`p[data-id="${id}"]`);
+      if (notaElement) {
+        notaDisplay.removeChild(notaElement);
+      }
+    }
 
-    // Mostrar las notas cuando cargue la página
-    window.onload = function() {
-      mostrarNotas();
-    }
-  </script>
+    // Escucha los cambios en tiempo real de la colección 'notas'
+    onSnapshot(orderBy(collection(db, 'notas'), '__name__'), (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          mostrarNotaEnPantalla(change.doc);
+        }
+        if (change.type === 'removed') {
+          eliminarNotaDePantalla(change.doc.id);
+        }
+        // Si quieres manejar modificaciones (edición de notas), añade un 'if (change.type === "modified")' aquí
+      });
+    });
+
+    // Función para guardar la nota
+    function guardarNota() {
+      const notaInput = document.getElementById('notaInput');
+      const nota = notaInput.value;
+
+      if (nota.trim() !== '') {
+        // Guarda la nota en Firebase
+        addDoc(collection(db, 'notas'), {
+          nota: nota
+        })
+        .then(() => {
+          console.log('Nota guardada en Firebase');
+          notaInput.value = '';
+        })
+        .catch((error) => {
+          console.error('Error al guardar la nota: ', error);
+        });
+      }
+    }
+  </script>
 </head>
 <body>
-  <h1>Notas</h1>
-  <textarea id="notaInput" placeholder="Escribe tu nota aquí..."></textarea>
-  <button onclick="guardarNota()">Guardar Nota</button>
-  <div id="notaDisplay"></div> <!-- Aquí se mostrarán las notas -->
+  <h1>Notas</h1>
+  <textarea id="notaInput" placeholder="Escribe tu nota aquí..."></textarea>
+  <button onclick="guardarNota()">Guardar Nota</button>
+  <div id="notaDisplay"></div>
 </body>
 </html>
