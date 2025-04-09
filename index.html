@@ -1,12 +1,10 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aplicación de Notas</title>
+  <base target="_top">
 </head>
 <body>
-  <h1>Aplicación de Notas</h1>
+  <h1>Notas</h1>
   <textarea id="note" placeholder="Escribe tu nota aquí..."></textarea><br>
   <input type="text" id="imageUrl" placeholder="URL de la imagen"><br>
   <button onclick="saveNote()">Guardar Nota</button>
@@ -14,48 +12,36 @@
   <div id="notes"></div>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbzwMRBAshMn15X6nUcvr6y5vTj7fZ-ea6ulF2Jvykw/dev';
-
     function saveNote() {
-      const note = document.getElementById('note').value;
-      const imageUrl = document.getElementById('imageUrl').value;
-
-      fetch(`${API_URL}?action=saveNote&note=${encodeURIComponent(note)}&imageUrl=${encodeURIComponent(imageUrl)}`)
-        .then(response => response.text())
-        .then(data => {
-          alert('Nota guardada');
-          loadNotes();
-        })
-        .catch(error => console.error('Error:', error));
+      var note = document.getElementById('note').value;
+      var imageUrl = document.getElementById('imageUrl').value;
+      google.script.run.withSuccessHandler(function(row) {
+        alert('Nota guardada en la fila ' + row);
+        loadNotes();
+      }).saveNote(note, imageUrl);
     }
 
     function loadNotes() {
-      fetch(`${API_URL}?action=getNotes`)
-        .then(response => response.json())
-        .then(notes => {
-          const notesDiv = document.getElementById('notes');
-          notesDiv.innerHTML = '';
-          notes.forEach(note => {
-            const noteDiv = document.createElement('div');
-            noteDiv.innerHTML = `<p>${note.note}</p>`;
-            if (note.imageUrl) {
-              noteDiv.innerHTML += `<img src="${note.imageUrl}" width="100">`;
-            }
-            noteDiv.innerHTML += `<button onclick="deleteNote(${note.row})">Eliminar</button>`;
-            notesDiv.appendChild(noteDiv);
-          });
-        })
-        .catch(error => console.error('Error:', error));
+      google.script.run.withSuccessHandler(function(notes) {
+        var notesDiv = document.getElementById('notes');
+        notesDiv.innerHTML = '';
+        notes.forEach(function(note) {
+          var noteDiv = document.createElement('div');
+          noteDiv.innerHTML = '<p>' + note.note + '</p>';
+          if (note.imageUrl) {
+            noteDiv.innerHTML += '<img src="' + note.imageUrl + '" width="100">';
+          }
+          noteDiv.innerHTML += '<button onclick="deleteNote(' + note.row + ')">Eliminar</button>';
+          notesDiv.appendChild(noteDiv);
+        });
+      }).getNotes();
     }
 
     function deleteNote(row) {
-      fetch(`${API_URL}?action=deleteNote&row=${row}`)
-        .then(response => response.text())
-        .then(data => {
-          alert('Nota eliminada');
-          loadNotes();
-        })
-        .catch(error => console.error('Error:', error));
+      google.script.run.withSuccessHandler(function() {
+        alert('Nota eliminada');
+        loadNotes();
+      }).deleteNote(row);
     }
   </script>
 </body>
