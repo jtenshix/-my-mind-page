@@ -3,63 +3,77 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mi página de notas</title>
+  <title>Notas</title>
 </head>
 <body>
   <h1>Notas</h1>
-  <ul id="listaNotas"></ul>
+  
+  <!-- Formulario para agregar nota -->
+  <form id="nota-form">
+    <textarea id="nota-input" placeholder="Escribe tu nota aquí..."></textarea><br>
+    <button type="submit">Guardar Nota</button>
+  </form>
+
+  <h2>Notas Guardadas:</h2>
+  <ul id="notas-container"></ul>
+
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
 
   <script type="module">
-    // Importar Firebase SDK
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-
     // Configuración de Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
       authDomain: "oasis-b036d.firebaseapp.com",
       projectId: "oasis-b036d",
-      storageBucket: "oasis-b036d.firebasestorage.app",
+      storageBucket: "oasis-b036d.appspot.com",
       messagingSenderId: "141546637821",
       appId: "1:141546637821:web:0a861aeb13831774ed3194",
       measurementId: "G-HB2P17H5YL"
     };
 
-    // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const notasCollection = collection(db, "notas");
 
-    // Función para agregar una nota
-    const agregarNota = async (nota) => {
-      try {
-        const docRef = await addDoc(collection(db, "notas"), {
-          nota: nota
-        });
-        console.log("Nota agregada con ID: ", docRef.id);
-      } catch (e) {
-        console.error("Error al agregar nota: ", e);
-      }
-    };
-
-    // Función para mostrar las notas
-    const mostrarNotas = async () => {
-      const notasRef = collection(db, "notas");
-      const querySnapshot = await getDocs(notasRef);
-      const listaNotas = document.getElementById('listaNotas');
-      listaNotas.innerHTML = ""; // Limpiar lista antes de agregar nuevas notas
+    // Mostrar notas guardadas
+    async function mostrarNotas() {
+      const querySnapshot = await getDocs(notasCollection);
+      const notasContainer = document.getElementById("notas-container");
+      notasContainer.innerHTML = "";  // Limpiar antes de agregar las nuevas
 
       querySnapshot.forEach((doc) => {
-        const li = document.createElement("li");
-        li.textContent = doc.data().nota;
-        listaNotas.appendChild(li);
+        const nota = doc.data().nota;  // Se supone que cada documento tiene un campo 'nota'
+        const notaElement = document.createElement("li");
+        notaElement.textContent = nota;
+        notasContainer.appendChild(notaElement);
       });
-    };
+    }
 
-    // Llamamos a la función para mostrar las notas al cargar la página
+    // Agregar nueva nota
+    const form = document.getElementById("nota-form");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const notaInput = document.getElementById("nota-input");
+      const nuevaNota = notaInput.value.trim();
+
+      if (nuevaNota) {
+        try {
+          await addDoc(notasCollection, { nota: nuevaNota });
+          console.log("Nota guardada con éxito");
+          notaInput.value = "";  // Limpiar el input
+          mostrarNotas();  // Actualizar las notas mostradas
+        } catch (e) {
+          console.error("Error al agregar nota: ", e);
+        }
+      }
+    });
+
+    // Inicializar mostrando las notas
     mostrarNotas();
-
-    // Agregar una nota de prueba (puedes eliminar esta línea luego)
-    agregarNota("Mi primera nota");
   </script>
 </body>
 </html>
