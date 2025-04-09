@@ -43,8 +43,6 @@
     }
 
     .nota-card img {
-      max-width: 100%;
-      height: auto;
       margin-bottom: 10px;
     }
 
@@ -214,6 +212,9 @@
         // Es un link de imagen
         const img = document.createElement('img');
         img.src = notaData.url;
+        img.style.maxWidth = '200px'; // Ejemplo: ancho máximo de 200 píxeles
+        img.style.maxHeight = '150px'; // Ejemplo: alto máximo de 150 píxeles
+        img.style.objectFit = 'contain'; // Para que la imagen se ajuste sin recortarse
         notaCard.appendChild(img);
         if (notaData.texto) {
           const textoParrafo = document.createElement('p');
