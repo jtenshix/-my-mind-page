@@ -4,11 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Notas</title>
-  <script type="module">
-    // Importa las funciones necesarias de Firebase
-    import { initializeApp } from "firebase/app";
-    import { getFirestore, collection, addDoc, getDocs, onSnapshot, orderBy } from "firebase/firestore";
-
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <script>
     // Tu configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
@@ -21,8 +19,8 @@
     };
 
     // Inicializa Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore(app);
     const notaDisplay = document.getElementById('notaDisplay');
 
     // Función para mostrar las notas
@@ -43,17 +41,18 @@
     }
 
     // Escucha los cambios en tiempo real de la colección 'notas'
-    onSnapshot(orderBy(collection(db, 'notas'), '__name__'), (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
-          mostrarNotaEnPantalla(change.doc);
-        }
-        if (change.type === 'removed') {
-          eliminarNotaDePantalla(change.doc.id);
-        }
-        // Si quieres manejar modificaciones (edición de notas), añade un 'if (change.type === "modified")' aquí
+    db.collection('notas')
+      .orderBy('__name__')
+      .onSnapshot((snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === 'added') {
+            mostrarNotaEnPantalla(change.doc);
+          }
+          if (change.type === 'removed') {
+            eliminarNotaDePantalla(change.doc.id);
+          }
+        });
       });
-    });
 
     // Función para guardar la nota
     function guardarNota() {
@@ -62,7 +61,7 @@
 
       if (nota.trim() !== '') {
         // Guarda la nota en Firebase
-        addDoc(collection(db, 'notas'), {
+        db.collection('notas').add({
           nota: nota
         })
         .then(() => {
