@@ -38,7 +38,7 @@
       const notaDiv = document.createElement('div'); // Use a div to group content and delete button
 
       if (typeof notaData === 'object' && notaData !== null && notaData.url) {
-        // It's an image link with text
+        // It's an image link (possibly with text)
         const img = document.createElement('img');
         img.src = notaData.url;
         img.style.maxWidth = '300px'; // Basic styling to limit image width
@@ -97,16 +97,23 @@
       const notaInputValue = notaInput.value;
       const notaTextoValue = notaTextoInput.value;
 
-      if (notaInputValue.trim() !== '') {
-        let notaToSave;
-        // Check if it looks like an image URL
-        if (notaInputValue.startsWith('http://') || notaInputValue.startsWith('https://')) {
-          notaToSave = {
-            url: notaInputValue,
-            texto: notaTextoValue.trim() !== '' ? notaTextoValue : null // Save text only if it's not empty
-          };
+      if (notaInputValue.trim() !== '' || notaTextoValue.trim() !== '') {
+        let notaToSave = {};
+
+        const isImageLink = notaInputValue.startsWith('http://') || notaInputValue.startsWith('https://');
+        const hasText = notaTextoValue.trim() !== '';
+
+        if (isImageLink) {
+          notaToSave.url = notaInputValue;
+          if (hasText) {
+            notaToSave.texto = notaTextoValue;
+          }
+        } else if (hasText) {
+          // If notaInput is not a link but notaTexto has content, save notaTexto as the main note
+          notaToSave = notaTextoValue;
         } else {
-          notaToSave = notaInputValue; // Save as regular text note
+          // If notaInput is not a link and notaTexto is empty, save notaInput as the main note
+          notaToSave = notaInputValue;
         }
 
         // Guarda la nota en Firebase
