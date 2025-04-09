@@ -3,15 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mi Página de Notas</title>
+  <title>Mi página de notas</title>
+</head>
+<body>
+  <h1>Notas</h1>
+  <ul id="listaNotas"></ul>
 
   <script type="module">
-    // Importa las funciones necesarias desde el SDK de Firebase
+    // Importar Firebase SDK
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-analytics.js";
     import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
-    // Configuración de tu proyecto de Firebase
+    // Configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
       authDomain: "oasis-b036d.firebaseapp.com",
@@ -22,96 +25,41 @@
       measurementId: "G-HB2P17H5YL"
     };
 
-    // Inicializa Firebase
+    // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
     const db = getFirestore(app);
 
-    // Referencia al contenedor de notas
-    const notesContainer = document.getElementById('notes-container');
-
-    // Función para agregar una nueva nota
-    async function addNote() {
-      const noteInput = document.getElementById('note-input');
-      const noteText = noteInput.value;
-      if (noteText) {
-        try {
-          await addDoc(collection(db, "notes"), {
-            text: noteText,
-            timestamp: new Date()
-          });
-          noteInput.value = ''; // Limpiar el campo de entrada
-          loadNotes(); // Recargar las notas
-        } catch (e) {
-          console.error("Error al agregar nota: ", e);
-        }
+    // Función para agregar una nota
+    const agregarNota = async (nota) => {
+      try {
+        const docRef = await addDoc(collection(db, "notas"), {
+          nota: nota
+        });
+        console.log("Nota agregada con ID: ", docRef.id);
+      } catch (e) {
+        console.error("Error al agregar nota: ", e);
       }
-    }
+    };
 
-    // Función para cargar las notas desde Firestore
-    async function loadNotes() {
-      const querySnapshot = await getDocs(collection(db, "notes"));
-      notesContainer.innerHTML = ''; // Limpiar el contenedor de notas
+    // Función para mostrar las notas
+    const mostrarNotas = async () => {
+      const notasRef = collection(db, "notas");
+      const querySnapshot = await getDocs(notasRef);
+      const listaNotas = document.getElementById('listaNotas');
+      listaNotas.innerHTML = ""; // Limpiar lista antes de agregar nuevas notas
+
       querySnapshot.forEach((doc) => {
-        const note = doc.data();
-        const noteElement = document.createElement('div');
-        noteElement.classList.add('note');
-        noteElement.innerText = note.text;
-        notesContainer.appendChild(noteElement);
+        const li = document.createElement("li");
+        li.textContent = doc.data().nota;
+        listaNotas.appendChild(li);
       });
-    }
+    };
 
-    // Cargar las notas cuando se carga la página
-    window.onload = loadNotes;
+    // Llamamos a la función para mostrar las notas al cargar la página
+    mostrarNotas();
+
+    // Agregar una nota de prueba (puedes eliminar esta línea luego)
+    agregarNota("Mi primera nota");
   </script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-
-    h1 {
-      text-align: center;
-    }
-
-    #note-input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 10px;
-    }
-
-    #add-note-btn {
-      padding: 10px 20px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    #add-note-btn:hover {
-      background-color: #45a049;
-    }
-
-    #notes-container {
-      margin-top: 20px;
-    }
-
-    .note {
-      background-color: #f4f4f4;
-      padding: 10px;
-      margin: 5px 0;
-      border-radius: 4px;
-    }
-  </style>
-</head>
-<body>
-  <h1>Bienvenido a tu página de notas</h1>
-
-  <input id="note-input" type="text" placeholder="Escribe tu nota aquí" />
-  <button id="add-note-btn" onclick="addNote()">Agregar Nota</button>
-
-  <div id="notes-container"></div>
-
 </body>
 </html>
