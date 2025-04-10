@@ -164,10 +164,11 @@
     .bubble {
       animation: bubbleMerge 0.5s ease;
     }
-    /* Oculta el placeholder (sombra negra) durante el arrastre */
+    /* Oculta el placeholder y shadow durante el arrastre */
     .grid-stack-placeholder {
-      background: transparent !important;
-      border: none !important;
+      display: none !important;
+    }
+    .grid-stack-item.ui-draggable-dragging {
       box-shadow: none !important;
     }
   </style>
