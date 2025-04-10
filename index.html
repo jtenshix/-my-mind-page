@@ -28,6 +28,7 @@
       padding: 20px;
       flex-grow: 1;
     }
+    /* Se elimina la altura máxima fija para que las tarjetas se adapten al contenido */
     .nota-card {
       background-color: #fff;
       border-radius: 8px;
@@ -36,10 +37,12 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      max-height: 300px;
-      overflow: auto;
+      /* Se usa min-height para definir un tamaño base, sin limitar el crecimiento */
+      min-height: 100px;
+      word-wrap: break-word;
     }
-    .nota-card p, .nota-card input[type='text'] {
+    .nota-card p,
+    .nota-card input[type='text'] {
       margin-bottom: 10px;
       width: 100%;
       font-size: 16px;
@@ -116,7 +119,9 @@
       width: 80%;
       max-width: 500px;
     }
-    #inputArea textarea, #inputArea input[type='text'] {
+    /* Se agregan propiedades para que el texto se envuelva como en Word */
+    #inputArea textarea,
+    #inputArea input[type='text'] {
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 4px;
@@ -124,6 +129,8 @@
       width: 100%;
       overflow: hidden;
       box-sizing: border-box;
+      white-space: pre-wrap;
+      word-wrap: break-word;
     }
     #inputArea button {
       padding: 10px 15px;
@@ -201,13 +208,13 @@
 
     let addingNewNote = false;
 
-    // Función para autoajustar la altura del textarea
+    // Función para autoajustar la altura del textarea conforme se escribe
     function autoResizeTextarea(el) {
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
     }
 
-    // Añade el evento de auto redimensionamiento a los textareas
+    // Event listeners para redimensionar dinámicamente el textarea de la nota y el de la imagen
     textNoteInput.addEventListener('input', function() {
       autoResizeTextarea(this);
     });
