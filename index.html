@@ -3,27 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mis Notas</title>
+  <title>Notas Oceanicas</title>
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
   <!-- GridStack CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
   <style>
-    /* Fondo oceánico y estilos base */
+    /* Fondo tipo océano: de azul claro arriba a azul profundo abajo */
     body {
       font-family: sans-serif;
       margin: 0;
       min-height: 100vh;
-      background: linear-gradient(to bottom, #001f3f, #003f5c, #005f73, #0a9396, #94d2bd);
+      background: linear-gradient(to bottom, #a2dff7, #03254c);
       display: flex;
       flex-direction: column;
     }
-    h1 {
-      text-align: center;
-      margin-top: 20px;
-      color: white;
-    }
+    /* Elimina el título (h1) */
+    /* h1 {
+      display: none;
+    } */
+    
     /* Contenedor de GridStack */
     #notaDisplay {
       flex-grow: 1;
@@ -37,7 +37,7 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       overflow: hidden;
       position: relative;
-      /* Fija un máximo para simular una pequeña carta */
+      /* Tamaño máximo para simular una carta pequeña */
       max-width: 300px;
       max-height: 300px;
     }
@@ -163,7 +163,7 @@
   </style>
 </head>
 <body>
-  <h1>Mis Notas</h1>
+  <!-- Se ha eliminado el título -->
   <!-- Contenedor GridStack -->
   <div id="notaDisplay" class="grid-stack"></div>
   <button id="addNoteButton">+</button>
@@ -208,8 +208,7 @@
     // Inicializa GridStack sin redimensionamiento
     const grid = GridStack.init({
       margin: 5,
-      disableResize: true,  // Deshabilita el resize para todos los widgets
-      // Puedes ajustar otras opciones según necesites, por ejemplo, column: 12, cellHeight: 150, etc.
+      disableResize: true,
     });
     
     // Función para autoajustar la altura del textarea conforme se escribe
@@ -267,14 +266,12 @@
         const editInput = document.createElement('input');
         editInput.type = 'text';
         editInput.value = (notaData.texto) ? notaData.texto : (notaData.nota ? notaData.nota : '');
-        // Reemplaza el párrafo existente
         content.replaceChild(editInput, content.querySelector('p'));
         const saveEditButton = document.createElement('button');
         saveEditButton.innerHTML = '💾';
         saveEditButton.onclick = function() {
           const newText = editInput.value;
           if(newText.trim() !== '') {
-            // Actualiza en Firestore
             db.collection('notas').doc(doc.id).update(notaData.url ? {texto: newText} : {nota: newText})
               .then(() => {
                 const newP = document.createElement('p');
@@ -294,7 +291,6 @@
       const deleteButton = document.createElement('button');
       deleteButton.innerHTML = '✖';
       deleteButton.onclick = function() {
-        // Elimina la nota de Firebase y del grid
         db.collection('notas').doc(doc.id).delete()
           .then(() => {
             grid.removeWidget(gridItem);
