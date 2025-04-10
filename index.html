@@ -7,7 +7,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
   <style>
-    /* Fondo oceánico y estilo base */
+    /* Fondo oceánico y estilos base */
     body {
       font-family: sans-serif;
       margin: 0;
@@ -28,29 +28,52 @@
       padding: 20px;
       flex-grow: 1;
     }
-    /* Cada nota se comporta como una hoja blanca: tamaño según contenido, con márgenes internos */
+    /* Tarjeta base (para ambas notas) */
     .nota-card {
       background-color: #fff;
       border-radius: 8px;
-      padding: 20px 15px 30px 15px; /* se añade mayor padding abajo para simular margen inferior */
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      word-wrap: break-word;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      word-wrap: break-word;
+      /* Sin altura fija para notas de texto */
+    }
+    /* Tarjeta para notas de texto: se ajusta al contenido */
+    .nota-card.text-note {
+      /* La altura dependerá del contenido */
+    }
+    /* Tarjeta para notas de imagen: tamaño fijo cuadrado similar a una card */
+    .nota-card.image-note {
+      width: 250px;
+      height: 250px;
+      position: relative;
+    }
+    .nota-card.image-note img {
+      width: 100%;
+      height: 60%;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+    /* El párrafo en las notas de imagen se coloca abajo, se puede editar */
+    .nota-card.image-note p {
+      margin: 10px 0 0 0;
+      white-space: pre-wrap;
+      overflow: auto;
+      flex-grow: 1;
     }
     .nota-card p,
     .nota-card input[type='text'] {
       font-size: 16px;
-      /* Permite que el texto se envuelva y respete los saltos de línea */
       white-space: pre-wrap;
       margin: 0 0 10px 0;
     }
+    /* Contenedor para botones (editar, eliminar) */
     .button-container {
       display: flex;
       justify-content: flex-end;
       gap: 10px;
-      margin-top: 10px;
+      margin-top: auto;
     }
     .nota-card button {
       background: none;
@@ -117,7 +140,7 @@
       width: 80%;
       max-width: 500px;
     }
-    /* Textareas e inputs con estilo de hoja: envuelve el texto y respeta márgenes */
+    /* Estilos para el textarea y los inputs: envuelven el texto como en Word */
     #inputArea textarea,
     #inputArea input[type='text'] {
       padding: 10px;
@@ -212,7 +235,6 @@
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
     }
-    // Autoajuste para ambos textareas
     textNoteInput.addEventListener('input', function() {
       autoResizeTextarea(this);
     });
@@ -220,12 +242,20 @@
       autoResizeTextarea(this);
     });
 
-    // Función para mostrar una nota en pantalla (cada nota se comporta como una hoja blanca)
+    // Función para mostrar una nota en pantalla
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       const notaCard = document.createElement('div');
-      notaCard.classList.add('nota-card');
 
+      // Si la nota es de imagen, se le asigna la clase image-note (tamaño fijo)
+      // Si es de texto, se le asigna la clase text-note (se adapta al contenido)
+      if (notaData.url) {
+        notaCard.classList.add('nota-card', 'image-note');
+      } else if (notaData.nota) {
+        notaCard.classList.add('nota-card', 'text-note');
+      }
+
+      // Contenedor para los botones de edición y eliminación
       const buttonContainer = document.createElement('div');
       buttonContainer.classList.add('button-container');
 
@@ -233,9 +263,6 @@
         // Nota de imagen
         const img = document.createElement('img');
         img.src = notaData.url;
-        img.style.maxWidth = '100%';
-        img.style.maxHeight = '150px';
-        img.style.objectFit = 'contain';
         notaCard.appendChild(img);
 
         let textoParrafo = null;
@@ -244,7 +271,7 @@
           textoParrafo.textContent = notaData.texto;
           notaCard.appendChild(textoParrafo);
         }
-        // Botón de editar para el texto de imagen
+        // Botón de editar (edita el texto de la imagen)
         const editButton = document.createElement('button');
         editButton.innerHTML = '✎';
         editButton.onclick = function() {
@@ -254,6 +281,7 @@
           if (textoParrafo) {
             notaCard.replaceChild(editInput, textoParrafo);
           } else {
+            // Si no existe párrafo, lo agrega antes de los botones
             notaCard.insertBefore(editInput, buttonContainer);
           }
           const saveEditButton = document.createElement('button');
@@ -279,6 +307,7 @@
           buttonContainer.replaceChild(saveEditButton, editButton);
         };
         buttonContainer.appendChild(editButton);
+
         // Botón de eliminar
         const deleteButton = document.createElement('button');
         deleteButton.innerHTML = '✖';
@@ -321,6 +350,7 @@
           buttonContainer.replaceChild(saveEditButton, editButton);
         };
         buttonContainer.appendChild(editButton);
+
         // Botón de eliminar
         const deleteButton = document.createElement('button');
         deleteButton.innerHTML = '✖';
@@ -345,12 +375,12 @@
         });
     }
 
-    // Limpia el display antes de actualizar la lista
+    // Función para limpiar la visualización de notas
     function limpiarNotasDisplay() {
       notaDisplay.innerHTML = '';
     }
 
-    // Escucha en tiempo real la colección "notas"
+    // Escucha en tiempo real la colección 'notas'
     db.collection('notas')
       .orderBy('__name__')
       .onSnapshot((snapshot) => {
@@ -383,7 +413,7 @@
       addingNewNote = false;
     };
 
-    // Guarda una nota con link de imagen y texto opcional
+    // Función para guardar una nota con link de imagen y texto opcional
     function guardarLinkDeImagen() {
       const link = imageLinkInput.value;
       const texto = imageNoteText.value;
@@ -404,7 +434,7 @@
       }
     }
 
-    // Guarda la nota de texto
+    // Función para guardar una nota de texto
     function guardarNotaTexto() {
       const nota = textNoteInput.value;
       if (nota.trim() !== '') {
