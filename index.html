@@ -7,7 +7,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
   <style>
-    /* Fondo oceánico y estilos base */
+    /* Fondo oceánico y estilo base */
     body {
       font-family: sans-serif;
       margin: 0;
@@ -28,36 +28,36 @@
       padding: 20px;
       flex-grow: 1;
     }
-    /* Tarjeta base (para ambas notas) */
+    /* Estilo base para todas las notas */
     .nota-card {
       background-color: #fff;
       border-radius: 8px;
       padding: 20px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       word-wrap: break-word;
+      margin: 0 auto;
       display: flex;
       flex-direction: column;
-      /* Sin altura fija para notas de texto */
     }
-    /* Tarjeta para notas de texto: se ajusta al contenido */
-    .nota-card.text-note {
-      /* La altura dependerá del contenido */
+    /* Notas de texto: sin altura fija, se adapta al contenido */
+    .text-note {
+      height: auto;
     }
-    /* Tarjeta para notas de imagen: tamaño fijo cuadrado similar a una card */
-    .nota-card.image-note {
+    /* Notas de imagen: contenedor cuadrado */
+    .image-note {
       width: 250px;
       height: 250px;
       position: relative;
+      overflow: hidden;
     }
-    .nota-card.image-note img {
+    .image-note img {
       width: 100%;
       height: 60%;
       object-fit: cover;
       border-radius: 4px;
     }
-    /* El párrafo en las notas de imagen se coloca abajo, se puede editar */
-    .nota-card.image-note p {
-      margin: 10px 0 0 0;
+    .image-note p {
+      margin-top: 10px;
       white-space: pre-wrap;
       overflow: auto;
       flex-grow: 1;
@@ -73,7 +73,7 @@
       display: flex;
       justify-content: flex-end;
       gap: 10px;
-      margin-top: auto;
+      margin-top: 10px;
     }
     .nota-card button {
       background: none;
@@ -140,7 +140,7 @@
       width: 80%;
       max-width: 500px;
     }
-    /* Estilos para el textarea y los inputs: envuelven el texto como en Word */
+    /* Estilos para textarea e inputs: envuelven el texto de forma similar a Word */
     #inputArea textarea,
     #inputArea input[type='text'] {
       padding: 10px;
@@ -210,8 +210,6 @@
       appId: "1:141546637821:web:0a861aeb13831774ed3194",
       measurementId: "G-HB2P17H5YL"
     };
-
-    // Inicializa Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const notaDisplay = document.getElementById('notaDisplay');
@@ -227,10 +225,9 @@
     const textNoteInputArea = document.getElementById('textNoteInputArea');
     const textNoteInput = document.getElementById('textNote');
     const saveTextNoteButton = document.getElementById('saveTextNote');
-
     let addingNewNote = false;
-
-    // Función para autoajustar la altura del textarea conforme se escribe
+    
+    // Función para autoajustar la altura del textarea a medida que escribes
     function autoResizeTextarea(el) {
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
@@ -241,37 +238,33 @@
     imageNoteText.addEventListener('input', function() {
       autoResizeTextarea(this);
     });
-
-    // Función para mostrar una nota en pantalla
+    
+    // Función para mostrar las notas en pantalla
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       const notaCard = document.createElement('div');
-
-      // Si la nota es de imagen, se le asigna la clase image-note (tamaño fijo)
-      // Si es de texto, se le asigna la clase text-note (se adapta al contenido)
+      
+      // Asigna la clase según el tipo de nota
       if (notaData.url) {
         notaCard.classList.add('nota-card', 'image-note');
       } else if (notaData.nota) {
         notaCard.classList.add('nota-card', 'text-note');
       }
-
-      // Contenedor para los botones de edición y eliminación
+      
       const buttonContainer = document.createElement('div');
       buttonContainer.classList.add('button-container');
-
+      
       if (notaData.url) {
-        // Nota de imagen
+        // Nota de imagen (con contenedor fijo)
         const img = document.createElement('img');
         img.src = notaData.url;
         notaCard.appendChild(img);
-
         let textoParrafo = null;
         if (notaData.texto !== undefined && notaData.texto !== null) {
           textoParrafo = document.createElement('p');
           textoParrafo.textContent = notaData.texto;
           notaCard.appendChild(textoParrafo);
         }
-        // Botón de editar (edita el texto de la imagen)
         const editButton = document.createElement('button');
         editButton.innerHTML = '✎';
         editButton.onclick = function() {
@@ -281,7 +274,6 @@
           if (textoParrafo) {
             notaCard.replaceChild(editInput, textoParrafo);
           } else {
-            // Si no existe párrafo, lo agrega antes de los botones
             notaCard.insertBefore(editInput, buttonContainer);
           }
           const saveEditButton = document.createElement('button');
@@ -289,26 +281,24 @@
           saveEditButton.onclick = function() {
             const newText = editInput.value;
             db.collection('notas').doc(doc.id).update({ texto: newText })
-              .then(() => {
-                if (textoParrafo) {
-                  textoParrafo.textContent = newText;
-                  notaCard.replaceChild(textoParrafo, editInput);
-                } else if(newText.trim() !== ''){
-                  textoParrafo = document.createElement('p');
-                  textoParrafo.textContent = newText;
-                  notaCard.insertBefore(textoParrafo, buttonContainer);
-                }
-                buttonContainer.replaceChild(editButton, saveEditButton);
-              })
-              .catch((error) => {
-                console.error('Error al actualizar la nota: ', error);
-              });
+            .then(() => {
+              if (textoParrafo) {
+                textoParrafo.textContent = newText;
+                notaCard.replaceChild(textoParrafo, editInput);
+              } else if (newText.trim() !== '') {
+                textoParrafo = document.createElement('p');
+                textoParrafo.textContent = newText;
+                notaCard.insertBefore(textoParrafo, buttonContainer);
+              }
+              buttonContainer.replaceChild(editButton, saveEditButton);
+            })
+            .catch((error) => {
+              console.error('Error al actualizar la nota: ', error);
+            });
           };
           buttonContainer.replaceChild(saveEditButton, editButton);
         };
         buttonContainer.appendChild(editButton);
-
-        // Botón de eliminar
         const deleteButton = document.createElement('button');
         deleteButton.innerHTML = '✖';
         deleteButton.onclick = function() {
@@ -316,14 +306,13 @@
         };
         buttonContainer.appendChild(deleteButton);
         notaCard.appendChild(buttonContainer);
-
+        
       } else if (notaData.nota) {
-        // Nota de texto
+        // Nota de texto: contenedor que se adapta al contenido
         const noteParagraph = document.createElement('p');
         noteParagraph.textContent = notaData.nota;
         notaCard.appendChild(noteParagraph);
-
-        // Botón de editar
+        
         const editButton = document.createElement('button');
         editButton.innerHTML = '✎';
         editButton.onclick = function() {
@@ -337,21 +326,19 @@
             const newText = editInput.value;
             if (newText.trim() !== '') {
               db.collection('notas').doc(doc.id).update({ nota: newText })
-                .then(() => {
-                  noteParagraph.textContent = newText;
-                  notaCard.replaceChild(noteParagraph, editInput);
-                  buttonContainer.replaceChild(editButton, saveEditButton);
-                })
-                .catch((error) => {
-                  console.error('Error al actualizar la nota: ', error);
-                });
+              .then(() => {
+                noteParagraph.textContent = newText;
+                notaCard.replaceChild(noteParagraph, editInput);
+                buttonContainer.replaceChild(editButton, saveEditButton);
+              })
+              .catch((error) => {
+                console.error('Error al actualizar la nota: ', error);
+              });
             }
           };
           buttonContainer.replaceChild(saveEditButton, editButton);
         };
         buttonContainer.appendChild(editButton);
-
-        // Botón de eliminar
         const deleteButton = document.createElement('button');
         deleteButton.innerHTML = '✖';
         deleteButton.onclick = function() {
@@ -360,37 +347,37 @@
         buttonContainer.appendChild(deleteButton);
         notaCard.appendChild(buttonContainer);
       }
-
+      
       notaDisplay.appendChild(notaCard);
     }
-
-    // Función para eliminar una nota
+    
+    // Función para eliminar nota
     function eliminarNota(id) {
       db.collection('notas').doc(id).delete()
-        .then(() => {
-          console.log("Nota eliminada con ID: ", id);
-        })
-        .catch((error) => {
-          console.error("Error al eliminar la nota: ", error);
-        });
+      .then(() => {
+        console.log("Nota eliminada con ID: ", id);
+      })
+      .catch((error) => {
+        console.error("Error al eliminar la nota: ", error);
+      });
     }
-
-    // Función para limpiar la visualización de notas
+    
+    // Limpia el área de notas antes de repintar
     function limpiarNotasDisplay() {
       notaDisplay.innerHTML = '';
     }
-
+    
     // Escucha en tiempo real la colección 'notas'
     db.collection('notas')
-      .orderBy('__name__')
-      .onSnapshot((snapshot) => {
-        limpiarNotasDisplay();
-        snapshot.forEach((doc) => {
-          mostrarNotaEnPantalla(doc);
-        });
+    .orderBy('__name__')
+    .onSnapshot((snapshot) => {
+      limpiarNotasDisplay();
+      snapshot.forEach((doc) => {
+        mostrarNotaEnPantalla(doc);
       });
-
-    // Eventos para mostrar/ocultar formularios
+    });
+    
+    // Eventos para mostrar/ocultar formularios de entrada
     addNoteButton.onclick = function() {
       addingNewNote = !addingNewNote;
       addNoteOptions.style.display = addingNewNote ? 'flex' : 'none';
@@ -412,8 +399,8 @@
       textNoteInputArea.style.display = 'flex';
       addingNewNote = false;
     };
-
-    // Función para guardar una nota con link de imagen y texto opcional
+    
+    // Guarda una nota con link de imagen (y texto opcional)
     function guardarLinkDeImagen() {
       const link = imageLinkInput.value;
       const texto = imageNoteText.value;
@@ -433,8 +420,8 @@
         });
       }
     }
-
-    // Función para guardar una nota de texto
+    
+    // Guarda una nota de texto
     function guardarNotaTexto() {
       const nota = textNoteInput.value;
       if (nota.trim() !== '') {
@@ -451,7 +438,7 @@
         });
       }
     }
-
+    
     saveImageLinkButton.onclick = guardarLinkDeImagen;
     saveTextNoteButton.onclick = guardarNotaTexto;
   </script>
