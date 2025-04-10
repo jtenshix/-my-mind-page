@@ -45,7 +45,7 @@
     /* Cada nota se muestra como una "carta de solitario" */
     .grid-stack-item-content {
       min-width: 180px;        /* Ancho base tipo carta */
-      min-height: 280px;       /* Altura base tipo carta */
+      min-height: 280px;       /* Alto base tipo carta */
       padding: 10px;
       background-color: #fff;
       border: 2px solid #0077a3;  /* Tono oceánico */
@@ -53,12 +53,12 @@
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra flotante */
       display: flex;
       flex-direction: column;
-      overflow: visible; /* Se expande para mostrar todo el contenido */
+      overflow: visible; /* Permite que la nota se expanda según su contenido */
       box-sizing: border-box;
     }
-    /* Ocultar manejadores de resize (flechitas) */
-    .ui-resizable-handle {
-      display: none !important;
+    /* Ocultar cualquier manejador de resize que pudiera quedar activo */
+    .ui-resizable-handle { 
+      display: none !important; 
     }
     /* Cuerpo de la nota */
     .note-body {
@@ -78,7 +78,7 @@
     }
     /* Barra de control inferior */
     .note-footer {
-      background-color: rgba(0, 85, 119, 0.8); /* Azul profundo, semitransparente */
+      background-color: rgba(0, 85, 119, 0.8); /* Azul profundo semitransparente */
       color: white;
       height: 30px;
       display: flex;
@@ -304,9 +304,10 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     
-    // Inicializar GridStack
+    // Inicializar GridStack con cellHeight en "auto" para que el widget se expanda según su contenido
     const grid = GridStack.init({
       margin: 5,
+      cellHeight: 'auto',
       disableResize: true,
       float: true
     });
