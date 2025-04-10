@@ -21,11 +21,11 @@
       margin-top: 20px;
       color: white;
     }
-    /* Ajuste del grid: separa las notas sutilmente para un look más ordenado */
+    /* Ajuste del grid: se adaptan según el tamaño del contenido */
     #notaDisplay {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 5px; /* Espaciado reducido a 5px */
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 5px; /* Espaciado sutil */
       padding: 20px;
       flex-grow: 1;
       align-items: start;
@@ -41,20 +41,18 @@
       display: flex;
       flex-direction: column;
     }
-    /* Notas de texto: sin altura fija, se adapta al contenido */
+    /* Notas de texto se adaptan al contenido */
     .text-note {
       height: auto;
     }
-    /* Notas de imagen: contenedor cuadrado fijo */
+    /* Notas de imagen: se eliminan dimensiones fijas para que se ajusten al contenido */
     .image-note {
-      width: 250px;
-      height: 250px;
       position: relative;
       overflow: hidden;
     }
     .image-note img {
-      width: 100%;
-      height: 60%;
+      max-width: 100%;
+      height: auto;
       object-fit: cover;
       border-radius: 4px;
     }
@@ -142,7 +140,7 @@
       width: 80%;
       max-width: 500px;
     }
-    /* Estilos para textarea e inputs: envuelven el texto como en Word */
+    /* Estilos para textarea e inputs: se adaptan como en Word */
     #inputArea textarea,
     #inputArea input[type='text'] {
       padding: 10px;
@@ -256,7 +254,7 @@
       buttonContainer.classList.add('button-container');
       
       if (notaData.url) {
-        // Nota de imagen (contenedor fijo)
+        // Nota de imagen
         const img = document.createElement('img');
         img.src = notaData.url;
         notaCard.appendChild(img);
@@ -308,7 +306,7 @@
         buttonContainer.appendChild(deleteButton);
         notaCard.appendChild(buttonContainer);
       } else if (notaData.nota) {
-        // Nota de texto: contenedor que se adapta al contenido
+        // Nota de texto
         const noteParagraph = document.createElement('p');
         noteParagraph.textContent = notaData.nota;
         notaCard.appendChild(noteParagraph);
