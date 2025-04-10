@@ -19,21 +19,22 @@
       position: relative;
       overflow: hidden;
     }
-    /* Margin superior para dejar espacio al sol overlay y a la navegación */
+    /* Contenedor de notas: deja un margen superior para la navegación (sin afectar al overlay del sol) */
     #notaDisplay {
-      margin-top: 120px;  /* espacio para el overlay y futuros íconos */
+      margin-top: 120px;  /* reserva espacio en la parte superior */
       padding: 20px;
       flex-grow: 1;
     }
-    /* Sun overlay con efecto de luz: se muestra en la parte superior */
+    /* Sun overlay a pantalla completa: simula la luz solar que se filtra desde arriba */
     .sun-overlay {
-      position: absolute;
+      position: fixed;
       top: 0;
       left: 0;
       width: 100%;
-      height: 120px;
+      height: 100%;
       pointer-events: none;
-      background: radial-gradient(ellipse at top, rgba(255,255,224,0.5) 0%, transparent 70%);
+      background: radial-gradient(ellipse at top center, rgba(255,255,224,0.3) 0%, transparent 70%);
+      z-index: 0;
     }
     /* Cada nota (widget) */
     .grid-stack-item-content {
@@ -45,12 +46,13 @@
       position: relative;
       max-width: 300px;
       max-height: 300px;
+      z-index: 1; /* aseguramos que las notas van sobre el overlay */
     }
-    /* Transición para lograr efecto suave al posicionar (flotación) */
+    /* Transición ajustada para simular resistencia del agua: mayor duración y curva personalizada */
     .grid-stack-item {
-      transition: transform 0.3s ease-in-out;
+      transition: transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
     }
-    /* Estilos para el contenido de texto */
+    /* Estilos para texto e inputs dentro de la nota */
     .grid-stack-item-content p,
     .grid-stack-item-content input[type='text'] {
       font-size: 16px;
@@ -64,7 +66,7 @@
       object-fit: cover;
       border-radius: 4px;
     }
-    /* Botones: ahora se ubican en la parte inferior derecha */
+    /* Botones: ubicados en la parte inferior derecha dentro de la nota */
     .button-container {
       position: absolute;
       bottom: 5px;
@@ -97,6 +99,7 @@
       cursor: pointer;
       box-shadow: 0 3px 8px rgba(0,0,0,0.3);
       transition: background-color 0.3s ease, transform 0.3s ease;
+      z-index: 2;
     }
     #addNoteButton:hover {
       background-color: #005577;
@@ -114,6 +117,7 @@
       border-radius: 5px;
       padding: 10px;
       box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+      z-index: 2;
     }
     #addNoteOptions button {
       padding: 8px 15px;
@@ -136,8 +140,9 @@
       gap: 10px;
       width: 80%;
       max-width: 500px;
+      z-index: 2;
     }
-    /* Estilos para textarea e inputs */
+    /* Estilos para textarea e inputs dentro del área de entrada */
     #inputArea textarea,
     #inputArea input[type='text'] {
       padding: 10px;
@@ -169,7 +174,7 @@
       flex-direction: column;
       gap: 5px;
     }
-    /* Oculta el placeholder y shadow durante el arrastre */
+    /* Oculta el placeholder y sombra durante el arrastre */
     .grid-stack-placeholder {
       display: none !important;
     }
@@ -179,7 +184,7 @@
   </style>
 </head>
 <body>
-  <!-- Sun overlay (sol) -->
+  <!-- Sun overlay que cubre toda la pantalla -->
   <div class="sun-overlay"></div>
   
   <!-- Contenedor GridStack con margen superior -->
@@ -324,7 +329,7 @@
       content.appendChild(buttonContainer);
       gridItem.appendChild(content);
       
-      // Configura posición y dimensiones persistidas (o autoPosition si no existen)
+      // Configura posición y dimensiones persistidas; si no existen, se usan valores por defecto y autoPosition
       const pos = {
         x: notaData.x || 0,
         y: typeof notaData.y === 'number' ? notaData.y : 0,
