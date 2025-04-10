@@ -9,8 +9,10 @@
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
   <!-- GridStack CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
+  <!-- GridStack JS -->
+  <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
   <style>
-    /* Fondo oceánico con degradado: arriba claro y abajo oscuro */
+    /* Estilos generales */
     body {
       font-family: sans-serif;
       margin: 0;
@@ -18,14 +20,9 @@
       background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
       position: relative;
       overflow: hidden;
+      padding-left: 80px; /* para dejar espacio a la barra lateral */
     }
-    /* Contenedor de notas: reserva un margen superior para navegación futura */
-    #notaDisplay {
-      margin-top: 120px;
-      padding: 20px;
-      flex-grow: 1;
-    }
-    /* Sun overlay a pantalla completa para simular la luz solar */
+    /* Overlay con luz solar */
     .sun-overlay {
       position: fixed;
       top: 0;
@@ -36,7 +33,13 @@
       background: radial-gradient(ellipse at top center, rgba(255,255,224,0.35) 0%, rgba(255,255,224,0) 50%);
       z-index: 0;
     }
-    /* Cada nota (widget) */
+    /* Contenedor principal de notas */
+    #notaDisplay {
+      margin-top: 120px;
+      padding: 20px;
+      flex-grow: 1;
+    }
+    /* Estilos para cada nota (widget) */
     .grid-stack-item-content {
       background-color: #fff;
       border-radius: 8px;
@@ -48,11 +51,9 @@
       max-height: 300px;
       z-index: 1;
     }
-    /* Transición para simular la resistencia del agua en el movimiento de las notas */
     .grid-stack-item {
       transition: transform 0.8s cubic-bezier(0.35, 0.45, 0.55, 1.2);
     }
-    /* Estilos para texto, inputs y elementos internos de la nota */
     .grid-stack-item-content p,
     .grid-stack-item-content input[type='text'] {
       font-size: 16px;
@@ -65,7 +66,7 @@
       object-fit: cover;
       border-radius: 4px;
     }
-    /* Botones de editar y eliminar: ubicados en la esquina inferior derecha */
+    /* Botones de edición y eliminación en la esquina inferior derecha */
     .button-container {
       position: absolute;
       bottom: 5px;
@@ -79,6 +80,16 @@
       cursor: pointer;
       font-size: 16px;
       color: #555;
+    }
+    /* Estilo para la estrella draggable en la esquina inferior izquierda */
+    .drag-star {
+      position: absolute;
+      bottom: 5px;
+      left: 5px;
+      font-size: 20px;
+      color: gold;
+      cursor: move;
+      z-index: 2;
     }
     /* Botón flotante para agregar notas */
     #addNoteButton {
@@ -179,11 +190,72 @@
     .grid-stack-item.ui-draggable-dragging {
       box-shadow: none !important;
     }
+    /* Barra lateral vertical izquierda */
+    #sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 80px;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      z-index: 3;
+    }
+    .sidebar-icon {
+      width: 50px;
+      height: 50px;
+      background: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+    .sidebar-icon:hover {
+      transform: scale(1.1);
+    }
+    /* Calendario flotante */
+    #floatingCalendar {
+      position: fixed;
+      top: 50%;
+      left: 90px; /* junto a la barra lateral */
+      transform: translateY(-50%);
+      width: 300px;
+      height: 300px;
+      background: #fff;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      display: none;
+      z-index: 4;
+      padding: 10px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+    }
   </style>
 </head>
 <body>
-  <!-- Overlay con luz solar que cubre toda la pantalla -->
+  <!-- Overlay con luz solar -->
   <div class="sun-overlay"></div>
+
+  <!-- Barra lateral con íconos -->
+  <div id="sidebar">
+    <div class="sidebar-icon" title="Música">♪</div>
+    <div class="sidebar-icon" title="Archivos">📁</div>
+    <div class="sidebar-icon" title="Calendario" id="calendarIcon">📅</div>
+    <div class="sidebar-icon" title="Tareas">✎</div>
+    <div class="sidebar-icon" title="Contactos">☎</div>
+  </div>
+
+  <!-- Calendario flotante (se despliega al pasar el mouse por el ícono del calendario) -->
+  <div id="floatingCalendar">
+    <!-- Aquí se puede insertar un calendario real o de ejemplo -->
+    <h3 style="text-align: center;">Calendario</h3>
+    <p style="text-align: center; font-size: 14px;">[Calendario de ejemplo]</p>
+  </div>
   
   <!-- Contenedor principal de notas con GridStack -->
   <div id="notaDisplay" class="grid-stack"></div>
@@ -210,8 +282,6 @@
     </div>
   </div>
   
-  <!-- GridStack JS -->
-  <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
   <script>
     // Configuración de Firebase (reemplaza estos valores con los tuyos)
     const firebaseConfig = {
@@ -226,7 +296,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     
-    // Inicializa GridStack con opción de movimiento libre y sin redimensionamiento
+    // Inicializar GridStack
     const grid = GridStack.init({
       margin: 5,
       disableResize: true,
@@ -247,7 +317,7 @@
       autoResizeTextarea(this);
     });
     
-    // Función para mostrar cada nota y agregarla a GridStack
+    // Función para crear y mostrar cada nota en pantalla con su contenido y elementos interactivos
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       
@@ -258,6 +328,25 @@
       
       const content = document.createElement('div');
       content.classList.add('grid-stack-item-content');
+      
+      // Agregar estrella draggable en la esquina inferior izquierda
+      const dragStar = document.createElement('div');
+      dragStar.classList.add('drag-star');
+      dragStar.textContent = '★';
+      dragStar.draggable = true;
+      // Eventos para drag & drop de la estrella
+      dragStar.addEventListener('dragstart', (e) => {
+        // Ocultar o "plegar" el calendario al iniciar el arrastre
+        document.getElementById('floatingCalendar').style.display = 'none';
+        // Opcional: agrega datos al drag si se desea procesar la asignación
+        e.dataTransfer.setData("text/plain", doc.id);
+      });
+      dragStar.addEventListener('dragend', () => {
+        // Al finalizar el arrastre, se puede reactivar el calendario o dejarlo oculto
+        // En este ejemplo se lo muestra de nuevo cuando no esté sobre el ícono
+        // (la lógica real de asignación se puede ampliar según se necesite)
+        // Revisa el estado del ícono de calendario si se desea mostrarlo o no
+      });
       
       if(notaData.url) {
         // Nota con imagen
@@ -325,9 +414,11 @@
       buttonContainer.appendChild(deleteButton);
       
       content.appendChild(buttonContainer);
+      // Agregar la estrella draggable (en la esquina inferior izquierda)
+      content.appendChild(dragStar);
       gridItem.appendChild(content);
       
-      // Configurar posición y dimensiones persistidas o usar defaults con autoPosition
+      // Configurar posición y dimensiones (usar datos persistidos o defaults)
       const pos = {
         x: notaData.x || 0,
         y: typeof notaData.y === 'number' ? notaData.y : 0,
@@ -339,7 +430,7 @@
       grid.addWidget(gridItem, pos);
     }
     
-    // Limpia todos los widgets existentes
+    // Función para limpiar todos los widgets existentes
     function limpiarNotasDisplay() {
       grid.removeAll();
     }
@@ -429,7 +520,7 @@
     saveImageLinkButton.onclick = guardarLinkDeImagen;
     saveTextNoteButton.onclick = guardarNotaTexto;
     
-    // Al finalizar el arrastre, guarda la nueva posición en Firebase
+    // Actualiza la posición de la nota al finalizar el arrastre
     grid.on('dragstop', function(event, el) {
       setTimeout(() => {
         const noteId = el.getAttribute('data-note-id');
@@ -444,6 +535,49 @@
         }
       }, 100);
     });
+    
+    // Mostrar el calendario flotante al pasar el mouse por el ícono del calendario
+    const calendarIcon = document.getElementById('calendarIcon');
+    const floatingCalendar = document.getElementById('floatingCalendar');
+    
+    calendarIcon.addEventListener('mouseenter', () => {
+      floatingCalendar.style.display = 'block';
+    });
+    calendarIcon.addEventListener('mouseleave', () => {
+      // Se retrasa un poco para poder hacer drop sobre el calendario si se desea
+      setTimeout(() => {
+        if (!isDraggingStar) {
+          floatingCalendar.style.display = 'none';
+        }
+      }, 300);
+    });
+    
+    // Variable para controlar si se está arrastrando la estrella
+    let isDraggingStar = false;
+    document.addEventListener('dragstart', (e) => {
+      if (e.target.classList.contains('drag-star')) {
+        isDraggingStar = true;
+        // Opcional: se puede ocultar o minimizar el calendario aquí
+        floatingCalendar.style.display = 'none';
+      }
+    });
+    document.addEventListener('dragend', (e) => {
+      if (e.target.classList.contains('drag-star')) {
+        isDraggingStar = false;
+      }
+    });
+    
+    // Evento drop en el calendario para asignar la nota (funcionalidad demo)
+    floatingCalendar.addEventListener('dragover', (e) => {
+      e.preventDefault();
+    });
+    floatingCalendar.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const noteId = e.dataTransfer.getData("text/plain");
+      console.log("Asignar nota " + noteId + " al calendario");
+      // Aquí puedes implementar la lógica de asignación de la nota a la fecha seleccionada
+    });
+    
   </script>
 </body>
 </html>
