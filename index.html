@@ -320,8 +320,16 @@
       content.appendChild(buttonContainer);
       gridItem.appendChild(content);
       
-      // Agrega el widget a GridStack con dimensiones fijas (por ejemplo, 2x2)
-      grid.addWidget(gridItem, {x: 0, y: 0, w: 2, h: 2, autoPosition: true, noResize: true});
+      // Configura posición y dimensiones persistidas si existen; de lo contrario se usa autoPosition
+      const pos = {
+        x: notaData.x || 0,
+        y: typeof notaData.y === 'number' ? notaData.y : 0,
+        w: notaData.w || 2,
+        h: notaData.h || 2,
+        autoPosition: notaData.x === undefined || notaData.y === undefined
+      };
+      
+      grid.addWidget(gridItem, pos);
     }
     
     // Limpia los widgets actuales
@@ -462,9 +470,22 @@
       }
     }
     
-    // Escucha el fin del arrastre y verifica la fusión
+    // Escucha el fin del arrastre, guarda la nueva posición y verifica la fusión
     grid.on('dragstop', function(event, el) {
-      setTimeout(detectAndMerge, 100);
+      setTimeout(() => {
+        detectAndMerge();
+        // Guarda la posición actualizada en Firebase
+        const noteId = el.getAttribute('data-note-id');
+        const node = el.gridstackNode;
+        if(noteId && node) {
+          db.collection('notas').doc(noteId).update({
+            x: node.x,
+            y: node.y,
+            w: node.w,
+            h: node.h
+          }).catch(error => console.error("Error guardando posición:", error));
+        }
+      }, 100);
     });
   </script>
 </body>
