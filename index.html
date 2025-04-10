@@ -33,24 +33,32 @@
       border-radius: 8px;
       padding: 15px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      max-height: 300px;
+      overflow: auto;
     }
     .nota-card p, .nota-card input[type='text'] {
       margin-bottom: 10px;
       width: 100%;
       font-size: 16px;
+      word-wrap: break-word;
+    }
+    .button-container {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 10px;
     }
     .nota-card button {
-      position: absolute;
-      top: 5px;
-      right: 5px;
       background: none;
       border: none;
       cursor: pointer;
-      font-size: 14px;
-      color: #888;
+      font-size: 18px;
+      color: #555;
     }
-    /* Botón flotante */
+    /* Botón flotante para agregar notas */
     #addNoteButton {
       position: fixed;
       bottom: 20px;
@@ -73,7 +81,7 @@
       background-color: #005577;
       transform: scale(1.05);
     }
-    /* Opciones y área de entrada, sin modificaciones aquí */
+    /* Opciones y área de entrada */
     #addNoteOptions {
       position: fixed;
       bottom: 90px;
@@ -108,11 +116,12 @@
       width: 80%;
       max-width: 500px;
     }
-    #inputArea textarea {
+    #inputArea textarea, #inputArea input[type='text'] {
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 4px;
       resize: vertical;
+      width: 100%;
     }
     #inputArea button {
       padding: 10px 15px;
@@ -190,43 +199,95 @@
 
     let addingNewNote = false;
 
-    // Función para mostrar una nota en pantalla (incluye botón de editar y eliminar)
+    // Función para mostrar una nota en pantalla con edición y eliminación separadas
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       const notaCard = document.createElement('div');
       notaCard.classList.add('nota-card');
 
+      // Contenedor para botones
+      const buttonContainer = document.createElement('div');
+      buttonContainer.classList.add('button-container');
+
       if (notaData.url) {
-        // Es un link de imagen
+        // Nota de imagen
         const img = document.createElement('img');
         img.src = notaData.url;
-        img.style.maxWidth = '200px';
+        img.style.maxWidth = '100%';
         img.style.maxHeight = '150px';
         img.style.objectFit = 'contain';
         notaCard.appendChild(img);
-        if (notaData.texto) {
-          const textoParrafo = document.createElement('p');
+
+        let textoParrafo = null;
+        if (notaData.texto !== undefined && notaData.texto !== null) {
+          textoParrafo = document.createElement('p');
           textoParrafo.textContent = notaData.texto;
           notaCard.appendChild(textoParrafo);
         }
+
+        // Botón de editar (para el texto de imagen)
+        const editButton = document.createElement('button');
+        editButton.innerHTML = '✎';
+        editButton.onclick = function() {
+          const editInput = document.createElement('input');
+          editInput.type = 'text';
+          editInput.value = (notaData.texto) ? notaData.texto : '';
+          if (textoParrafo) {
+            notaCard.replaceChild(editInput, textoParrafo);
+          } else {
+            // Si no hay párrafo, inserta debajo de la imagen
+            notaCard.insertBefore(editInput, buttonContainer);
+          }
+          const saveEditButton = document.createElement('button');
+          saveEditButton.innerHTML = '💾';
+          saveEditButton.onclick = function() {
+            const newText = editInput.value;
+            db.collection('notas').doc(doc.id).update({ texto: newText })
+              .then(() => {
+                if (textoParrafo) {
+                  textoParrafo.textContent = newText;
+                  notaCard.replaceChild(textoParrafo, editInput);
+                } else if(newText.trim() !== ''){
+                  textoParrafo = document.createElement('p');
+                  textoParrafo.textContent = newText;
+                  notaCard.insertBefore(textoParrafo, buttonContainer);
+                  // También actualiza la variable notaData para futuras ediciones
+                }
+                buttonContainer.replaceChild(editButton, saveEditButton);
+              })
+              .catch((error) => {
+                console.error('Error al actualizar la nota: ', error);
+              });
+          };
+          buttonContainer.replaceChild(saveEditButton, editButton);
+        };
+        buttonContainer.appendChild(editButton);
+
+        // Botón de eliminar
+        const deleteButton = document.createElement('button');
+        deleteButton.innerHTML = '✖';
+        deleteButton.onclick = function() {
+          eliminarNota(doc.id);
+        };
+        buttonContainer.appendChild(deleteButton);
+        notaCard.appendChild(buttonContainer);
+
       } else if (notaData.nota) {
-        // Es una nota de texto
+        // Nota de texto
         const noteParagraph = document.createElement('p');
         noteParagraph.textContent = notaData.nota;
         notaCard.appendChild(noteParagraph);
 
         // Botón de editar
         const editButton = document.createElement('button');
-        editButton.textContent = 'Edit';
+        editButton.innerHTML = '✎';
         editButton.onclick = function() {
-          // Crea un input para editar la nota
           const editInput = document.createElement('input');
           editInput.type = 'text';
           editInput.value = notaData.nota;
           notaCard.replaceChild(editInput, noteParagraph);
-          // Reemplaza el botón de editar con uno de guardar
           const saveEditButton = document.createElement('button');
-          saveEditButton.textContent = 'Save';
+          saveEditButton.innerHTML = '💾';
           saveEditButton.onclick = function() {
             const newText = editInput.value;
             if (newText.trim() !== '') {
@@ -234,25 +295,26 @@
                 .then(() => {
                   noteParagraph.textContent = newText;
                   notaCard.replaceChild(noteParagraph, editInput);
-                  notaCard.replaceChild(editButton, saveEditButton);
+                  buttonContainer.replaceChild(editButton, saveEditButton);
                 })
                 .catch((error) => {
                   console.error('Error al actualizar la nota: ', error);
                 });
             }
           };
-          notaCard.replaceChild(saveEditButton, editButton);
+          buttonContainer.replaceChild(saveEditButton, editButton);
         };
-        notaCard.appendChild(editButton);
-      }
+        buttonContainer.appendChild(editButton);
 
-      // Botón de eliminar
-      const deleteButton = document.createElement('button');
-      deleteButton.textContent = 'X';
-      deleteButton.onclick = function() {
-        eliminarNota(doc.id);
-      };
-      notaCard.appendChild(deleteButton);
+        // Botón de eliminar
+        const deleteButton = document.createElement('button');
+        deleteButton.innerHTML = '✖';
+        deleteButton.onclick = function() {
+          eliminarNota(doc.id);
+        };
+        buttonContainer.appendChild(deleteButton);
+        notaCard.appendChild(buttonContainer);
+      }
 
       notaDisplay.appendChild(notaCard);
     }
@@ -273,7 +335,7 @@
       notaDisplay.innerHTML = '';
     }
 
-    // Escucha cambios en tiempo real de la colección 'notas'
+    // Escucha en tiempo real de la colección 'notas'
     db.collection('notas')
       .orderBy('__name__')
       .onSnapshot((snapshot) => {
