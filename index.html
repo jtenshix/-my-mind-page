@@ -1,115 +1,428 @@
-"use client"
-
-import { useEffect, useRef, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Trash, Pencil } from "lucide-react"
-import { motion } from "framer-motion"
-
-interface Note {
-  id: string
-  content: string
-  x: number
-  y: number
-}
-
-export default function StickyNotes() {
-  const [notes, setNotes] = useState<Note[]>([])
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const savedNotes = localStorage.getItem("sticky-notes")
-    if (savedNotes) {
-      setNotes(JSON.parse(savedNotes))
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notas Oceánicas</title>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+  <!-- GridStack CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
+  <style>
+    /* Fondo tipo océano: de azul claro arriba a azul profundo abajo */
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(to bottom, #a2dff7, #03254c);
+      display: flex;
+      flex-direction: column;
     }
-  }, [])
-
-  const saveNotes = () => {
-    localStorage.setItem("sticky-notes", JSON.stringify(notes))
-  }
-
-  const createNote = () => {
-    const newNote: Note = {
-      id: Date.now().toString(),
-      content: "",
-      x: 50,
-      y: 50,
+    /* Contenedor de GridStack */
+    #notaDisplay {
+      flex-grow: 1;
+      padding: 20px;
     }
-    const updatedNotes = [...notes, newNote]
-    setNotes(updatedNotes)
-    saveNotes()
-    setEditingNoteId(newNote.id)
-  }
-
-  const updateNote = (id: string, content: string) => {
-    const updatedNotes = notes.map((note) =>
-      note.id === id ? { ...note, content } : note
-    )
-    setNotes(updatedNotes)
-  }
-
-  const deleteNote = (id: string) => {
-    const updatedNotes = notes.filter((note) => note.id !== id)
-    setNotes(updatedNotes)
-    saveNotes()
-  }
-
-  const handleDragEnd = (id: string, x: number, y: number) => {
-    const updatedNotes = notes.map((note) =>
-      note.id === id ? { ...note, x, y } : note
-    )
-    setNotes(updatedNotes)
-    saveNotes()
-  }
-
-  return (
-    <div className="relative w-full h-[100vh] bg-neutral-100" ref={containerRef}>
-      <Button
-        onClick={createNote}
-        className="absolute top-4 left-4 z-10"
-      >
-        Crear nota
-      </Button>
-
-      {notes.map((note) => (
-        <motion.div
-          key={note.id}
-          drag
-          dragConstraints={containerRef}
-          onDragEnd={(_, info) =>
-            handleDragEnd(note.id, info.point.x, info.point.y)
-          }
-          initial={{ x: note.x, y: note.y }}
-          animate={{ x: note.x, y: note.y }}
-          className="absolute"
-        >
-          <div className="bg-yellow-100 rounded-xl p-4 w-[200px] h-[200px] flex flex-col justify-between">
-            <Textarea
-              value={note.content}
-              onChange={(e) => updateNote(note.id, e.target.value)}
-              onBlur={saveNotes}
-              className="bg-yellow-100 resize-none border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0"
-            />
-            <div className="flex justify-end gap-2 mt-2">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => deleteNote(note.id)}
-              >
-                <Trash className="h-4 w-4 text-red-500" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setEditingNoteId(note.id)}
-              >
-                <Pencil className="h-4 w-4 text-blue-500" />
-              </Button>
-            </div>
-          </div>
-        </motion.div>
-      ))}
+    /* Cada widget (nota) se mostrará en este contenedor */
+    .grid-stack-item-content {
+      background-color: #fff;
+      border-radius: 8px;
+      padding: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      overflow: hidden;
+      position: relative;
+      max-width: 300px;
+      max-height: 300px;
+    }
+    /* Estilos para texto en la nota */
+    .grid-stack-item-content p,
+    .grid-stack-item-content input[type='text'] {
+      font-size: 16px;
+      white-space: pre-wrap;
+      margin: 0 0 10px 0;
+    }
+    /* Imagen en nota (si aplica) */
+    .grid-stack-item-content img {
+      max-width: 100%;
+      height: auto;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+    /* Contenedor para botones (editar, eliminar) - ahora en la parte inferior derecha */
+    .button-container {
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      display: flex;
+      gap: 5px;
+    }
+    .button-container button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: #555;
+    }
+    /* Botón flotante para agregar notas */
+    #addNoteButton {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #006994;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 30px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+    #addNoteButton:hover {
+      background-color: #005577;
+      transform: scale(1.05);
+    }
+    /* Opciones y área de entrada */
+    #addNoteOptions {
+      position: fixed;
+      bottom: 90px;
+      right: 20px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      background-color: rgba(255,255,255,0.95);
+      border-radius: 5px;
+      padding: 10px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+    }
+    #addNoteOptions button {
+      padding: 8px 15px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      cursor: pointer;
+      background-color: #f9f9f9;
+    }
+    #inputArea {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(255,255,255,0.95);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      width: 80%;
+      max-width: 500px;
+    }
+    /* Estilos para textarea e inputs */
+    #inputArea textarea,
+    #inputArea input[type='text'] {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      resize: none;
+      width: 100%;
+      overflow: hidden;
+      box-sizing: border-box;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      line-height: 1.5;
+    }
+    #inputArea button {
+      padding: 10px 15px;
+      background-color: #006994;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #imageLinkInputArea, #textNoteInputArea {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    /* Oculta el placeholder y shadow durante el arrastre */
+    .grid-stack-placeholder {
+      display: none !important;
+    }
+    .grid-stack-item.ui-draggable-dragging {
+      box-shadow: none !important;
+    }
+  </style>
+</head>
+<body>
+  <!-- Contenedor GridStack -->
+  <div id="notaDisplay" class="grid-stack"></div>
+  <button id="addNoteButton">+</button>
+  <div id="addNoteOptions">
+    <button id="addImageLinkOption">Guardar link de imagen</button>
+    <button id="addTextNoteOption">Subir nota</button>
+  </div>
+  <div id="inputArea">
+    <div id="imageLinkInputArea">
+      <div class="input-group">
+        <label for="imageLink">Link de la imagen:</label>
+        <input type="text" id="imageLink" placeholder="Ej: https://...">
+      </div>
+      <div class="input-group">
+        <label for="imageNoteText">Texto de la imagen (opcional):</label>
+        <textarea id="imageNoteText" placeholder="Descripción o nota..."></textarea>
+      </div>
+      <button id="saveImageLink">Guardar Link</button>
     </div>
-  )
-}
+    <div id="textNoteInputArea">
+      <textarea id="textNote" placeholder="Escribe tu nota aquí..."></textarea>
+      <button id="saveTextNote">Guardar Nota</button>
+    </div>
+  </div>
+  
+  <!-- GridStack JS -->
+  <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
+  <script>
+    // Configuración de Firebase (reemplaza estos valores con los tuyos)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
+      authDomain: "oasis-b036d.firebaseapp.com",
+      projectId: "oasis-b036d",
+      storageBucket: "oasis-b036d.firebasestorage.app",
+      messagingSenderId: "141546637821",
+      appId: "1:141546637821:web:0a861aeb13831774ed3194",
+      measurementId: "G-HB2P17H5YL"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    
+    // Inicializa GridStack con movimiento libre (float: true) y sin redimensionamiento
+    const grid = GridStack.init({
+      margin: 5,
+      disableResize: true,
+      float: true
+    });
+    
+    // Función para autoajustar la altura del textarea conforme se escribe
+    function autoResizeTextarea(el) {
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 'px';
+    }
+    const textNoteInput = document.getElementById('textNote');
+    const imageNoteText = document.getElementById('imageNoteText');
+    textNoteInput.addEventListener('input', function() {
+      autoResizeTextarea(this);
+    });
+    imageNoteText.addEventListener('input', function() {
+      autoResizeTextarea(this);
+    });
+    
+    // Función para mostrar una nota en pantalla y agregarla a GridStack
+    function mostrarNotaEnPantalla(doc) {
+      const notaData = doc.data();
+      
+      // Crea el contenedor del grid item y su contenido
+      const gridItem = document.createElement('div');
+      gridItem.classList.add('grid-stack-item');
+      gridItem.setAttribute('data-note-id', doc.id);
+      
+      const content = document.createElement('div');
+      content.classList.add('grid-stack-item-content');
+      
+      if(notaData.url) {
+        // Nota de imagen
+        const img = document.createElement('img');
+        img.src = notaData.url;
+        content.appendChild(img);
+        if(notaData.texto) {
+          const p = document.createElement('p');
+          p.textContent = notaData.texto;
+          content.appendChild(p);
+        }
+      } else if(notaData.nota) {
+        // Nota de texto
+        const p = document.createElement('p');
+        p.textContent = notaData.nota;
+        content.appendChild(p);
+      }
+      
+      // Botones para editar y eliminar (ahora en la parte inferior derecha)
+      const buttonContainer = document.createElement('div');
+      buttonContainer.classList.add('button-container');
+      
+      const editButton = document.createElement('button');
+      editButton.innerHTML = '✎';
+      editButton.onclick = function() {
+        const editInput = document.createElement('input');
+        editInput.type = 'text';
+        editInput.value = (notaData.texto) ? notaData.texto : (notaData.nota ? notaData.nota : '');
+        const pElement = content.querySelector('p');
+        if(pElement) {
+          content.replaceChild(editInput, pElement);
+        }
+        const saveEditButton = document.createElement('button');
+        saveEditButton.innerHTML = '💾';
+        saveEditButton.onclick = function() {
+          const newText = editInput.value;
+          if(newText.trim() !== '') {
+            db.collection('notas').doc(doc.id).update(notaData.url ? { texto: newText } : { nota: newText })
+              .then(() => {
+                const newP = document.createElement('p');
+                newP.textContent = newText;
+                content.replaceChild(newP, editInput);
+                buttonContainer.replaceChild(editButton, saveEditButton);
+              })
+              .catch((error) => {
+                console.error('Error al actualizar la nota: ', error);
+              });
+          }
+        };
+        buttonContainer.replaceChild(saveEditButton, editButton);
+      };
+      buttonContainer.appendChild(editButton);
+      
+      const deleteButton = document.createElement('button');
+      deleteButton.innerHTML = '✖';
+      deleteButton.onclick = function() {
+        db.collection('notas').doc(doc.id).delete()
+          .then(() => {
+            grid.removeWidget(gridItem);
+          })
+          .catch((error) => {
+            console.error("Error al eliminar la nota: ", error);
+          });
+      };
+      buttonContainer.appendChild(deleteButton);
+      
+      content.appendChild(buttonContainer);
+      gridItem.appendChild(content);
+      
+      // Configura posición y dimensiones persistidas si existen; de lo contrario usa autoPosition
+      const pos = {
+        x: notaData.x || 0,
+        y: typeof notaData.y === 'number' ? notaData.y : 0,
+        w: notaData.w || 2,
+        h: notaData.h || 2,
+        autoPosition: (notaData.x === undefined || notaData.y === undefined)
+      };
+      
+      grid.addWidget(gridItem, pos);
+    }
+    
+    // Limpia los widgets actuales
+    function limpiarNotasDisplay() {
+      grid.removeAll();
+    }
+    
+    // Escucha en tiempo real los cambios de la colección 'notas'
+    db.collection('notas')
+      .orderBy('__name__')
+      .onSnapshot((snapshot) => {
+        limpiarNotasDisplay();
+        snapshot.forEach((doc) => {
+          mostrarNotaEnPantalla(doc);
+        });
+      });
+    
+    // Manejo de la interfaz para agregar notas
+    const addNoteButton = document.getElementById('addNoteButton');
+    const addNoteOptions = document.getElementById('addNoteOptions');
+    const addImageLinkOption = document.getElementById('addImageLinkOption');
+    const addTextNoteOption = document.getElementById('addTextNoteOption');
+    const inputArea = document.getElementById('inputArea');
+    const imageLinkInputArea = document.getElementById('imageLinkInputArea');
+    const imageLinkInput = document.getElementById('imageLink');
+    const saveImageLinkButton = document.getElementById('saveImageLink');
+    const textNoteInputArea = document.getElementById('textNoteInputArea');
+    const saveTextNoteButton = document.getElementById('saveTextNote');
+    let addingNewNote = false;
+    
+    addNoteButton.onclick = function() {
+      addingNewNote = !addingNewNote;
+      addNoteOptions.style.display = addingNewNote ? 'flex' : 'none';
+      inputArea.style.display = 'none';
+      imageLinkInputArea.style.display = 'none';
+      textNoteInputArea.style.display = 'none';
+    };
+    addImageLinkOption.onclick = function() {
+      addNoteOptions.style.display = 'none';
+      inputArea.style.display = 'flex';
+      imageLinkInputArea.style.display = 'flex';
+      textNoteInputArea.style.display = 'none';
+      addingNewNote = false;
+    };
+    addTextNoteOption.onclick = function() {
+      addNoteOptions.style.display = 'none';
+      inputArea.style.display = 'flex';
+      imageLinkInputArea.style.display = 'none';
+      textNoteInputArea.style.display = 'flex';
+      addingNewNote = false;
+    };
+    
+    // Guarda una nota con link de imagen
+    function guardarLinkDeImagen() {
+      const link = imageLinkInput.value;
+      const texto = imageNoteText.value;
+      if (link.trim() !== '') {
+        db.collection('notas').add({
+          url: link,
+          texto: texto.trim() !== '' ? texto : null
+        })
+        .then(() => {
+          imageLinkInput.value = '';
+          imageNoteText.value = '';
+          inputArea.style.display = 'none';
+        })
+        .catch((error) => {
+          console.error('Error al guardar el link de imagen: ', error);
+        });
+      }
+    }
+    
+    // Guarda una nota de texto
+    function guardarNotaTexto() {
+      const nota = textNoteInput.value;
+      if (nota.trim() !== '') {
+        db.collection('notas').add({
+          nota: nota
+        })
+        .then(() => {
+          textNoteInput.value = '';
+          inputArea.style.display = 'none';
+        })
+        .catch((error) => {
+          console.error('Error al guardar la nota de texto: ', error);
+        });
+      }
+    }
+    
+    saveImageLinkButton.onclick = guardarLinkDeImagen;
+    saveTextNoteButton.onclick = guardarNotaTexto;
+    
+    // Escucha el fin del arrastre para guardar la nueva posición en Firebase
+    grid.on('dragstop', function(event, el) {
+      setTimeout(() => {
+        const noteId = el.getAttribute('data-note-id');
+        const node = el.gridstackNode;
+        if(noteId && node) {
+          db.collection('notas').doc(noteId).update({
+            x: node.x,
+            y: node.y,
+            w: node.w,
+            h: node.h
+          }).catch(error => console.error("Error guardando posición:", error));
+        }
+      }, 100);
+    });
+  </script>
+</body>
+</html>
