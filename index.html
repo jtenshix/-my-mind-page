@@ -50,11 +50,11 @@
       object-fit: cover;
       border-radius: 4px;
     }
-    /* Contenedor para botones (editar, eliminar) */
+    /* Contenedor para botones (editar, eliminar) - ubicado en la parte inferior derecha */
     .button-container {
       position: absolute;
       right: 5px;
-      top: 5px;
+      bottom: 5px;
       display: flex;
       gap: 5px;
     }
@@ -268,7 +268,7 @@
         content.appendChild(p);
       }
       
-      // Botones para editar y eliminar la nota
+      // Botones para editar y eliminar la nota (ubicados en la parte inferior)
       const buttonContainer = document.createElement('div');
       buttonContainer.classList.add('button-container');
       
@@ -470,7 +470,7 @@
       }
     }
     
-    // Escucha el fin del arrastre, guarda la nueva posición y verifica la fusión
+    // Escucha el fin del arrastre, guarda la posición y verifica la fusión
     grid.on('dragstop', function(event, el) {
       setTimeout(() => {
         detectAndMerge();
