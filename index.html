@@ -21,14 +21,14 @@
       margin-top: 20px;
       color: white;
     }
-    /* El grid se ajusta verticalmente según el contenido de cada nota */
+    /* Ajuste del grid: reduce el espacio entre notas (gap menor) */
     #notaDisplay {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 15px;
+      gap: 10px; /* Gap reducido de 10px en lugar de 15px */
       padding: 20px;
       flex-grow: 1;
-      align-items: start; /* Evita que las tarjetas se estiren verticalmente */
+      align-items: start; /* Evita estiramiento vertical */
     }
     /* Estilo base para todas las notas */
     .nota-card {
@@ -245,7 +245,7 @@
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       const notaCard = document.createElement('div');
-      // Asigna clase según tipo de nota
+      // Asigna clase según el tipo de nota
       if (notaData.url) {
         notaCard.classList.add('nota-card', 'image-note');
       } else if (notaData.nota) {
@@ -256,11 +256,10 @@
       buttonContainer.classList.add('button-container');
       
       if (notaData.url) {
-        // Nota de imagen con contenedor fijo
+        // Nota de imagen (contenedor fijo)
         const img = document.createElement('img');
         img.src = notaData.url;
         notaCard.appendChild(img);
-        
         let textoParrafo = null;
         if (notaData.texto !== undefined && notaData.texto !== null) {
           textoParrafo = document.createElement('p');
@@ -308,9 +307,8 @@
         };
         buttonContainer.appendChild(deleteButton);
         notaCard.appendChild(buttonContainer);
-        
       } else if (notaData.nota) {
-        // Nota de texto que se ajusta al contenido (sin altura fija)
+        // Nota de texto: contenedor que se adapta al contenido
         const noteParagraph = document.createElement('p');
         noteParagraph.textContent = notaData.nota;
         notaCard.appendChild(noteParagraph);
@@ -379,7 +377,7 @@
         });
       });
     
-    // Eventos para mostrar/ocultar formularios
+    // Eventos para mostrar/ocultar formularios de entrada
     addNoteButton.onclick = function() {
       addingNewNote = !addingNewNote;
       addNoteOptions.style.display = addingNewNote ? 'flex' : 'none';
@@ -402,7 +400,7 @@
       addingNewNote = false;
     };
     
-    // Función para guardar nota con link de imagen
+    // Guarda una nota con link de imagen
     function guardarLinkDeImagen() {
       const link = imageLinkInput.value;
       const texto = imageNoteText.value;
@@ -423,7 +421,7 @@
       }
     }
     
-    // Función para guardar nota de texto
+    // Guarda una nota de texto
     function guardarNotaTexto() {
       const nota = textNoteInput.value;
       if (nota.trim() !== '') {
