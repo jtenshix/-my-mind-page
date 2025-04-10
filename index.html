@@ -1,562 +1,569 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Notas Oceánicas</title>
-    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
-  <style>
-    /* Estilos generales */
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      min-height: 100vh;
-      background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
-      position: relative;
-      overflow: hidden;
-      padding-left: 20px;
-      padding-bottom: 100px; /* Espacio para íconos inferiores */
-    }
-    /* Overlay de luz solar */
-    .sun-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      background: radial-gradient(ellipse at top center, rgba(255,255,224,0.35) 0%, rgba(255,255,224,0) 50%);
-      z-index: 0;
-    }
-    /* Contenedor principal de notas */
-    #notaDisplay {
-      margin-top: 120px;
-      padding: 20px;
-      flex-grow: 1;
-    }
-    /* Cada nota se muestra como una "ventana" (carta de solitario) */
-    .grid-stack-item-content {
-      min-width: 280px;      /* Ancho base de la carta */
-      min-height: 180px;     /* Altura base de la carta */
-      padding: 10px;
-      background-color: #fff;
-      border: 2px solid #0077a3; /* Tono oceánico */
-      border-radius: 8px;
-      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Sombra flotante */
-      display: flex;
-      flex-direction: column;
-      overflow: visible; /* Permitir que la nota se expanda para mostrar todo el contenido */
-      box-sizing: border-box;
-    }
-    /* Cuerpo de la nota */
-    .note-body {
-      padding: 10px;
-      flex-grow: 1;
-      font-size: 16px;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      line-height: 1.5;
-    }
-    /* Imágenes adaptadas al tamaño de la nota */
-    .note-body img {
-      width: 100%;
-      height: auto;
-      object-fit: contain;
-      border-radius: 4px;
-    }
-    /* Barra de control inferior */
-    .note-footer {
-      background-color: rgba(0, 85, 119, 0.8); /* Azul profundo, semitransparente */
-      color: white;
-      height: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 5px;
-    }
-    .footer-left,
-    .footer-right {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    /* Iconos de la barra inferior */
-    .footer-icon {
-      background: none;
-      border: none;
-      color: white;
-      cursor: pointer;
-      font-size: 16px;
-      padding: 2px;
-    }
-    /* Estilo para la estrella draggable */
-    .drag-star {
-      font-size: 30px;
-      color: gold;
-      cursor: move;
-      text-shadow: 0 0 10px rgba(255,215,0,0.8);
-    }
-    /* Botón flotante para agregar notas */
-    #addNoteButton {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background-color: #006994;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 60px;
-      height: 60px;
-      font-size: 30px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-      transition: background-color 0.3s ease, transform 0.3s ease;
-      z-index: 2;
-    }
-    #addNoteButton:hover {
-      background-color: #005577;
-      transform: scale(1.05);
-    }
-    /* Opciones y área de entrada para nuevas notas */
-    #addNoteOptions {
-      position: fixed;
-      bottom: 90px;
-      right: 20px;
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-      background-color: rgba(255,255,255,0.95);
-      border-radius: 5px;
-      padding: 10px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-      z-index: 2;
-    }
-    #addNoteOptions button {
-      padding: 8px 15px;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-      cursor: pointer;
-      background-color: #f9f9f9;
-    }
-    #inputArea {
-      position: fixed;
-      bottom: 90px;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: rgba(255,255,255,0.95);
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-      width: 80%;
-      max-width: 500px;
-      z-index: 2;
-    }
-    #inputArea textarea,
-    #inputArea input[type="text"] {
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      resize: none;
-      width: 100%;
-      box-sizing: border-box;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      line-height: 1.5;
-    }
-    #inputArea button {
-      padding: 10px 15px;
-      background-color: #006994;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    #imageLinkInputArea, #textNoteInputArea {
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-    /* Íconos minimalistas en blanco en la esquina inferior izquierda */
-    #sidebar {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      z-index: 3;
-    }
-    .sidebar-icon {
-      width: 60px;
-      height: 60px;
-      background: none;
-      color: white;
-      font-size: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: transform 0.3s ease;
-    }
-    .sidebar-icon:hover {
-      transform: scale(1.1);
-    }
-    /* Calendario flotante */
-    #floatingCalendar {
-      position: fixed;
-      top: 50%;
-      left: 100px;
-      transform: translateY(-50%);
-      width: 350px;
-      height: 400px;
-      background: #fff;
-      border: 2px solid #ccc;
-      border-radius: 8px;
-      display: none;
-      z-index: 4;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-      padding: 10px;
-    }
-    /* Contenedor para FullCalendar */
-    #calendarContainer {
-      width: 100%;
-      height: 100%;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notas Oceánicas</title>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+  <!-- GridStack CSS & JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
+  <!-- FullCalendar CSS & JS -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
+  <style>
+    /* Estilos generales */
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
+      position: relative;
+      overflow: hidden;
+      padding-left: 20px;
+      padding-bottom: 100px; /* Espacio para íconos inferiores */
+    }
+    /* Overlay de luz solar */
+    .sun-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background: radial-gradient(ellipse at top center, rgba(255,255,224,0.35) 0%, rgba(255,255,224,0) 50%);
+      z-index: 0;
+    }
+    /* Contenedor principal de notas */
+    #notaDisplay {
+      margin-top: 120px;
+      padding: 20px;
+      flex-grow: 1;
+    }
+    /* Cada nota se muestra como una "ventana" (carta de solitario) */
+    .grid-stack-item-content {
+      min-width: 280px;       /* Ancho base de la carta */
+      min-height: 180px;      /* Altura base de la carta */
+      padding: 10px;
+      background-color: #fff;
+      border: 2px solid #0077a3; /* Tono oceánico */
+      border-radius: 8px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Sombra flotante */
+      display: flex;
+      flex-direction: column;
+      overflow: visible; /* Permite que la nota se expanda para mostrar todo el contenido */
+      box-sizing: border-box;
+    }
+    /* Cuerpo de la nota */
+    .note-body {
+      padding: 10px;
+      flex-grow: 1;
+      font-size: 16px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      line-height: 1.5;
+    }
+    /* Imágenes adaptadas al tamaño de la nota */
+    .note-body img {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+    /* Barra de control inferior */
+    .note-footer {
+      background-color: rgba(0, 85, 119, 0.8); /* Azul profundo, semitransparente */
+      color: white;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 5px;
+    }
+    .footer-left,
+    .footer-right {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    /* Iconos de la barra inferior */
+    .footer-icon {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 2px;
+    }
+    /* Estilo para la estrella draggable */
+    .drag-star {
+      font-size: 30px;
+      color: gold;
+      cursor: move;
+      text-shadow: 0 0 10px rgba(255,215,0,0.8);
+    }
+    /* Botón flotante para agregar notas */
+    #addNoteButton {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #006994;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 30px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+      transition: background-color 0.3s ease, transform 0.3s ease;
+      z-index: 2;
+    }
+    #addNoteButton:hover {
+      background-color: #005577;
+      transform: scale(1.05);
+    }
+    /* Opciones y área de entrada para nuevas notas */
+    #addNoteOptions {
+      position: fixed;
+      bottom: 90px;
+      right: 20px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      background-color: rgba(255,255,255,0.95);
+      border-radius: 5px;
+      padding: 10px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+      z-index: 2;
+    }
+    #addNoteOptions button {
+      padding: 8px 15px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      cursor: pointer;
+      background-color: #f9f9f9;
+    }
+    #inputArea {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(255,255,255,0.95);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      width: 80%;
+      max-width: 500px;
+      z-index: 2;
+    }
+    #inputArea textarea,
+    #inputArea input[type="text"] {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      resize: none;
+      width: 100%;
+      box-sizing: border-box;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      line-height: 1.5;
+    }
+    #inputArea button {
+      padding: 10px 15px;
+      background-color: #006994;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #imageLinkInputArea, #textNoteInputArea {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    /* Íconos minimalistas en blanco en la esquina inferior izquierda */
+    #sidebar {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      z-index: 3;
+    }
+    .sidebar-icon {
+      width: 60px;
+      height: 60px;
+      background: none;
+      color: white;
+      font-size: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+    .sidebar-icon:hover {
+      transform: scale(1.1);
+    }
+    /* Calendario flotante */
+    #floatingCalendar {
+      position: fixed;
+      top: 50%;
+      left: 100px;
+      transform: translateY(-50%);
+      width: 350px;
+      height: 400px;
+      background: #fff;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      display: none;
+      z-index: 4;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+      padding: 10px;
+    }
+    /* Contenedor para FullCalendar */
+    #calendarContainer {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
 </head>
 <body>
-    <div class="sun-overlay"></div>
-  
-    <div id="sidebar">
-    <div class="sidebar-icon" title="Música">♪</div>
-    <div class="sidebar-icon" title="Archivos">📁</div>
-    <div class="sidebar-icon" title="Calendario" id="calendarIcon">📅</div>
-    <div class="sidebar-icon" title="Tareas">✎</div>
-    <div class="sidebar-icon" title="Contactos">☎</div>
-  </div>
-  
-    <div id="floatingCalendar">
-    <div id="calendarContainer"></div>
-  </div>
-  
-    <div id="notaDisplay" class="grid-stack"></div>
-  <button id="addNoteButton">+</button>
-  <div id="addNoteOptions">
-    <button id="addImageLinkOption">Guardar link de imagen</button>
-    <button id="addTextNoteOption">Subir nota</button>
-  </div>
-  <div id="inputArea">
-    <div id="imageLinkInputArea">
-      <div class="input-group">
-        <label for="imageLink">Link de la imagen:</label>
-        <input type="text" id="imageLink" placeholder="Ej: https://..." />
-      </div>
-      <div class="input-group">
-        <label for="imageNoteText">Texto de la imagen (opcional):</label>
-        <textarea id="imageNoteText" placeholder="Descripción o nota..."></textarea>
-      </div>
-      <button id="saveImageLink">Guardar Link</button>
-    </div>
-    <div id="textNoteInputArea">
-      <textarea id="textNote" placeholder="Escribe tu nota aquí..."></textarea>
-      <button id="saveTextNote">Guardar Nota</button>
-    </div>
-  </div>
-  
-  <script>
-    // Configuración de Firebase (reemplaza con tus datos)
-    const firebaseConfig = {
-      apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
-      authDomain: "oasis-b036d.firebaseapp.com",
-      projectId: "oasis-b036d",
-      storageBucket: "oasis-b036d.firebasestorage.app",
-      messagingSenderId: "141546637821",
-      appId: "1:141546637821:web:0a861aeb13831774ed3194",
-      measurementId: "G-HB2P17H5YL"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    
-    // Inicializar GridStack
-    const grid = GridStack.init({
-      margin: 5,
-      disableResize: true,
-      float: true
-    });
-    
-    // Autoajuste en textareas
-    function autoResizeTextarea(el) {
-      el.style.height = 'auto';
-      el.style.height = el.scrollHeight + 'px';
-    }
-    const textNoteInput = document.getElementById('textNote');
-    const imageNoteText = document.getElementById('imageNoteText');
-    textNoteInput.addEventListener('input', () => autoResizeTextarea(textNoteInput));
-    imageNoteText.addEventListener('input', () => autoResizeTextarea(imageNoteText));
-    
-    // Función para crear y mostrar cada nota en pantalla
-    function mostrarNotaEnPantalla(doc) {
-      const notaData = doc.data();
-      
-      // Crear widget (nota) y su contenedor
-      const gridItem = document.createElement('div');
-      gridItem.classList.add('grid-stack-item');
-      gridItem.setAttribute('data-note-id', doc.id);
-      
-      // Contenedor de la nota (tipo carta)
-      const content = document.createElement('div');
-      content.classList.add('grid-stack-item-content');
-      
-      // Cuerpo de la nota
-      const noteBody = document.createElement('div');
-      noteBody.classList.add('note-body');
-      
-      if(notaData.url) {
-        const img = document.createElement('img');
-        img.src = notaData.url;
-        noteBody.appendChild(img);
-        if(notaData.texto) {
-          const p = document.createElement('p');
-          p.textContent = notaData.texto;
-          noteBody.appendChild(p);
-        }
-      } else if(notaData.nota) {
-        const p = document.createElement('p');
-        p.textContent = notaData.nota;
-        noteBody.appendChild(p);
-      }
-      
-      content.appendChild(noteBody);
-      
-      // Footer con controles (editar, eliminar, draggable)
-      const noteFooter = document.createElement('div');
-      noteFooter.classList.add('note-footer');
-      const footerLeft = document.createElement('div');
-      footerLeft.classList.add('footer-left');
-      const dragStar = document.createElement('div');
-      dragStar.classList.add('drag-star');
-      dragStar.textContent = '✦';
-      dragStar.draggable = true;
-      dragStar.addEventListener('dragstart', (e) => {
-        document.getElementById('floatingCalendar').style.display = 'block';
-        e.dataTransfer.setData("text/plain", doc.id);
-      });
-      dragStar.addEventListener('dragend', () => {
-        setTimeout(() => {
-          document.getElementById('floatingCalendar').style.display = 'none';
-        }, 100);
-      });
-      footerLeft.appendChild(dragStar);
-      
-      const footerRight = document.createElement('div');
-      footerRight.classList.add('footer-right');
-      const editButton = document.createElement('button');
-      editButton.classList.add('footer-icon');
-      editButton.innerHTML = '✎';
-      editButton.onclick = function() {
-        const editInput = document.createElement('input');
-        editInput.type = 'text';
-        editInput.value = notaData.texto || notaData.nota || '';
-        const pElement = noteBody.querySelector('p');
-        if(pElement) {
-          noteBody.replaceChild(editInput, pElement);
-        }
-        const saveEditButton = document.createElement('button');
-        saveEditButton.classList.add('footer-icon');
-        saveEditButton.innerHTML = '💾';
-        saveEditButton.onclick = function() {
-          const newText = editInput.value;
-          if(newText.trim() !== '') {
-            db.collection('notas').doc(doc.id).update(notaData.url ? { texto: newText } : { nota: newText })
-              .then(() => {
-                const newP = document.createElement('p');
-                newP.textContent = newText;
-                noteBody.replaceChild(newP, editInput);
-                footerRight.replaceChild(editButton, saveEditButton);
-              })
-              .catch((error) => {
-                console.error('Error al actualizar la nota: ', error);
-              });
-          }
-        };
-        footerRight.replaceChild(saveEditButton, editButton);
-      };
-      footerRight.appendChild(editButton);
-      
-      const deleteButton = document.createElement('button');
-      deleteButton.classList.add('footer-icon');
-      deleteButton.innerHTML = '✖';
-      deleteButton.onclick = function() {
-        db.collection('notas').doc(doc.id).delete()
-          .then(() => {
-            grid.removeWidget(gridItem);
-          })
-          .catch((error) => {
-            console.error("Error al eliminar la nota: ", error);
-          });
-      };
-      footerRight.appendChild(deleteButton);
-      
-      noteFooter.appendChild(footerLeft);
-      noteFooter.appendChild(footerRight);
-      content.appendChild(noteFooter);
-      gridItem.appendChild(content);
-      
-      // Configurar posición y dimensiones (persistentes o por defecto)
-      const pos = {
-        x: notaData.x || 0,
-        y: typeof notaData.y === 'number' ? notaData.y : 0,
-        w: notaData.w || 2,
-        h: notaData.h || 2,
-        autoPosition: (notaData.x === undefined || notaData.y === undefined)
-      };
-      grid.addWidget(gridItem, pos);
-    }
-    
-    // Función para limpiar todas las notas
-    function limpiarNotasDisplay() {
-      grid.removeAll();
-    }
-    
-    // Escuchar cambios en la colección "notas"
-    db.collection('notas')
-      .orderBy('__name__')
-      .onSnapshot((snapshot) => {
-        limpiarNotasDisplay();
-        snapshot.forEach((doc) => {
-          mostrarNotaEnPantalla(doc);
-        });
-      });
-    
-    // Manejo de la interfaz para agregar notas
-    const addNoteButton = document.getElementById('addNoteButton');
-    const addNoteOptions = document.getElementById('addNoteOptions');
-    const addImageLinkOption = document.getElementById('addImageLinkOption');
-    const addTextNoteOption = document.getElementById('addTextNoteOption');
-    const inputArea = document.getElementById('inputArea');
-    const imageLinkInputArea = document.getElementById('imageLinkInputArea');
-    const imageLinkInput = document.getElementById('imageLink');
-    const saveImageLinkButton = document.getElementById('saveImageLink');
-    const textNoteInputArea = document.getElementById('textNoteInputArea');
-    const saveTextNoteButton = document.getElementById('saveTextNote');
-    let addingNewNote = false;
-    
-    addNoteButton.onclick = function() {
-      addingNewNote = !addingNewNote;
-      addNoteOptions.style.display = addingNewNote ? 'flex' : 'none';
-      inputArea.style.display = 'none';
-      imageLinkInputArea.style.display = 'none';
-      textNoteInputArea.style.display = 'none';
-    };
-    addImageLinkOption.onclick = function() {
-      addNoteOptions.style.display = 'none';
-      inputArea.style.display = 'flex';
-      imageLinkInputArea.style.display = 'flex';
-      textNoteInputArea.style.display = 'none';
-      addingNewNote = false;
-    };
-    addTextNoteOption.onclick = function() {
-      addNoteOptions.style.display = 'none';
-      inputArea.style.display = 'flex';
-      imageLinkInputArea.style.display = 'none';
-      textNoteInputArea.style.display = 'flex';
-      addingNewNote = false;
-    };
-    
-    // Función para guardar nota con link de imagen
-    function guardarLinkDeImagen() {
-      const link = imageLinkInput.value;
-      const texto = imageNoteText.value;
-      if(link.trim() !== '') {
-        db.collection('notas').add({
-          url: link,
-          texto: texto.trim() !== '' ? texto : null
-        })
-        .then(() => {
-          imageLinkInput.value = '';
-          imageNoteText.value = '';
-          inputArea.style.display = 'none';
-        })
-        .catch((error) => {
-          console.error('Error al guardar el link de imagen: ', error);
-        });
-      }
-    }
-    
-    // Función para guardar nota de texto
-    function guardarNotaTexto() {
-      const nota = textNoteInput.value;
-      if(nota.trim() !== '') {
-        db.collection('notas').add({
-          nota: nota
-        })
-        .then(() => {
-          textNoteInput.value = '';
-          inputArea.style.display = 'none';
-        })
-        .catch((error) => {
-          console.error('Error al guardar la nota de texto: ', error);
-        });
-      }
-    }
-    
-    saveImageLinkButton.onclick = guardarLinkDeImagen;
-    saveTextNoteButton.onclick = guardarNotaTexto;
-    
-    // Actualizar posición de la nota al finalizar arrastre
-    grid.on('dragstop', function(event, el) {
-      setTimeout(() => {
-        const noteId = el.getAttribute('data-note-id');
-        const node = el.gridstackNode;
-        if(noteId && node) {
-          db.collection('notas').doc(noteId).update({
-            x: node.x,
-            y: node.y,
-            w: node.w,
-            h: node.h
-          }).catch(error => console.error("Error guardando posición:", error));
-        }
-      }, 100);
-    });
-    
-    // Inicialización de FullCalendar (sin cambios en esta parte)
-    document.addEventListener('DOMContentLoaded', function() {
-      var calendarEl = document.getElementById('calendarContainer');
-      var calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        initialDate: '2025-04-10',
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
-        selectable: true,
-        navLinks: true,
-        businessHours: true,
-        dayMaxEvents: true,
-        dateClick: function(info) {
-          // Ejemplo: asignar fecha a la nota (completar según lógica deseada)
-          console.log("Fecha seleccionada: " + info.dateStr);
-        }
-      });
-      calendar.render();
-    });
-  </script>
+  <!-- Overlay -->
+  <div class="sun-overlay"></div>
+  
+  <!-- Íconos minimalistas en blanco en la esquina inferior izquierda -->
+  <div id="sidebar">
+    <div class="sidebar-icon" title="Música">♪</div>
+    <div class="sidebar-icon" title="Archivos">📁</div>
+    <div class="sidebar-icon" title="Calendario" id="calendarIcon">📅</div>
+    <div class="sidebar-icon" title="Tareas">✎</div>
+    <div class="sidebar-icon" title="Contactos">☎</div>
+  </div>
+  
+  <!-- Calendario flotante con FullCalendar -->
+  <div id="floatingCalendar">
+    <div id="calendarContainer"></div>
+  </div>
+  
+  <!-- Contenedor de notas con GridStack -->
+  <div id="notaDisplay" class="grid-stack"></div>
+  <button id="addNoteButton">+</button>
+  <div id="addNoteOptions">
+    <button id="addImageLinkOption">Guardar link de imagen</button>
+    <button id="addTextNoteOption">Subir nota</button>
+  </div>
+  <div id="inputArea">
+    <div id="imageLinkInputArea">
+      <div class="input-group">
+        <label for="imageLink">Link de la imagen:</label>
+        <input type="text" id="imageLink" placeholder="Ej: https://..." />
+      </div>
+      <div class="input-group">
+        <label for="imageNoteText">Texto de la imagen (opcional):</label>
+        <textarea id="imageNoteText" placeholder="Descripción o nota..."></textarea>
+      </div>
+      <button id="saveImageLink">Guardar Link</button>
+    </div>
+    <div id="textNoteInputArea">
+      <textarea id="textNote" placeholder="Escribe tu nota aquí..."></textarea>
+      <button id="saveTextNote">Guardar Nota</button>
+    </div>
+  </div>
+  
+  <script>
+    // Configuración de Firebase (reemplaza con tus datos)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
+      authDomain: "oasis-b036d.firebaseapp.com",
+      projectId: "oasis-b036d",
+      storageBucket: "oasis-b036d.firebasestorage.app",
+      messagingSenderId: "141546637821",
+      appId: "1:141546637821:web:0a861aeb13831774ed3194",
+      measurementId: "G-HB2P17H5YL"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    
+    // Inicializar GridStack
+    const grid = GridStack.init({
+      margin: 5,
+      disableResize: true,
+      float: true
+    });
+    
+    // Autoajuste en textareas
+    function autoResizeTextarea(el) {
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 'px';
+    }
+    const textNoteInput = document.getElementById('textNote');
+    const imageNoteText = document.getElementById('imageNoteText');
+    textNoteInput.addEventListener('input', () => autoResizeTextarea(textNoteInput));
+    imageNoteText.addEventListener('input', () => autoResizeTextarea(imageNoteText));
+    
+    // Función para crear y mostrar cada nota en pantalla
+    function mostrarNotaEnPantalla(doc) {
+      const notaData = doc.data();
+      
+      // Crear widget (nota) y su contenedor
+      const gridItem = document.createElement('div');
+      gridItem.classList.add('grid-stack-item');
+      gridItem.setAttribute('data-note-id', doc.id);
+      
+      // Contenedor de la nota (tipo carta)
+      const content = document.createElement('div');
+      content.classList.add('grid-stack-item-content');
+      
+      // Cuerpo de la nota
+      const noteBody = document.createElement('div');
+      noteBody.classList.add('note-body');
+      
+      if(notaData.url) {
+        const img = document.createElement('img');
+        img.src = notaData.url;
+        noteBody.appendChild(img);
+        if(notaData.texto) {
+          const p = document.createElement('p');
+          p.textContent = notaData.texto;
+          noteBody.appendChild(p);
+        }
+      } else if(notaData.nota) {
+        const p = document.createElement('p');
+        p.textContent = notaData.nota;
+        noteBody.appendChild(p);
+      }
+      
+      content.appendChild(noteBody);
+      
+      // Footer con controles (editar, eliminar, draggable)
+      const noteFooter = document.createElement('div');
+      noteFooter.classList.add('note-footer');
+      const footerLeft = document.createElement('div');
+      footerLeft.classList.add('footer-left');
+      const dragStar = document.createElement('div');
+      dragStar.classList.add('drag-star');
+      dragStar.textContent = '✦';
+      dragStar.draggable = true;
+      dragStar.addEventListener('dragstart', (e) => {
+        document.getElementById('floatingCalendar').style.display = 'block';
+        e.dataTransfer.setData("text/plain", doc.id);
+      });
+      dragStar.addEventListener('dragend', () => {
+        setTimeout(() => {
+          document.getElementById('floatingCalendar').style.display = 'none';
+        }, 100);
+      });
+      footerLeft.appendChild(dragStar);
+      
+      const footerRight = document.createElement('div');
+      footerRight.classList.add('footer-right');
+      const editButton = document.createElement('button');
+      editButton.classList.add('footer-icon');
+      editButton.innerHTML = '✎';
+      editButton.onclick = function() {
+        const editInput = document.createElement('input');
+        editInput.type = 'text';
+        editInput.value = notaData.texto || notaData.nota || '';
+        const pElement = noteBody.querySelector('p');
+        if(pElement) {
+          noteBody.replaceChild(editInput, pElement);
+        }
+        const saveEditButton = document.createElement('button');
+        saveEditButton.classList.add('footer-icon');
+        saveEditButton.innerHTML = '💾';
+        saveEditButton.onclick = function() {
+          const newText = editInput.value;
+          if(newText.trim() !== '') {
+            db.collection('notas').doc(doc.id).update(notaData.url ? { texto: newText } : { nota: newText })
+              .then(() => {
+                const newP = document.createElement('p');
+                newP.textContent = newText;
+                noteBody.replaceChild(newP, editInput);
+                footerRight.replaceChild(editButton, saveEditButton);
+              })
+              .catch((error) => {
+                console.error('Error al actualizar la nota: ', error);
+              });
+          }
+        };
+        footerRight.replaceChild(saveEditButton, editButton);
+      };
+      footerRight.appendChild(editButton);
+      
+      const deleteButton = document.createElement('button');
+      deleteButton.classList.add('footer-icon');
+      deleteButton.innerHTML = '✖';
+      deleteButton.onclick = function() {
+        db.collection('notas').doc(doc.id).delete()
+          .then(() => {
+            grid.removeWidget(gridItem);
+          })
+          .catch((error) => {
+            console.error("Error al eliminar la nota: ", error);
+          });
+      };
+      footerRight.appendChild(deleteButton);
+      
+      noteFooter.appendChild(footerLeft);
+      noteFooter.appendChild(footerRight);
+      content.appendChild(noteFooter);
+      gridItem.appendChild(content);
+      
+      // Configurar posición y dimensiones (persistentes o por defecto)
+      const pos = {
+        x: notaData.x || 0,
+        y: typeof notaData.y === 'number' ? notaData.y : 0,
+        w: notaData.w || 2,
+        h: notaData.h || 2,
+        autoPosition: (notaData.x === undefined || notaData.y === undefined)
+      };
+      grid.addWidget(gridItem, pos);
+    }
+    
+    // Función para limpiar todas las notas
+    function limpiarNotasDisplay() {
+      grid.removeAll();
+    }
+    
+    // Escuchar cambios en la colección "notas"
+    db.collection('notas')
+      .orderBy('__name__')
+      .onSnapshot((snapshot) => {
+        limpiarNotasDisplay();
+        snapshot.forEach((doc) => {
+          mostrarNotaEnPantalla(doc);
+        });
+      });
+    
+    // Manejo de la interfaz para agregar notas
+    const addNoteButton = document.getElementById('addNoteButton');
+    const addNoteOptions = document.getElementById('addNoteOptions');
+    const addImageLinkOption = document.getElementById('addImageLinkOption');
+    const addTextNoteOption = document.getElementById('addTextNoteOption');
+    const inputArea = document.getElementById('inputArea');
+    const imageLinkInputArea = document.getElementById('imageLinkInputArea');
+    const imageLinkInput = document.getElementById('imageLink');
+    const saveImageLinkButton = document.getElementById('saveImageLink');
+    const textNoteInputArea = document.getElementById('textNoteInputArea');
+    const saveTextNoteButton = document.getElementById('saveTextNote');
+    let addingNewNote = false;
+    
+    addNoteButton.onclick = function() {
+      addingNewNote = !addingNewNote;
+      addNoteOptions.style.display = addingNewNote ? 'flex' : 'none';
+      inputArea.style.display = 'none';
+      imageLinkInputArea.style.display = 'none';
+      textNoteInputArea.style.display = 'none';
+    };
+    addImageLinkOption.onclick = function() {
+      addNoteOptions.style.display = 'none';
+      inputArea.style.display = 'flex';
+      imageLinkInputArea.style.display = 'flex';
+      textNoteInputArea.style.display = 'none';
+      addingNewNote = false;
+    };
+    addTextNoteOption.onclick = function() {
+      addNoteOptions.style.display = 'none';
+      inputArea.style.display = 'flex';
+      imageLinkInputArea.style.display = 'none';
+      textNoteInputArea.style.display = 'flex';
+      addingNewNote = false;
+    };
+    
+    // Función para guardar nota con link de imagen
+    function guardarLinkDeImagen() {
+      const link = imageLinkInput.value;
+      const texto = imageNoteText.value;
+      if(link.trim() !== '') {
+        db.collection('notas').add({
+          url: link,
+          texto: texto.trim() !== '' ? texto : null
+        })
+        .then(() => {
+          imageLinkInput.value = '';
+          imageNoteText.value = '';
+          inputArea.style.display = 'none';
+        })
+        .catch((error) => {
+          console.error('Error al guardar el link de imagen: ', error);
+        });
+      }
+    }
+    
+    // Función para guardar nota de texto
+    function guardarNotaTexto() {
+      const nota = textNoteInput.value;
+      if(nota.trim() !== '') {
+        db.collection('notas').add({
+          nota: nota
+        })
+        .then(() => {
+          textNoteInput.value = '';
+          inputArea.style.display = 'none';
+        })
+        .catch((error) => {
+          console.error('Error al guardar la nota de texto: ', error);
+        });
+      }
+    }
+    
+    saveImageLinkButton.onclick = guardarLinkDeImagen;
+    saveTextNoteButton.onclick = guardarNotaTexto;
+    
+    // Actualizar posición de la nota al finalizar arrastre
+    grid.on('dragstop', function(event, el) {
+      setTimeout(() => {
+        const noteId = el.getAttribute('data-note-id');
+        const node = el.gridstackNode;
+        if(noteId && node) {
+          db.collection('notas').doc(noteId).update({
+            x: node.x,
+            y: node.y,
+            w: node.w,
+            h: node.h
+          }).catch(error => console.error("Error guardando posición:", error));
+        }
+      }, 100);
+    });
+    
+    // Inicialización de FullCalendar (sin cambios en esta parte)
+    document.addEventListener('DOMContentLoaded', function() {
+      var calendarEl = document.getElementById('calendarContainer');
+      var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        initialDate: '2025-04-10',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        selectable: true,
+        navLinks: true,
+        businessHours: true,
+        dayMaxEvents: true,
+        dateClick: function(info) {
+          // Ejemplo: asignar fecha a la nota (completar según lógica deseada)
+          console.log("Fecha seleccionada: " + info.dateStr);
+        }
+      });
+      calendar.render();
+    });
+  </script>
 </body>
 </html>
