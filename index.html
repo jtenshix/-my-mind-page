@@ -10,22 +10,22 @@
   <!-- GridStack CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
   <style>
-    /* Fondo oceánico: degradado de azul claro (arriba) a azul profundo (abajo) */
+    /* Fondo oceánico con degradado: arriba claro y abajo oscuro */
     body {
       font-family: sans-serif;
       margin: 0;
       min-height: 100vh;
-      background: linear-gradient(to bottom, #a2dff7, #03254c);
+      background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
       position: relative;
       overflow: hidden;
     }
-    /* Contenedor de notas: deja un margen superior para la navegación (sin afectar al overlay del sol) */
+    /* Contenedor de notas: reserva un margen superior para navegación futura */
     #notaDisplay {
-      margin-top: 120px;  /* reserva espacio en la parte superior */
+      margin-top: 120px;
       padding: 20px;
       flex-grow: 1;
     }
-    /* Sun overlay a pantalla completa: simula la luz solar que se filtra desde arriba */
+    /* Sun overlay a pantalla completa para simular la luz solar */
     .sun-overlay {
       position: fixed;
       top: 0;
@@ -33,7 +33,7 @@
       width: 100%;
       height: 100%;
       pointer-events: none;
-      background: radial-gradient(ellipse at top center, rgba(255,255,224,0.3) 0%, transparent 70%);
+      background: radial-gradient(ellipse at top center, rgba(255,255,224,0.35) 0%, rgba(255,255,224,0) 50%);
       z-index: 0;
     }
     /* Cada nota (widget) */
@@ -46,27 +46,26 @@
       position: relative;
       max-width: 300px;
       max-height: 300px;
-      z-index: 1; /* aseguramos que las notas van sobre el overlay */
+      z-index: 1;
     }
-    /* Transición ajustada para simular resistencia del agua: mayor duración y curva personalizada */
+    /* Transición para simular la resistencia del agua en el movimiento de las notas */
     .grid-stack-item {
-      transition: transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+      transition: transform 0.8s cubic-bezier(0.35, 0.45, 0.55, 1.2);
     }
-    /* Estilos para texto e inputs dentro de la nota */
+    /* Estilos para texto, inputs y elementos internos de la nota */
     .grid-stack-item-content p,
     .grid-stack-item-content input[type='text'] {
       font-size: 16px;
       white-space: pre-wrap;
       margin: 0 0 10px 0;
     }
-    /* Imagen en la nota */
     .grid-stack-item-content img {
       max-width: 100%;
       height: auto;
       object-fit: cover;
       border-radius: 4px;
     }
-    /* Botones: ubicados en la parte inferior derecha dentro de la nota */
+    /* Botones de editar y eliminar: ubicados en la esquina inferior derecha */
     .button-container {
       position: absolute;
       bottom: 5px;
@@ -105,7 +104,7 @@
       background-color: #005577;
       transform: scale(1.05);
     }
-    /* Opciones y área de entrada de notas */
+    /* Opciones y área de entrada para nuevas notas */
     #addNoteOptions {
       position: fixed;
       bottom: 90px;
@@ -142,7 +141,6 @@
       max-width: 500px;
       z-index: 2;
     }
-    /* Estilos para textarea e inputs dentro del área de entrada */
     #inputArea textarea,
     #inputArea input[type='text'] {
       padding: 10px;
@@ -174,7 +172,7 @@
       flex-direction: column;
       gap: 5px;
     }
-    /* Oculta el placeholder y sombra durante el arrastre */
+    /* Oculta el placeholder y la sombra durante el arrastre */
     .grid-stack-placeholder {
       display: none !important;
     }
@@ -184,10 +182,10 @@
   </style>
 </head>
 <body>
-  <!-- Sun overlay que cubre toda la pantalla -->
+  <!-- Overlay con luz solar que cubre toda la pantalla -->
   <div class="sun-overlay"></div>
   
-  <!-- Contenedor GridStack con margen superior -->
+  <!-- Contenedor principal de notas con GridStack -->
   <div id="notaDisplay" class="grid-stack"></div>
   <button id="addNoteButton">+</button>
   <div id="addNoteOptions">
@@ -228,14 +226,14 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     
-    // Inicializa GridStack con movimiento libre (float: true) y sin redimensionamiento
+    // Inicializa GridStack con opción de movimiento libre y sin redimensionamiento
     const grid = GridStack.init({
       margin: 5,
       disableResize: true,
       float: true
     });
     
-    // Función para autoajustar la altura del textarea conforme se escribe
+    // Función para autoajustar la altura de los textareas
     function autoResizeTextarea(el) {
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
@@ -249,11 +247,11 @@
       autoResizeTextarea(this);
     });
     
-    // Función para mostrar una nota en pantalla y agregarla a GridStack
+    // Función para mostrar cada nota y agregarla a GridStack
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       
-      // Crea el contenedor del widget y su contenido
+      // Crear el widget y contenido
       const gridItem = document.createElement('div');
       gridItem.classList.add('grid-stack-item');
       gridItem.setAttribute('data-note-id', doc.id);
@@ -262,7 +260,7 @@
       content.classList.add('grid-stack-item-content');
       
       if(notaData.url) {
-        // Nota de imagen
+        // Nota con imagen
         const img = document.createElement('img');
         img.src = notaData.url;
         content.appendChild(img);
@@ -278,7 +276,7 @@
         content.appendChild(p);
       }
       
-      // Botones de edición y eliminación (ubicados en la esquina inferior derecha)
+      // Botones de editar y eliminar en la esquina inferior derecha
       const buttonContainer = document.createElement('div');
       buttonContainer.classList.add('button-container');
       
@@ -329,7 +327,7 @@
       content.appendChild(buttonContainer);
       gridItem.appendChild(content);
       
-      // Configura posición y dimensiones persistidas; si no existen, se usan valores por defecto y autoPosition
+      // Configurar posición y dimensiones persistidas o usar defaults con autoPosition
       const pos = {
         x: notaData.x || 0,
         y: typeof notaData.y === 'number' ? notaData.y : 0,
@@ -341,12 +339,12 @@
       grid.addWidget(gridItem, pos);
     }
     
-    // Limpia los widgets actuales
+    // Limpia todos los widgets existentes
     function limpiarNotasDisplay() {
       grid.removeAll();
     }
     
-    // Escucha en tiempo real los cambios de la colección 'notas'
+    // Escucha en tiempo real los cambios en la colección 'notas'
     db.collection('notas')
       .orderBy('__name__')
       .onSnapshot((snapshot) => {
