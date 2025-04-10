@@ -7,10 +7,12 @@
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
-  <!-- GridStack CSS -->
+  <!-- GridStack CSS & JS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
-  <!-- GridStack JS -->
   <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
+  <!-- FullCalendar CSS & JS -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
   <style>
     /* Estilos generales */
     body {
@@ -20,7 +22,7 @@
       background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
       position: relative;
       overflow: hidden;
-      padding-left: 80px; /* para dejar espacio a la barra lateral */
+      padding-left: 100px; /* espacio para los íconos flotantes */
     }
     /* Overlay con luz solar */
     .sun-overlay {
@@ -81,15 +83,16 @@
       font-size: 16px;
       color: #555;
     }
-    /* Estilo para la estrella draggable en la esquina inferior izquierda */
+    /* Estilo para la estrella draggable (cuatro puntas con halo brillante) */
     .drag-star {
       position: absolute;
       bottom: 5px;
       left: 5px;
-      font-size: 20px;
+      font-size: 30px;
       color: gold;
       cursor: move;
       z-index: 2;
+      text-shadow: 0 0 10px rgba(255,215,0,0.8);
     }
     /* Botón flotante para agregar notas */
     #addNoteButton {
@@ -190,26 +193,23 @@
     .grid-stack-item.ui-draggable-dragging {
       box-shadow: none !important;
     }
-    /* Barra lateral vertical izquierda */
+    /* Íconos flotantes en la esquina superior izquierda */
     #sidebar {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 80px;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.4);
+      top: 20px;
+      left: 20px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
       gap: 20px;
       z-index: 3;
     }
     .sidebar-icon {
-      width: 50px;
-      height: 50px;
-      background: #fff;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
+      background: none; /* sin fondo */
+      color: white;
+      font-size: 30px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -223,17 +223,22 @@
     #floatingCalendar {
       position: fixed;
       top: 50%;
-      left: 90px; /* junto a la barra lateral */
+      left: 100px; /* junto a los íconos */
       transform: translateY(-50%);
-      width: 300px;
-      height: 300px;
+      width: 350px;
+      height: 400px;
       background: #fff;
       border: 2px solid #ccc;
       border-radius: 8px;
       display: none;
       z-index: 4;
-      padding: 10px;
       box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+      padding: 10px;
+    }
+    /* Contenedor interno para FullCalendar */
+    #calendarContainer {
+      width: 100%;
+      height: 100%;
     }
   </style>
 </head>
@@ -241,7 +246,7 @@
   <!-- Overlay con luz solar -->
   <div class="sun-overlay"></div>
 
-  <!-- Barra lateral con íconos -->
+  <!-- Íconos flotantes (sin barra oscura de fondo) -->
   <div id="sidebar">
     <div class="sidebar-icon" title="Música">♪</div>
     <div class="sidebar-icon" title="Archivos">📁</div>
@@ -250,11 +255,9 @@
     <div class="sidebar-icon" title="Contactos">☎</div>
   </div>
 
-  <!-- Calendario flotante (se despliega al pasar el mouse por el ícono del calendario) -->
+  <!-- Calendario flotante con FullCalendar -->
   <div id="floatingCalendar">
-    <!-- Aquí se puede insertar un calendario real o de ejemplo -->
-    <h3 style="text-align: center;">Calendario</h3>
-    <p style="text-align: center; font-size: 14px;">[Calendario de ejemplo]</p>
+    <div id="calendarContainer"></div>
   </div>
   
   <!-- Contenedor principal de notas con GridStack -->
@@ -303,7 +306,7 @@
       float: true
     });
     
-    // Función para autoajustar la altura de los textareas
+    // Autoajuste de altura en textareas
     function autoResizeTextarea(el) {
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
@@ -317,7 +320,7 @@
       autoResizeTextarea(this);
     });
     
-    // Función para crear y mostrar cada nota en pantalla con su contenido y elementos interactivos
+    // Función para crear y mostrar cada nota en pantalla
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       
@@ -329,23 +332,17 @@
       const content = document.createElement('div');
       content.classList.add('grid-stack-item-content');
       
-      // Agregar estrella draggable en la esquina inferior izquierda
+      // Agregar la estrella draggable (cuatro puntas) con halo
       const dragStar = document.createElement('div');
       dragStar.classList.add('drag-star');
-      dragStar.textContent = '★';
+      dragStar.textContent = '✦';
       dragStar.draggable = true;
-      // Eventos para drag & drop de la estrella
       dragStar.addEventListener('dragstart', (e) => {
-        // Ocultar o "plegar" el calendario al iniciar el arrastre
         document.getElementById('floatingCalendar').style.display = 'none';
-        // Opcional: agrega datos al drag si se desea procesar la asignación
         e.dataTransfer.setData("text/plain", doc.id);
       });
       dragStar.addEventListener('dragend', () => {
-        // Al finalizar el arrastre, se puede reactivar el calendario o dejarlo oculto
-        // En este ejemplo se lo muestra de nuevo cuando no esté sobre el ícono
-        // (la lógica real de asignación se puede ampliar según se necesite)
-        // Revisa el estado del ícono de calendario si se desea mostrarlo o no
+        // Puedes ajustar la lógica para mostrar o no el calendario
       });
       
       if(notaData.url) {
@@ -365,7 +362,7 @@
         content.appendChild(p);
       }
       
-      // Botones de editar y eliminar en la esquina inferior derecha
+      // Botones de edición y eliminación en la esquina inferior derecha
       const buttonContainer = document.createElement('div');
       buttonContainer.classList.add('button-container');
       
@@ -374,7 +371,7 @@
       editButton.onclick = function() {
         const editInput = document.createElement('input');
         editInput.type = 'text';
-        editInput.value = (notaData.texto) ? notaData.texto : (notaData.nota ? notaData.nota : '');
+        editInput.value = notaData.texto || notaData.nota || '';
         const pElement = content.querySelector('p');
         if(pElement) {
           content.replaceChild(editInput, pElement);
@@ -414,7 +411,7 @@
       buttonContainer.appendChild(deleteButton);
       
       content.appendChild(buttonContainer);
-      // Agregar la estrella draggable (en la esquina inferior izquierda)
+      // Agregar la estrella draggable
       content.appendChild(dragStar);
       gridItem.appendChild(content);
       
@@ -430,7 +427,7 @@
       grid.addWidget(gridItem, pos);
     }
     
-    // Función para limpiar todos los widgets existentes
+    // Limpia todos los widgets existentes
     function limpiarNotasDisplay() {
       grid.removeAll();
     }
@@ -544,7 +541,6 @@
       floatingCalendar.style.display = 'block';
     });
     calendarIcon.addEventListener('mouseleave', () => {
-      // Se retrasa un poco para poder hacer drop sobre el calendario si se desea
       setTimeout(() => {
         if (!isDraggingStar) {
           floatingCalendar.style.display = 'none';
@@ -552,12 +548,11 @@
       }, 300);
     });
     
-    // Variable para controlar si se está arrastrando la estrella
+    // Controla si se está arrastrando la estrella
     let isDraggingStar = false;
     document.addEventListener('dragstart', (e) => {
       if (e.target.classList.contains('drag-star')) {
         isDraggingStar = true;
-        // Opcional: se puede ocultar o minimizar el calendario aquí
         floatingCalendar.style.display = 'none';
       }
     });
@@ -575,9 +570,27 @@
       e.preventDefault();
       const noteId = e.dataTransfer.getData("text/plain");
       console.log("Asignar nota " + noteId + " al calendario");
-      // Aquí puedes implementar la lógica de asignación de la nota a la fecha seleccionada
+      // Aquí implementa la lógica para asignar la nota a la fecha seleccionada
     });
     
+    // Inicialización de FullCalendar en el contenedor del calendario
+    document.addEventListener('DOMContentLoaded', function() {
+      var calendarEl = document.getElementById('calendarContainer');
+      var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialDate: '2025-04-10',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        editable: false,
+        selectable: true,
+        navLinks: true,
+        businessHours: true,
+        dayMaxEvents: true
+      });
+      calendar.render();
+    });
   </script>
 </body>
 </html>
