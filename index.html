@@ -23,9 +23,9 @@
       position: relative;
       overflow: hidden;
       padding-left: 20px;
-      padding-bottom: 100px; /* Para dejar espacio a los íconos inferiores */
+      padding-bottom: 100px; /* Espacio para íconos inferiores */
     }
-    /* Overlay con luz solar */
+    /* Overlay de luz solar */
     .sun-overlay {
       position: fixed;
       top: 0;
@@ -42,9 +42,9 @@
       padding: 20px;
       flex-grow: 1;
     }
-    /* Cada nota se muestra con un borde y dividida en header y body */
+    /* Cada nota se muestra como una "ventana" */
     .grid-stack-item-content {
-      border: 2px solid #0077a3; /* Tono oceánico que contrasta */
+      border: 2px solid #0077a3; /* Tono oceánico */
       border-radius: 8px;
       overflow: hidden;
       max-width: 300px;
@@ -52,10 +52,31 @@
       z-index: 1;
       display: flex;
       flex-direction: column;
+      background-color: #fff; /* Fondo blanco para el contenido */
     }
-    /* Barra de control (header) al estilo Windows */
-    .note-header {
-      background-color: #005577; /* Azul profundo */
+    /* Cuerpo de la nota */
+    .note-body {
+      padding: 10px;
+      flex-grow: 1;
+      overflow: hidden;
+    }
+    /* Ajuste para que los textos se adapten */
+    .note-body p,
+    .note-body input[type="text"] {
+      font-size: 16px;
+      white-space: pre-wrap;
+      margin: 0 0 10px 0;
+    }
+    /* Imágenes adaptadas al tamaño de la nota */
+    .note-body img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+    /* Barra de control inferior */
+    .note-footer {
+      background-color: rgba(0, 85, 119, 0.8); /* Azul profundo, semitransparente */
       color: white;
       height: 30px;
       display: flex;
@@ -63,18 +84,14 @@
       justify-content: space-between;
       padding: 0 5px;
     }
-    .header-left {
+    .footer-left,
+    .footer-right {
       display: flex;
       align-items: center;
       gap: 5px;
     }
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    /* Iconos dentro de la cabecera */
-    .header-icon {
+    /* Iconos de la barra inferior */
+    .footer-icon {
       background: none;
       border: none;
       color: white;
@@ -82,25 +99,7 @@
       font-size: 16px;
       padding: 2px;
     }
-    /* Cuerpo de la nota */
-    .note-body {
-      padding: 10px;
-      flex-grow: 1;
-      overflow: auto;
-    }
-    .note-body p,
-    .note-body input[type="text"] {
-      font-size: 16px;
-      white-space: pre-wrap;
-      margin: 0 0 10px 0;
-    }
-    .note-body img {
-      max-width: 100%;
-      height: auto;
-      object-fit: cover;
-      border-radius: 4px;
-    }
-    /* Estilo para la estrella draggable (cuatro puntas) con halo */
+    /* Estilo para la estrella draggable */
     .drag-star {
       font-size: 30px;
       color: gold;
@@ -175,7 +174,6 @@
       border-radius: 4px;
       resize: none;
       width: 100%;
-      overflow: hidden;
       box-sizing: border-box;
       white-space: pre-wrap;
       word-wrap: break-word;
@@ -240,7 +238,7 @@
       box-shadow: 0 3px 8px rgba(0,0,0,0.3);
       padding: 10px;
     }
-    /* Contenedor interno para FullCalendar */
+    /* Contenedor para FullCalendar */
     #calendarContainer {
       width: 100%;
       height: 100%;
@@ -248,9 +246,9 @@
   </style>
 </head>
 <body>
-  <!-- Overlay con luz solar -->
+  <!-- Overlay -->
   <div class="sun-overlay"></div>
-
+  
   <!-- Íconos minimalistas en blanco en la esquina inferior izquierda -->
   <div id="sidebar">
     <div class="sidebar-icon" title="Música">♪</div>
@@ -259,13 +257,13 @@
     <div class="sidebar-icon" title="Tareas">✎</div>
     <div class="sidebar-icon" title="Contactos">☎</div>
   </div>
-
+  
   <!-- Calendario flotante con FullCalendar -->
   <div id="floatingCalendar">
     <div id="calendarContainer"></div>
   </div>
   
-  <!-- Contenedor principal de notas con GridStack -->
+  <!-- Contenedor de notas con GridStack -->
   <div id="notaDisplay" class="grid-stack"></div>
   <button id="addNoteButton">+</button>
   <div id="addNoteOptions">
@@ -318,100 +316,24 @@
     }
     const textNoteInput = document.getElementById('textNote');
     const imageNoteText = document.getElementById('imageNoteText');
-    textNoteInput.addEventListener('input', function() {
-      autoResizeTextarea(this);
-    });
-    imageNoteText.addEventListener('input', function() {
-      autoResizeTextarea(this);
-    });
+    textNoteInput.addEventListener('input', () => autoResizeTextarea(textNoteInput));
+    imageNoteText.addEventListener('input', () => autoResizeTextarea(imageNoteText));
     
     // Función para crear y mostrar cada nota en pantalla
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       
-      // Crear widget (nota) y su contenido
+      // Crear widget (nota) y su contenedor
       const gridItem = document.createElement('div');
       gridItem.classList.add('grid-stack-item');
       gridItem.setAttribute('data-note-id', doc.id);
       
-      // Contenedor que simula la "ventana" de la nota
+      // Contenedor de la nota con la estructura "ventana"
       const content = document.createElement('div');
       content.classList.add('grid-stack-item-content');
       
-      // --- Creación de la barra de título (header) ---
-      const noteHeader = document.createElement('div');
-      noteHeader.classList.add('note-header');
-      
-      // Izquierda: estrella draggable
-      const headerLeft = document.createElement('div');
-      headerLeft.classList.add('header-left');
-      const dragStar = document.createElement('div');
-      dragStar.classList.add('drag-star');
-      dragStar.textContent = '✦';
-      dragStar.draggable = true;
-      dragStar.addEventListener('dragstart', (e) => {
-        document.getElementById('floatingCalendar').style.display = 'none';
-        e.dataTransfer.setData("text/plain", doc.id);
-      });
-      dragStar.addEventListener('dragend', () => {
-        // Lógica al finalizar el drag, si se requiere.
-      });
-      headerLeft.appendChild(dragStar);
-      
-      // Derecha: botones de editar y eliminar
-      const headerRight = document.createElement('div');
-      headerRight.classList.add('header-right');
-      const editButton = document.createElement('button');
-      editButton.classList.add('header-icon');
-      editButton.innerHTML = '✎';
-      editButton.onclick = function() {
-        const editInput = document.createElement('input');
-        editInput.type = 'text';
-        editInput.value = notaData.texto || notaData.nota || '';
-        const pElement = noteBody.querySelector('p');
-        if(pElement) {
-          noteBody.replaceChild(editInput, pElement);
-        }
-        const saveEditButton = document.createElement('button');
-        saveEditButton.classList.add('header-icon');
-        saveEditButton.innerHTML = '💾';
-        saveEditButton.onclick = function() {
-          const newText = editInput.value;
-          if(newText.trim() !== '') {
-            db.collection('notas').doc(doc.id).update(notaData.url ? { texto: newText } : { nota: newText })
-              .then(() => {
-                const newP = document.createElement('p');
-                newP.textContent = newText;
-                noteBody.replaceChild(newP, editInput);
-                headerRight.replaceChild(editButton, saveEditButton);
-              })
-              .catch((error) => {
-                console.error('Error al actualizar la nota: ', error);
-              });
-          }
-        };
-        headerRight.replaceChild(saveEditButton, editButton);
-      };
-      headerRight.appendChild(editButton);
-      
-      const deleteButton = document.createElement('button');
-      deleteButton.classList.add('header-icon');
-      deleteButton.innerHTML = '✖';
-      deleteButton.onclick = function() {
-        db.collection('notas').doc(doc.id).delete()
-          .then(() => {
-            grid.removeWidget(gridItem);
-          })
-          .catch((error) => {
-            console.error("Error al eliminar la nota: ", error);
-          });
-      };
-      headerRight.appendChild(deleteButton);
-      
-      // Agregar el header (barra) a la nota
-      noteHeader.appendChild(headerLeft);
-      noteHeader.appendChild(headerRight);
-      content.appendChild(noteHeader);
+      // --- Header (barra de control superior no se usa, pasamos a footer) ---
+      // En este caso quitamos la barra superior y trasladamos los controles a la parte inferior.
       
       // --- Cuerpo de la nota ---
       const noteBody = document.createElement('div');
@@ -433,9 +355,83 @@
       }
       
       content.appendChild(noteBody);
+      
+      // --- Footer (barra de control inferior) ---
+      const noteFooter = document.createElement('div');
+      noteFooter.classList.add('note-footer');
+      // Izquierda: estrella draggable
+      const footerLeft = document.createElement('div');
+      footerLeft.classList.add('footer-left');
+      const dragStar = document.createElement('div');
+      dragStar.classList.add('drag-star');
+      dragStar.textContent = '✦';
+      dragStar.draggable = true;
+      dragStar.addEventListener('dragstart', (e) => {
+        document.getElementById('floatingCalendar').style.display = 'none';
+        e.dataTransfer.setData("text/plain", doc.id);
+      });
+      dragStar.addEventListener('dragend', () => {
+        // Lógica adicional si es necesaria.
+      });
+      footerLeft.appendChild(dragStar);
+      // Derecha: botones editar y eliminar
+      const footerRight = document.createElement('div');
+      footerRight.classList.add('footer-right');
+      
+      const editButton = document.createElement('button');
+      editButton.classList.add('footer-icon');
+      editButton.innerHTML = '✎';
+      editButton.onclick = function() {
+        const editInput = document.createElement('input');
+        editInput.type = 'text';
+        editInput.value = notaData.texto || notaData.nota || '';
+        const pElement = noteBody.querySelector('p');
+        if(pElement) {
+          noteBody.replaceChild(editInput, pElement);
+        }
+        const saveEditButton = document.createElement('button');
+        saveEditButton.classList.add('footer-icon');
+        saveEditButton.innerHTML = '💾';
+        saveEditButton.onclick = function() {
+          const newText = editInput.value;
+          if(newText.trim() !== '') {
+            db.collection('notas').doc(doc.id).update(notaData.url ? { texto: newText } : { nota: newText })
+              .then(() => {
+                const newP = document.createElement('p');
+                newP.textContent = newText;
+                noteBody.replaceChild(newP, editInput);
+                footerRight.replaceChild(editButton, saveEditButton);
+              })
+              .catch((error) => {
+                console.error('Error al actualizar la nota: ', error);
+              });
+          }
+        };
+        footerRight.replaceChild(saveEditButton, editButton);
+      };
+      footerRight.appendChild(editButton);
+      
+      const deleteButton = document.createElement('button');
+      deleteButton.classList.add('footer-icon');
+      deleteButton.innerHTML = '✖';
+      deleteButton.onclick = function() {
+        db.collection('notas').doc(doc.id).delete()
+          .then(() => {
+            grid.removeWidget(gridItem);
+          })
+          .catch((error) => {
+            console.error("Error al eliminar la nota: ", error);
+          });
+      };
+      footerRight.appendChild(deleteButton);
+      
+      noteFooter.appendChild(footerLeft);
+      noteFooter.appendChild(footerRight);
+      content.appendChild(noteFooter);
+      
       gridItem.appendChild(content);
       
-      // Configurar posición y dimensiones (datos persistidos o default)
+      // Configurar posición y dimensiones (persistentes o por defecto)
       const pos = {
         x: notaData.x || 0,
         y: typeof notaData.y === 'number' ? notaData.y : 0,
@@ -443,7 +439,6 @@
         h: notaData.h || 2,
         autoPosition: (notaData.x === undefined || notaData.y === undefined)
       };
-      
       grid.addWidget(gridItem, pos);
     }
     
@@ -452,7 +447,7 @@
       grid.removeAll();
     }
     
-    // Escucha en tiempo real los cambios de la colección "notas"
+    // Escuchar cambios en la colección "notas"
     db.collection('notas')
       .orderBy('__name__')
       .onSnapshot((snapshot) => {
@@ -537,7 +532,7 @@
     saveImageLinkButton.onclick = guardarLinkDeImagen;
     saveTextNoteButton.onclick = guardarNotaTexto;
     
-    // Actualiza la posición de la nota al finalizar el arrastre
+    // Actualizar posición de la nota al finalizar arrastre
     grid.on('dragstop', function(event, el) {
       setTimeout(() => {
         const noteId = el.getAttribute('data-note-id');
@@ -553,7 +548,7 @@
       }, 100);
     });
     
-    // Mostrar el calendario flotante al pasar el mouse sobre el ícono de calendario
+    // Mostrar el calendario al pasar el mouse sobre el ícono de calendario
     const calendarIcon = document.getElementById('calendarIcon');
     const floatingCalendar = document.getElementById('floatingCalendar');
     
@@ -568,7 +563,7 @@
       }, 300);
     });
     
-    // Control del arrastre de la estrella draggable
+    // Control de arrastre de la estrella draggable
     let isDraggingStar = false;
     document.addEventListener('dragstart', (e) => {
       if(e.target.classList.contains('drag-star')) {
@@ -582,7 +577,7 @@
       }
     });
     
-    // Evento drop en el calendario para asignar la nota (demo)
+    // Drop en el calendario para asignar la nota (función demo)
     floatingCalendar.addEventListener('dragover', (e) => {
       e.preventDefault();
     });
@@ -590,25 +585,28 @@
       e.preventDefault();
       const noteId = e.dataTransfer.getData("text/plain");
       console.log("Asignar nota " + noteId + " al calendario");
-      // Implementa aquí la lógica para asignar la nota a una fecha específica.
+      // Implementa la asignación a una fecha según tu lógica.
     });
     
-    // Inicialización de FullCalendar
-    var calendar = new FullCalendar.Calendar(document.getElementById('calendarContainer'), {
-      initialView: 'dayGridMonth',
-      initialDate: '2025-04-10',
-      headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'dayGridMonth,timeGridWeek,timeGridDay'
-      },
-      editable: false,
-      selectable: true,
-      navLinks: true,
-      businessHours: true,
-      dayMaxEvents: true
+    // Inicialización de FullCalendar una vez que el DOM esté listo
+    document.addEventListener('DOMContentLoaded', function() {
+      var calendarEl = document.getElementById('calendarContainer');
+      var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        initialDate: '2025-04-10',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        editable: false,
+        selectable: true,
+        navLinks: true,
+        businessHours: true,
+        dayMaxEvents: true
+      });
+      calendar.render();
     });
-    calendar.render();
   </script>
 </body>
 </html>
