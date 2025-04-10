@@ -10,21 +10,32 @@
   <!-- GridStack CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
   <style>
-    /* Fondo tipo océano: de azul claro arriba a azul profundo abajo */
+    /* Fondo oceánico: degradado de azul claro (arriba) a azul profundo (abajo) */
     body {
       font-family: sans-serif;
       margin: 0;
       min-height: 100vh;
       background: linear-gradient(to bottom, #a2dff7, #03254c);
-      display: flex;
-      flex-direction: column;
+      position: relative;
+      overflow: hidden;
     }
-    /* Contenedor de GridStack */
+    /* Margin superior para dejar espacio al sol overlay y a la navegación */
     #notaDisplay {
-      flex-grow: 1;
+      margin-top: 120px;  /* espacio para el overlay y futuros íconos */
       padding: 20px;
+      flex-grow: 1;
     }
-    /* Cada widget (nota) se mostrará en este contenedor */
+    /* Sun overlay con efecto de luz: se muestra en la parte superior */
+    .sun-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 120px;
+      pointer-events: none;
+      background: radial-gradient(ellipse at top, rgba(255,255,224,0.5) 0%, transparent 70%);
+    }
+    /* Cada nota (widget) */
     .grid-stack-item-content {
       background-color: #fff;
       border-radius: 8px;
@@ -35,21 +46,25 @@
       max-width: 300px;
       max-height: 300px;
     }
-    /* Estilos para texto en la nota */
+    /* Transición para lograr efecto suave al posicionar (flotación) */
+    .grid-stack-item {
+      transition: transform 0.3s ease-in-out;
+    }
+    /* Estilos para el contenido de texto */
     .grid-stack-item-content p,
     .grid-stack-item-content input[type='text'] {
       font-size: 16px;
       white-space: pre-wrap;
       margin: 0 0 10px 0;
     }
-    /* Imagen en nota (si aplica) */
+    /* Imagen en la nota */
     .grid-stack-item-content img {
       max-width: 100%;
       height: auto;
       object-fit: cover;
       border-radius: 4px;
     }
-    /* Contenedor para botones (editar, eliminar) - ahora en la parte inferior derecha */
+    /* Botones: ahora se ubican en la parte inferior derecha */
     .button-container {
       position: absolute;
       bottom: 5px;
@@ -87,7 +102,7 @@
       background-color: #005577;
       transform: scale(1.05);
     }
-    /* Opciones y área de entrada */
+    /* Opciones y área de entrada de notas */
     #addNoteOptions {
       position: fixed;
       bottom: 90px;
@@ -164,7 +179,10 @@
   </style>
 </head>
 <body>
-  <!-- Contenedor GridStack -->
+  <!-- Sun overlay (sol) -->
+  <div class="sun-overlay"></div>
+  
+  <!-- Contenedor GridStack con margen superior -->
   <div id="notaDisplay" class="grid-stack"></div>
   <button id="addNoteButton">+</button>
   <div id="addNoteOptions">
@@ -230,7 +248,7 @@
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       
-      // Crea el contenedor del grid item y su contenido
+      // Crea el contenedor del widget y su contenido
       const gridItem = document.createElement('div');
       gridItem.classList.add('grid-stack-item');
       gridItem.setAttribute('data-note-id', doc.id);
@@ -255,7 +273,7 @@
         content.appendChild(p);
       }
       
-      // Botones para editar y eliminar (ahora en la parte inferior derecha)
+      // Botones de edición y eliminación (ubicados en la esquina inferior derecha)
       const buttonContainer = document.createElement('div');
       buttonContainer.classList.add('button-container');
       
@@ -306,7 +324,7 @@
       content.appendChild(buttonContainer);
       gridItem.appendChild(content);
       
-      // Configura posición y dimensiones persistidas si existen; de lo contrario usa autoPosition
+      // Configura posición y dimensiones persistidas (o autoPosition si no existen)
       const pos = {
         x: notaData.x || 0,
         y: typeof notaData.y === 'number' ? notaData.y : 0,
@@ -408,7 +426,7 @@
     saveImageLinkButton.onclick = guardarLinkDeImagen;
     saveTextNoteButton.onclick = guardarNotaTexto;
     
-    // Escucha el fin del arrastre para guardar la nueva posición en Firebase
+    // Al finalizar el arrastre, guarda la nueva posición en Firebase
     grid.on('dragstop', function(event, el) {
       setTimeout(() => {
         const noteId = el.getAttribute('data-note-id');
