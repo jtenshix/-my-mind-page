@@ -120,8 +120,10 @@
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 4px;
-      resize: vertical;
+      resize: none;
       width: 100%;
+      overflow: hidden;
+      box-sizing: border-box;
     }
     #inputArea button {
       padding: 10px 15px;
@@ -199,6 +201,21 @@
 
     let addingNewNote = false;
 
+    // Función para autoajustar la altura del textarea
+    function autoResizeTextarea(el) {
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 'px';
+    }
+
+    // Añade el evento de auto redimensionamiento a los textareas
+    textNoteInput.addEventListener('input', function() {
+      autoResizeTextarea(this);
+    });
+
+    imageNoteText.addEventListener('input', function() {
+      autoResizeTextarea(this);
+    });
+
     // Función para mostrar una nota en pantalla con edición y eliminación separadas
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
@@ -235,7 +252,6 @@
           if (textoParrafo) {
             notaCard.replaceChild(editInput, textoParrafo);
           } else {
-            // Si no hay párrafo, inserta debajo de la imagen
             notaCard.insertBefore(editInput, buttonContainer);
           }
           const saveEditButton = document.createElement('button');
@@ -251,7 +267,6 @@
                   textoParrafo = document.createElement('p');
                   textoParrafo.textContent = newText;
                   notaCard.insertBefore(textoParrafo, buttonContainer);
-                  // También actualiza la variable notaData para futuras ediciones
                 }
                 buttonContainer.replaceChild(editButton, saveEditButton);
               })
