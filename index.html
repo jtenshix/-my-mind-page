@@ -35,8 +35,11 @@
       border-radius: 8px;
       padding: 10px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      overflow: auto;
+      overflow: hidden;
       position: relative;
+      /* Fija un máximo para simular una pequeña carta */
+      max-width: 300px;
+      max-height: 300px;
     }
     /* Estilos para texto en la nota */
     .grid-stack-item-content p,
@@ -184,7 +187,6 @@
       <textarea id="textNote" placeholder="Escribe tu nota aquí..."></textarea>
       <button id="saveTextNote">Guardar Nota</button>
     </div>
-  <!-- GridStack requiere contenedor para "trash" si se quiere eliminar items arrastrándolos (opcional) -->
   </div>
   
   <!-- GridStack JS -->
@@ -203,10 +205,11 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     
-    // Inicializa GridStack
+    // Inicializa GridStack sin redimensionamiento
     const grid = GridStack.init({
-      // Puedes ajustar opciones aquí, por ejemplo: column: 12, cellHeight: 100, etc.
-      margin: 5
+      margin: 5,
+      disableResize: true,  // Deshabilita el resize para todos los widgets
+      // Puedes ajustar otras opciones según necesites, por ejemplo, column: 12, cellHeight: 150, etc.
     });
     
     // Función para autoajustar la altura del textarea conforme se escribe
@@ -227,7 +230,7 @@
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       
-      // Crea el contenedor del grid item y el contenido
+      // Crea el contenedor del grid item y su contenido
       const gridItem = document.createElement('div');
       gridItem.classList.add('grid-stack-item');
       // Opcional: guardar el id del documento en un atributo
@@ -235,7 +238,6 @@
       
       const content = document.createElement('div');
       content.classList.add('grid-stack-item-content');
-      content.style.position = 'relative';  // Para posicionar los botones
       
       // Si es nota de imagen
       if(notaData.url) {
@@ -262,11 +264,10 @@
       const editButton = document.createElement('button');
       editButton.innerHTML = '✎';
       editButton.onclick = function() {
-        // Se reemplaza el contenido por un input para editar
         const editInput = document.createElement('input');
         editInput.type = 'text';
-        // Se carga el contenido actual
         editInput.value = (notaData.texto) ? notaData.texto : (notaData.nota ? notaData.nota : '');
+        // Reemplaza el párrafo existente
         content.replaceChild(editInput, content.querySelector('p'));
         const saveEditButton = document.createElement('button');
         saveEditButton.innerHTML = '💾';
@@ -293,7 +294,7 @@
       const deleteButton = document.createElement('button');
       deleteButton.innerHTML = '✖';
       deleteButton.onclick = function() {
-        // Eliminar la nota de Firebase y quitarla del grid
+        // Elimina la nota de Firebase y del grid
         db.collection('notas').doc(doc.id).delete()
           .then(() => {
             grid.removeWidget(gridItem);
@@ -307,9 +308,8 @@
       content.appendChild(buttonContainer);
       gridItem.appendChild(content);
       
-      // Agrega el widget a GridStack con una posición y tamaño por defecto
-      // (x: 0, y: 0 posicion inicial, w: 2 columnas, h: 2 filas; ajústalos según necesidad)
-      grid.addWidget(gridItem, {x: 0, y: 0, w: 2, h: 2, autoPosition: true});
+      // Agrega el widget a GridStack con dimensiones fijas (por ejemplo, 2x2)
+      grid.addWidget(gridItem, {x: 0, y: 0, w: 2, h: 2, autoPosition: true, noResize: true});
     }
     
     // Limpia los widgets actuales
@@ -317,7 +317,7 @@
       grid.removeAll();
     }
     
-    // Escucha en tiempo real cambios en la colección 'notas'
+    // Escucha en tiempo real los cambios de la colección 'notas'
     db.collection('notas')
       .orderBy('__name__')
       .onSnapshot((snapshot) => {
