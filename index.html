@@ -7,7 +7,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
   <style>
-    /* Estilos básicos con fondo oceánico */
+    /* Fondo oceánico y estilo base */
     body {
       font-family: sans-serif;
       margin: 0;
@@ -28,25 +28,23 @@
       padding: 20px;
       flex-grow: 1;
     }
-    /* Se elimina la altura máxima fija para que las tarjetas se adapten al contenido */
+    /* Cada nota se comporta como una hoja blanca: tamaño según contenido, con márgenes internos */
     .nota-card {
       background-color: #fff;
       border-radius: 8px;
-      padding: 15px;
+      padding: 20px 15px 30px 15px; /* se añade mayor padding abajo para simular margen inferior */
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      /* Se usa min-height para definir un tamaño base, sin limitar el crecimiento */
-      min-height: 100px;
       word-wrap: break-word;
     }
     .nota-card p,
     .nota-card input[type='text'] {
-      margin-bottom: 10px;
-      width: 100%;
       font-size: 16px;
-      word-wrap: break-word;
+      /* Permite que el texto se envuelva y respete los saltos de línea */
+      white-space: pre-wrap;
+      margin: 0 0 10px 0;
     }
     .button-container {
       display: flex;
@@ -119,7 +117,7 @@
       width: 80%;
       max-width: 500px;
     }
-    /* Se agregan propiedades para que el texto se envuelva como en Word */
+    /* Textareas e inputs con estilo de hoja: envuelve el texto y respeta márgenes */
     #inputArea textarea,
     #inputArea input[type='text'] {
       padding: 10px;
@@ -131,6 +129,7 @@
       box-sizing: border-box;
       white-space: pre-wrap;
       word-wrap: break-word;
+      line-height: 1.5;
     }
     #inputArea button {
       padding: 10px 15px;
@@ -213,23 +212,20 @@
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
     }
-
-    // Event listeners para redimensionar dinámicamente el textarea de la nota y el de la imagen
+    // Autoajuste para ambos textareas
     textNoteInput.addEventListener('input', function() {
       autoResizeTextarea(this);
     });
-
     imageNoteText.addEventListener('input', function() {
       autoResizeTextarea(this);
     });
 
-    // Función para mostrar una nota en pantalla con edición y eliminación separadas
+    // Función para mostrar una nota en pantalla (cada nota se comporta como una hoja blanca)
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       const notaCard = document.createElement('div');
       notaCard.classList.add('nota-card');
 
-      // Contenedor para botones
       const buttonContainer = document.createElement('div');
       buttonContainer.classList.add('button-container');
 
@@ -248,8 +244,7 @@
           textoParrafo.textContent = notaData.texto;
           notaCard.appendChild(textoParrafo);
         }
-
-        // Botón de editar (para el texto de imagen)
+        // Botón de editar para el texto de imagen
         const editButton = document.createElement('button');
         editButton.innerHTML = '✎';
         editButton.onclick = function() {
@@ -284,7 +279,6 @@
           buttonContainer.replaceChild(saveEditButton, editButton);
         };
         buttonContainer.appendChild(editButton);
-
         // Botón de eliminar
         const deleteButton = document.createElement('button');
         deleteButton.innerHTML = '✖';
@@ -327,7 +321,6 @@
           buttonContainer.replaceChild(saveEditButton, editButton);
         };
         buttonContainer.appendChild(editButton);
-
         // Botón de eliminar
         const deleteButton = document.createElement('button');
         deleteButton.innerHTML = '✖';
@@ -352,12 +345,12 @@
         });
     }
 
-    // Función para limpiar el display de notas
+    // Limpia el display antes de actualizar la lista
     function limpiarNotasDisplay() {
       notaDisplay.innerHTML = '';
     }
 
-    // Escucha en tiempo real de la colección 'notas'
+    // Escucha en tiempo real la colección "notas"
     db.collection('notas')
       .orderBy('__name__')
       .onSnapshot((snapshot) => {
@@ -375,7 +368,6 @@
       imageLinkInputArea.style.display = 'none';
       textNoteInputArea.style.display = 'none';
     };
-
     addImageLinkOption.onclick = function() {
       addNoteOptions.style.display = 'none';
       inputArea.style.display = 'flex';
@@ -383,7 +375,6 @@
       textNoteInputArea.style.display = 'none';
       addingNewNote = false;
     };
-
     addTextNoteOption.onclick = function() {
       addNoteOptions.style.display = 'none';
       inputArea.style.display = 'flex';
@@ -392,7 +383,7 @@
       addingNewNote = false;
     };
 
-    // Función para guardar link de imagen con su texto opcional
+    // Guarda una nota con link de imagen y texto opcional
     function guardarLinkDeImagen() {
       const link = imageLinkInput.value;
       const texto = imageNoteText.value;
@@ -413,7 +404,7 @@
       }
     }
 
-    // Función para guardar la nota de texto
+    // Guarda la nota de texto
     function guardarNotaTexto() {
       const nota = textNoteInput.value;
       if (nota.trim() !== '') {
