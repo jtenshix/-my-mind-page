@@ -23,7 +23,7 @@
       position: relative;
       overflow: hidden;
       padding-left: 20px;
-      padding-bottom: 100px; /* Para espacio en la parte inferior con íconos */
+      padding-bottom: 100px; /* Para dejar espacio a los íconos inferiores */
     }
     /* Overlay con luz solar */
     .sun-overlay {
@@ -44,13 +44,13 @@
     }
     /* Estilos para cada nota (widget) */
     .grid-stack-item-content {
+      position: relative;
       background-color: #fff;
       border: 2px solid #a2dff7; /* Marco sutil con tono oceánico */
       border-radius: 8px;
-      padding: 10px;
+      padding: 10px 10px 45px 10px; /* Se deja espacio en la parte inferior para la zona de control */
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       overflow: hidden;
-      position: relative;
       max-width: 300px;
       max-height: 300px;
       z-index: 1;
@@ -70,30 +70,37 @@
       object-fit: cover;
       border-radius: 4px;
     }
-    /* Botones de edición y eliminación en la esquina inferior derecha */
-    .button-container {
+    /* Zona de control dentro de la nota (para botones y estrella) */
+    .control-container {
       position: absolute;
-      bottom: 5px;
-      right: 5px;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,0.8);
+      padding: 5px;
+      border-top: 1px solid #ccc;
+      border-bottom-left-radius: 8px;
+      border-bottom-right-radius: 8px;
+    }
+    .control-buttons {
       display: flex;
       gap: 5px;
     }
-    .button-container button {
+    .control-buttons button {
       background: none;
       border: none;
       cursor: pointer;
       font-size: 16px;
       color: #555;
     }
-    /* Estilo para la estrella draggable (cuatro puntas) con halo */
+    /* Estilo para la estrella draggable (cuatro puntas) con halo brillante */
     .drag-star {
-      position: absolute;
-      bottom: 5px;
-      left: 5px;
       font-size: 30px;
       color: gold;
       cursor: move;
-      z-index: 2;
       text-shadow: 0 0 10px rgba(255,215,0,0.8);
     }
     /* Botón flotante para agregar notas */
@@ -188,14 +195,7 @@
       flex-direction: column;
       gap: 5px;
     }
-    /* Oculta el placeholder y la sombra durante el arrastre */
-    .grid-stack-placeholder {
-      display: none !important;
-    }
-    .grid-stack-item.ui-draggable-dragging {
-      box-shadow: none !important;
-    }
-    /* Íconos minimalistas en la esquina inferior izquierda */
+    /* Íconos minimalistas en blanco en la esquina inferior izquierda */
     #sidebar {
       position: fixed;
       bottom: 20px;
@@ -247,7 +247,7 @@
   <!-- Overlay con luz solar -->
   <div class="sun-overlay"></div>
 
-  <!-- Íconos minimalistas en la esquina inferior izquierda -->
+  <!-- Íconos minimalistas en blanco en la esquina inferior izquierda -->
   <div id="sidebar">
     <div class="sidebar-icon" title="Música">♪</div>
     <div class="sidebar-icon" title="Archivos">📁</div>
@@ -287,7 +287,7 @@
   </div>
   
   <script>
-    // Configuración de Firebase (reemplaza estos valores con los tuyos)
+    // Configuración de Firebase (reemplaza con tus datos)
     const firebaseConfig = {
       apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
       authDomain: "oasis-b036d.firebaseapp.com",
@@ -307,7 +307,7 @@
       float: true
     });
     
-    // Autoajuste de altura en textareas
+    // Autoajuste en textareas
     function autoResizeTextarea(el) {
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
@@ -325,7 +325,7 @@
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       
-      // Crear el widget y su contenido
+      // Crear widget y su contenido
       const gridItem = document.createElement('div');
       gridItem.classList.add('grid-stack-item');
       gridItem.setAttribute('data-note-id', doc.id);
@@ -333,21 +333,7 @@
       const content = document.createElement('div');
       content.classList.add('grid-stack-item-content');
       
-      // Agregar la estrella draggable de cuatro puntas
-      const dragStar = document.createElement('div');
-      dragStar.classList.add('drag-star');
-      dragStar.textContent = '✦';
-      dragStar.draggable = true;
-      dragStar.addEventListener('dragstart', (e) => {
-        // Ocultar el calendario al iniciar el arrastre
-        document.getElementById('floatingCalendar').style.display = 'none';
-        e.dataTransfer.setData("text/plain", doc.id);
-      });
-      dragStar.addEventListener('dragend', () => {
-        // Puedes agregar lógica para reactivar el calendario
-      });
-      
-      // Mostrar contenido de la nota
+      // Contenido de la nota (imagen o texto)
       if(notaData.url) {
         const img = document.createElement('img');
         img.src = notaData.url;
@@ -363,9 +349,27 @@
         content.appendChild(p);
       }
       
-      // Contenedor de botones (editar, eliminar)
-      const buttonContainer = document.createElement('div');
-      buttonContainer.classList.add('button-container');
+      // Crear zona de control interna: se ubican la estrella draggable y los botones
+      const controlContainer = document.createElement('div');
+      controlContainer.classList.add('control-container');
+      
+      // La estrella draggable (cuatro puntas) – se podrá arrastrar para asignar la nota
+      const dragStar = document.createElement('div');
+      dragStar.classList.add('drag-star');
+      dragStar.textContent = '✦';
+      dragStar.draggable = true;
+      dragStar.addEventListener('dragstart', (e) => {
+        // Ocultar el calendario al iniciar el arrastre
+        document.getElementById('floatingCalendar').style.display = 'none';
+        e.dataTransfer.setData("text/plain", doc.id);
+      });
+      dragStar.addEventListener('dragend', () => {
+        // Lógica adicional al finalizar (según necesidad)
+      });
+      
+      // Contenedor para botones de editar y eliminar
+      const controlButtons = document.createElement('div');
+      controlButtons.classList.add('control-buttons');
       
       const editButton = document.createElement('button');
       editButton.innerHTML = '✎';
@@ -387,16 +391,16 @@
                 const newP = document.createElement('p');
                 newP.textContent = newText;
                 content.replaceChild(newP, editInput);
-                buttonContainer.replaceChild(editButton, saveEditButton);
+                controlButtons.replaceChild(editButton, saveEditButton);
               })
               .catch((error) => {
                 console.error('Error al actualizar la nota: ', error);
               });
           }
         };
-        buttonContainer.replaceChild(saveEditButton, editButton);
+        controlButtons.replaceChild(saveEditButton, editButton);
       };
-      buttonContainer.appendChild(editButton);
+      controlButtons.appendChild(editButton);
       
       const deleteButton = document.createElement('button');
       deleteButton.innerHTML = '✖';
@@ -409,13 +413,17 @@
             console.error("Error al eliminar la nota: ", error);
           });
       };
-      buttonContainer.appendChild(deleteButton);
+      controlButtons.appendChild(deleteButton);
       
-      content.appendChild(buttonContainer);
-      content.appendChild(dragStar);
+      // Se agrega la estrella (a la izquierda) y los botones (a la derecha) en la zona de control
+      controlContainer.appendChild(dragStar);
+      controlContainer.appendChild(controlButtons);
+      
+      // Agregar la zona de control al contenido
+      content.appendChild(controlContainer);
       gridItem.appendChild(content);
       
-      // Posicionar la nota (se usan datos persistidos o valores por defecto)
+      // Configurar posición y dimensiones (persistentes o default)
       const pos = {
         x: notaData.x || 0,
         y: typeof notaData.y === 'number' ? notaData.y : 0,
@@ -423,16 +431,15 @@
         h: notaData.h || 2,
         autoPosition: (notaData.x === undefined || notaData.y === undefined)
       };
-      
       grid.addWidget(gridItem, pos);
     }
     
-    // Función para limpiar todas las notas
+    // Limpiar todas las notas
     function limpiarNotasDisplay() {
       grid.removeAll();
     }
     
-    // Escucha en tiempo real los cambios en la colección 'notas'
+    // Escucha en tiempo real los cambios en la colección "notas"
     db.collection('notas')
       .orderBy('__name__')
       .onSnapshot((snapshot) => {
@@ -477,11 +484,11 @@
       addingNewNote = false;
     };
     
-    // Guarda una nota con link de imagen
+    // Guarda nota con link de imagen
     function guardarLinkDeImagen() {
       const link = imageLinkInput.value;
       const texto = imageNoteText.value;
-      if (link.trim() !== '') {
+      if(link.trim() !== '') {
         db.collection('notas').add({
           url: link,
           texto: texto.trim() !== '' ? texto : null
@@ -497,7 +504,7 @@
       }
     }
     
-    // Guarda una nota de texto
+    // Guarda nota de texto
     function guardarNotaTexto() {
       const nota = textNoteInput.value;
       if(nota.trim() !== '') {
@@ -533,7 +540,7 @@
       }, 100);
     });
     
-    // Mostrar el calendario flotante al pasar el mouse por el ícono de calendario
+    // Mostrar el calendario flotante al pasar el mouse sobre el ícono de calendario
     const calendarIcon = document.getElementById('calendarIcon');
     const floatingCalendar = document.getElementById('floatingCalendar');
     
@@ -542,27 +549,27 @@
     });
     calendarIcon.addEventListener('mouseleave', () => {
       setTimeout(() => {
-        if (!isDraggingStar) {
+        if(!isDraggingStar) {
           floatingCalendar.style.display = 'none';
         }
       }, 300);
     });
     
-    // Control del estado de arrastre en la estrella
+    // Control del arrastre de la estrella
     let isDraggingStar = false;
     document.addEventListener('dragstart', (e) => {
-      if (e.target.classList.contains('drag-star')) {
+      if(e.target.classList.contains('drag-star')) {
         isDraggingStar = true;
         floatingCalendar.style.display = 'none';
       }
     });
     document.addEventListener('dragend', (e) => {
-      if (e.target.classList.contains('drag-star')) {
+      if(e.target.classList.contains('drag-star')) {
         isDraggingStar = false;
       }
     });
     
-    // Evento drop en el calendario (demo: asigna la nota a la fecha)
+    // Drop en el calendario para asignar la nota (función demo)
     floatingCalendar.addEventListener('dragover', (e) => {
       e.preventDefault();
     });
@@ -570,28 +577,26 @@
       e.preventDefault();
       const noteId = e.dataTransfer.getData("text/plain");
       console.log("Asignar nota " + noteId + " al calendario");
-      // Aquí puedes implementar la lógica para asignar la nota a una fecha real
+      // Implementa aquí la lógica para asignar la nota a una fecha específica.
     });
     
-    // Inicialización de FullCalendar en el contenedor del calendario
-    document.addEventListener('DOMContentLoaded', function() {
-      var calendarEl = document.getElementById('calendarContainer');
-      var calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        initialDate: '2025-04-10',
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
-        editable: false,
-        selectable: true,
-        navLinks: true,
-        businessHours: true,
-        dayMaxEvents: true
-      });
-      calendar.render();
+    // Inicialización de FullCalendar en el contenedor correspondiente
+    // (Se asume que el contenedor #calendarContainer ya está en el DOM)
+    var calendar = new FullCalendar.Calendar(document.getElementById('calendarContainer'), {
+      initialView: 'dayGridMonth',
+      initialDate: '2025-04-10',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      },
+      editable: false,
+      selectable: true,
+      navLinks: true,
+      businessHours: true,
+      dayMaxEvents: true
     });
+    calendar.render();
   </script>
 </body>
 </html>
