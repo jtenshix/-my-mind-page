@@ -11,14 +11,14 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
   <style>
-    /* Forzar pantalla fija sin scroll y ocupar el 100% del viewport */
+    /* Pantalla fija sin scroll */
     html, body {
       margin: 0;
       padding: 0;
       height: 100vh;
       overflow: hidden;
     }
-    /* Contenedor principal general: centrado y ocupando el 100% del viewport */
+    /* Contenedor principal: ocupa 100% del viewport y mantiene el fondo oceánico */
     .container {
       height: 100%;
       width: 100%;
@@ -29,20 +29,20 @@
       justify-content: center;
       position: relative;
     }
-    /* Contenedor principal de notas (GridStack) */
+    /* Contenedor de notas (GridStack) */
     #notaDisplay {
       margin-top: 20px;
     }
-    /* Ocultar ghost element del drag */
+    /* Ocultar ghost element durante el drag */
     .grid-stack-placeholder {
       display: none !important;
     }
-    /* Transición personalizada para el movimiento de cada widget */
+    /* Transición para el movimiento de cada widget */
     .grid-stack-item {
       transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     }
     /* ---------------------- */
-    /* Nuevo estilo de tarjeta (Polaroid) */
+    /* Estilo de tarjeta tipo Polaroid */
     /* ---------------------- */
     .card-wrapper {
       background-color: #fff;
@@ -54,11 +54,9 @@
       flex-direction: column;
       position: relative;
     }
-    /* Contenedor superior: imagen o área vacía para nota de texto */
     .card-content {
       flex-grow: 1;
     }
-    /* Si hay imagen, se muestra en recuadro fijo */
     .image-container {
       width: 240px;
       height: 240px;
@@ -71,7 +69,6 @@
       object-fit: cover;
       display: block;
     }
-    /* Área para la nota o descripción (parte blanca típica de Polaroid) */
     .note-content {
       background-color: #fff;
       padding: 10px;
@@ -81,7 +78,6 @@
       min-height: 50px;
       box-sizing: border-box;
     }
-    /* La barra de menú integrada, con tono oceánico */
     .menu-bar {
       background-color: #0288D1;
       display: flex;
@@ -96,7 +92,6 @@
       color: #fff;
       cursor: pointer;
     }
-    /* Estilo para nota de solo texto (sin imagen) */
     .text-card {
       background-color: #fff;
       border: 2px solid #0077a3;
@@ -112,7 +107,7 @@
       padding: 10px;
     }
     /* ---------------------- */
-    /* Interfaz para agregar nota (se conservan las funciones) */
+    /* Interfaz para agregar notas */
     /* ---------------------- */
     #addNoteButton {
       position: absolute;
@@ -179,7 +174,7 @@
       gap: 5px;
     }
     /* ---------------------- */
-    /* Estilos para el Calendario - Diseño minimalista */
+    /* Calendario minimalista */
     /* ---------------------- */
     .calendar-icon {
       position: absolute;
@@ -209,7 +204,7 @@
       display: none;
       z-index: 3;
       width: 250px;
-      min-height: 180px; /* Fijamos altura para 6 filas */
+      min-height: 180px; /* Altura fija para 6 filas */
     }
     .calendar-header {
       display: flex;
@@ -256,7 +251,7 @@
 </head>
 <body>
   <div class="container">
-    <!-- Contenedor de notas -->
+    <!-- Contenedor de notas con GridStack -->
     <div id="notaDisplay" class="grid-stack"></div>
     
     <!-- Botón para agregar nota -->
@@ -285,14 +280,14 @@
       </div>
     </div>
     
-    <!-- Ícono del Calendario (esquina inferior izquierda) -->
+    <!-- Ícono del Calendario -->
     <div id="calendarIcon" class="calendar-icon">☰</div>
-    <!-- Contenedor del Calendario desplegable -->
+    <!-- Calendario desplegable -->
     <div id="calendarWidget" class="calendar-widget"></div>
   </div>
   
   <script>
-    // Función para transformar enlaces de Google Drive en enlaces embebibles
+    // Función para transformar enlaces de Google Drive en enlaces embebibles.
     function transformDriveLink(url) {
       if (!url.includes("drive.google.com")) return url;
       let fileId = null;
@@ -308,7 +303,7 @@
       return url;
     }
     
-    // Configuración de Firebase
+    // Configuración de Firebase.
     const firebaseConfig = {
       apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
       authDomain: "oasis-b036d.firebaseapp.com",
@@ -321,22 +316,20 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     
-    // Inicializar GridStack permitiendo movimiento libre y reduciendo márgenes.
+    // Inicializamos GridStack con una cuadrícula de 3 columnas para representar los 3 lanes.
     const grid = GridStack.init({
       margin: 2,
       cellHeight: 'auto',
       disableResize: true,
       float: true,
       animate: true,
-      // Permitir movimiento libre sin adherirse a la cuadrícula.
-      disableGrid: true,
-      // Configuración de arrastre con inercia para simular resistencia.
+      column: 3, // 3 lanes: izquierda (0), centro (1) y derecha (2).
       dragOptions: {
         inertia: true
       }
     });
     
-    // Ajuste automático de textareas en la interfaz para agregar nota.
+    // Ajuste automático de textareas en la interfaz para agregar notas.
     function autoResizeTextarea(el) {
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
@@ -357,7 +350,6 @@
       
       let card;
       if(notaData.url) {
-        // Nota con imagen: estructura Polaroid.
         card = document.createElement('div');
         card.classList.add('card-wrapper');
         
@@ -374,7 +366,6 @@
         noteContent.textContent = notaData.texto ? notaData.texto : '';
         card.appendChild(noteContent);
       } else if(notaData.nota) {
-        // Nota de solo texto.
         card = document.createElement('div');
         card.classList.add('text-card');
         
@@ -384,7 +375,7 @@
         card.appendChild(noteContent);
       }
       
-      // Barra de menú integrada con íconos (editar y eliminar)
+      // Barra de menú (editar y eliminar).
       const menuBar = document.createElement('div');
       menuBar.classList.add('menu-bar');
       
@@ -441,23 +432,23 @@
       content.appendChild(card);
       gridItem.appendChild(content);
       
-      // Usamos la posición actual dada en la nota y dejamos que se mantenga libre.
+      // Para la posición: si no existe, asignamos la lane del centro (x = 1).
       const pos = {
-        x: notaData.x || 0,
-        y: typeof notaData.y === 'number' ? notaData.y : 0,
-        w: notaData.w || 2,
+        x: (typeof notaData.x === 'number') ? notaData.x : 1,
+        y: (typeof notaData.y === 'number') ? notaData.y : 0,
+        w: notaData.w || 1,
         h: notaData.h || 2,
         autoPosition: (notaData.x === undefined || notaData.y === undefined)
       };
       grid.addWidget(gridItem, pos);
     }
     
-    // Función para limpiar las notas mostradas.
+    // Limpia todas las notas mostradas.
     function limpiarNotasDisplay() {
       grid.removeAll();
     }
     
-    // Escucha los cambios en la colección "notas" para actualizar la vista en tiempo real.
+    // Escucha cambios en la colección "notas" para actualizar la vista en tiempo real.
     db.collection('notas')
       .orderBy('__name__')
       .onSnapshot((snapshot) => {
@@ -541,7 +532,7 @@
     saveImageLinkButton.onclick = guardarLinkDeImagen;
     saveTextNoteButton.onclick = guardarNotaTexto;
     
-    // Al finalizar el arrastre, actualizamos la posición de la nota.
+    // Al finalizar el arrastre, actualizamos la posición de la nota en Firebase.
     grid.on('dragstop', function(event, el) {
       setTimeout(() => {
         const noteId = el.getAttribute('data-note-id');
@@ -560,16 +551,12 @@
     /* -------------------------------------------------- */
     /* Funcionalidad del Calendario (desplegable minimalista y fijo) */
     /* -------------------------------------------------- */
-    
-    // Variables globales para el estado del calendario.
     let currentCalendarMonth, currentCalendarYear;
     
-    // Obtiene la fecha actual para Chile usando la zona horaria.
     function getChileDate() {
       return new Date(new Date().toLocaleString("en-US", {timeZone: "America/Santiago"}));
     }
     
-    // Inicializa el mes del calendario: si la fecha en Chile es anterior a diciembre 2024, se fija en diciembre 2024.
     function initCalendarDate() {
       let today = getChileDate();
       let year = today.getFullYear();
@@ -580,16 +567,14 @@
       return { month, year };
     }
     
-    // Devuelve el nombre del mes en español.
     function getMonthName(monthIndex) {
       const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
       return months[monthIndex];
     }
     
-    // Genera el calendario con 6 filas (42 celdas).
     function generateCalendar(month, year) {
       const calendarDiv = document.getElementById('calendarWidget');
-      calendarDiv.innerHTML = ''; // Limpiar contenido previo
+      calendarDiv.innerHTML = '';
       
       const header = document.createElement('div');
       header.className = 'calendar-header';
