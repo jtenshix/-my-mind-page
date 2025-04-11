@@ -3,16 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Notas Oceánicas</title>
+  <title>Notas Oceánicas - Polaroid</title>
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
   <!-- GridStack CSS & JS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
-  <!-- FullCalendar CSS & JS -->
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
   <style>
     /* Estilos generales */
     body {
@@ -20,79 +17,46 @@
       margin: 0;
       min-height: 100vh;
       background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
-      position: relative;
-      overflow: hidden;
-      padding-left: 20px;
+      padding: 20px;
       padding-bottom: 100px;
     }
-    /* Overlay de luz solar */
-    .sun-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      background: radial-gradient(ellipse at top center, rgba(255,255,224,0.35) 0%, rgba(255,255,224,0) 50%);
-      z-index: 0;
-    }
-    /* Contenedor principal de notas */
+    /* Contenedor principal de notas (GridStack) */
     #notaDisplay {
-      margin-top: 120px;
-      padding: 20px;
-      flex-grow: 1;
+      margin-top: 20px;
     }
-    /* Cada nota se muestra dentro de un widget de GridStack */
-    .grid-stack-item-content {
-      padding: 10px;
-      background-color: transparent; /* vamos a usar el polaroid para notas con imagen y otro estilo para texto */
-      border: none;
-      box-shadow: none;
-      box-sizing: border-box;
-    }
-    .ui-resizable-handle { 
-      display: none !important; 
-    }
-    /* Nota de solo texto (mantiene estilo previo) */
-    .text-note {
-      min-width: 180px;
-      min-height: 100px;
-      padding: 10px;
+    /* ---------------------- */
+    /* Nuevo estilo de tarjeta */
+    /* ---------------------- */
+    .card-wrapper {
       background-color: #fff;
-      border: 2px solid #0077a3;
       border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      font-size: 16px;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      line-height: 1.5;
-      position: relative;
-    }
-    /* Estilo Polaroid para notas con imagen */
-    .polaroid {
-      background-color: white;
-      width: 240px;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
       overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      width: 240px;
       display: flex;
       flex-direction: column;
+      position: relative;
     }
-    .polaroid-image-container {
+    /* Contenedor superior: imagen o área vacía para nota de texto */
+    .card-content {
+      flex-grow: 1;
+    }
+    /* Si hay imagen, se muestra en recuadro fijo */
+    .image-container {
       width: 240px;
       height: 240px;
       overflow: hidden;
       position: relative;
     }
-    .polaroid-image-container img {
+    .image-container img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
     }
-    .polaroid-note {
+    /* Área para la nota o descripción (parte blanca típica de Polaroid) */
+    .note-content {
       background-color: #fff;
-      width: 100%;
       padding: 10px;
       text-align: center;
       font-size: 16px;
@@ -100,42 +64,39 @@
       min-height: 50px;
       box-sizing: border-box;
     }
-    /* Barra de control inferior (para ambas opciones, si se requiere) */
-    .note-footer {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
+    /* La barra inferior integrada, con tono oceánico */
+    .menu-bar {
+      background-color: #0288D1; /* color oceánico; ajústalo si deseas */
       display: flex;
+      justify-content: space-around;
       align-items: center;
-      justify-content: space-between;
-      background-color: rgba(0, 85, 119, 0.8);
-      color: white;
-      padding: 0 5px;
-      height: 30px;
-      box-sizing: border-box;
+      padding: 5px 0;
     }
-    .footer-left,
-    .footer-right {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .footer-icon {
+    .menu-icon {
       background: none;
       border: none;
-      color: white;
+      font-size: 20px;
+      color: #fff;
       cursor: pointer;
-      font-size: 16px;
-      padding: 2px;
     }
-    .drag-star {
-      font-size: 30px;
-      color: gold;
-      cursor: move;
-      text-shadow: 0 0 10px rgba(255,215,0,0.8);
+    /* Estilo para nota de solo texto (sin imagen) */
+    .text-card {
+      background-color: #fff;
+      border: 2px solid #0077a3;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      width: 240px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
     }
-    /* Botón flotante para agregar notas */
+    .text-card .note-content {
+      min-height: 120px;
+      padding: 10px;
+    }
+    /* ---------------------- */
+    /* Estilos para la interfaz de agregar nota */
+    /* ---------------------- */
     #addNoteButton {
       position: fixed;
       bottom: 20px;
@@ -159,26 +120,8 @@
       background-color: #005577;
       transform: scale(1.05);
     }
-    /* Opciones y área de entrada para nuevas notas */
-    #addNoteOptions {
-      position: fixed;
-      bottom: 90px;
-      right: 20px;
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-      background-color: rgba(255,255,255,0.95);
-      border-radius: 5px;
-      padding: 10px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-      z-index: 2;
-    }
-    #addNoteOptions button {
-      padding: 8px 15px;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-      cursor: pointer;
-      background-color: #f9f9f9;
+    #addNoteOptions, #inputArea, #imageLinkInputArea, #textNoteInputArea {
+      display: none; /* Se pueden activar según la función */
     }
     #inputArea {
       position: fixed;
@@ -189,7 +132,6 @@
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-      display: none;
       flex-direction: column;
       gap: 10px;
       width: 80%;
@@ -204,8 +146,6 @@
       resize: none;
       width: 100%;
       box-sizing: border-box;
-      white-space: pre-wrap;
-      word-wrap: break-word;
       line-height: 1.5;
     }
     #inputArea button {
@@ -216,84 +156,24 @@
       border-radius: 4px;
       cursor: pointer;
     }
-    #imageLinkInputArea, #textNoteInputArea {
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-    }
     .input-group {
       display: flex;
       flex-direction: column;
       gap: 5px;
     }
-    /* Íconos minimalistas en la esquina inferior izquierda */
-    #sidebar {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      z-index: 3;
-    }
-    .sidebar-icon {
-      width: 60px;
-      height: 60px;
-      background: none;
-      color: white;
-      font-size: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: transform 0.3s ease;
-    }
-    .sidebar-icon:hover {
-      transform: scale(1.1);
-    }
-    /* Calendario flotante */
-    #floatingCalendar {
-      position: fixed;
-      top: 50%;
-      left: 100px;
-      transform: translateY(-50%);
-      width: 350px;
-      height: 400px;
-      background: #fff;
-      border: 2px solid #ccc;
-      border-radius: 8px;
-      display: none;
-      z-index: 4;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-      padding: 10px;
-    }
-    #calendarContainer {
-      width: 100%;
-      height: 100%;
-    }
+    /* ---------------------- */
+    /* Se eliminan los estilos de sidebar, calendario y demás extras */
+    /* ---------------------- */
   </style>
 </head>
 <body>
-  <!-- Overlay -->
-  <div class="sun-overlay"></div>
-  
-  <!-- Íconos laterales -->
-  <div id="sidebar">
-    <div class="sidebar-icon" title="Música">♪</div>
-    <div class="sidebar-icon" title="Archivos">📁</div>
-    <div class="sidebar-icon" title="Calendario" id="calendarIcon">📅</div>
-    <div class="sidebar-icon" title="Tareas">✎</div>
-    <div class="sidebar-icon" title="Contactos">☎</div>
-  </div>
-  
-  <!-- Calendario flotante -->
-  <div id="floatingCalendar">
-    <div id="calendarContainer"></div>
-  </div>
-  
   <!-- Contenedor de notas -->
   <div id="notaDisplay" class="grid-stack"></div>
+  
+  <!-- Botón para agregar nota -->
   <button id="addNoteButton">+</button>
+  
+  <!-- Opciones e interfaz para agregar una nueva nota (se mantienen las funciones) -->
   <div id="addNoteOptions">
     <button id="addImageLinkOption">Guardar link de imagen</button>
     <button id="addTextNoteOption">Subir nota</button>
@@ -321,11 +201,9 @@
     function transformDriveLink(url) {
       if (!url.includes("drive.google.com")) return url;
       let fileId = null;
-      // Caso 1: /file/d/FILE_ID/
       const regex1 = /\/file\/d\/([^\/]+)\//;
       let match = url.match(regex1);
       if (match && match[1]) fileId = match[1];
-      // Caso 2: ?id=FILE_ID o &id=FILE_ID
       if (!fileId) {
         const regex2 = /[?&]id=([^&]+)/;
         match = url.match(regex2);
@@ -356,7 +234,7 @@
       float: true
     });
     
-    // Autoajuste de textareas
+    // Autoajuste de textareas en la interfaz de agregar nota
     function autoResizeTextarea(el) {
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
@@ -366,119 +244,97 @@
     textNoteInput.addEventListener('input', () => autoResizeTextarea(textNoteInput));
     imageNoteText.addEventListener('input', () => autoResizeTextarea(imageNoteText));
     
-    // Función para mostrar cada nota en pantalla
+    // Función para mostrar cada nota en pantalla con el nuevo formato
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       const gridItem = document.createElement('div');
       gridItem.classList.add('grid-stack-item');
       gridItem.setAttribute('data-note-id', doc.id);
       
-      // Contenedor interno
       const content = document.createElement('div');
-      content.classList.add('grid-stack-item-content');
+      // Usamos una estructura de tarjeta: contenedor (card) + barra de menú inferior.
       
-      // Si existe url (nota con imagen) usamos el estilo polaroid
+      let card;
       if(notaData.url) {
-        const polaroid = document.createElement('div');
-        polaroid.classList.add('polaroid');
+        // Nota con imagen: estructura "Polaroid"
+        card = document.createElement('div');
+        card.classList.add('card-wrapper');
         
-        // Contenedor fijo para la imagen (240x240)
+        // Contenedor fijo para imagen
         const imageContainer = document.createElement('div');
-        imageContainer.classList.add('polaroid-image-container');
+        imageContainer.classList.add('image-container');
         const img = document.createElement('img');
         img.src = transformDriveLink(notaData.url);
         img.alt = 'Imagen de la nota';
         imageContainer.appendChild(img);
+        card.appendChild(imageContainer);
         
-        // Parte inferior para la nota o descripción
-        const noteDiv = document.createElement('div');
-        noteDiv.classList.add('polaroid-note');
-        noteDiv.textContent = notaData.texto ? notaData.texto : '';
-        
-        polaroid.appendChild(imageContainer);
-        polaroid.appendChild(noteDiv);
-        content.appendChild(polaroid);
+        // Área para texto (nota o descripción)
+        const noteContent = document.createElement('div');
+        noteContent.classList.add('note-content');
+        noteContent.textContent = notaData.texto ? notaData.texto : '';
+        card.appendChild(noteContent);
       } else if(notaData.nota) {
-        // Nota de solo texto, se mantiene estilo anterior
-        const textDiv = document.createElement('div');
-        textDiv.classList.add('text-note');
-        textDiv.textContent = notaData.nota;
-        content.appendChild(textDiv);
+        // Nota de solo texto: estructura similar pero sin imagen
+        card = document.createElement('div');
+        card.classList.add('text-card');
+        
+        const noteContent = document.createElement('div');
+        noteContent.classList.add('note-content');
+        noteContent.textContent = notaData.nota;
+        card.appendChild(noteContent);
       }
       
-      // Barra de control inferior (edición y eliminación), se posiciona sobre la nota
-      const noteFooter = document.createElement('div');
-      noteFooter.classList.add('note-footer');
-      const footerLeft = document.createElement('div');
-      footerLeft.classList.add('footer-left');
-      const dragStar = document.createElement('div');
-      dragStar.classList.add('drag-star');
-      dragStar.textContent = '✦';
-      dragStar.draggable = true;
-      dragStar.addEventListener('dragstart', (e) => {
-        document.getElementById('floatingCalendar').style.display = 'block';
-        e.dataTransfer.setData("text/plain", doc.id);
-      });
-      dragStar.addEventListener('dragend', () => {
-        setTimeout(() => {
-          document.getElementById('floatingCalendar').style.display = 'none';
-        }, 100);
-      });
-      footerLeft.appendChild(dragStar);
+      // Barra de menú integrada, pegada al final de la tarjeta
+      const menuBar = document.createElement('div');
+      menuBar.classList.add('menu-bar');
       
-      const footerRight = document.createElement('div');
-      footerRight.classList.add('footer-right');
+      // Icono de editar (lápiz)
       const editButton = document.createElement('button');
-      editButton.classList.add('footer-icon');
+      editButton.classList.add('menu-icon');
       editButton.innerHTML = '✎';
       editButton.onclick = function() {
-        // Para edición, dependiendo si es imagen o texto
         let currentText = notaData.texto || notaData.nota || '';
         const editInput = document.createElement('input');
         editInput.type = 'text';
         editInput.value = currentText;
-        // Reemplazamos el texto según el tipo de nota
+        // Reemplazamos el contenido de la nota según corresponda
         if(notaData.url) {
-          const noteContainer = content.querySelector('.polaroid-note');
+          const noteContainer = card.querySelector('.note-content');
           if(noteContainer) {
-            noteContainer.replaceChild(editInput, noteContainer.firstChild);
+            noteContainer.innerHTML = '';
+            noteContainer.appendChild(editInput);
           }
         } else {
-          const pElement = content.querySelector('.text-note');
-          if(pElement) {
-            pElement.replaceWith(editInput);
+          const noteContainer = card.querySelector('.note-content');
+          if(noteContainer) {
+            noteContainer.innerHTML = '';
+            noteContainer.appendChild(editInput);
           }
         }
         const saveEditButton = document.createElement('button');
-        saveEditButton.classList.add('footer-icon');
+        saveEditButton.classList.add('menu-icon');
         saveEditButton.innerHTML = '💾';
         saveEditButton.onclick = function() {
           const newText = editInput.value;
           if(newText.trim() !== '') {
             db.collection('notas').doc(doc.id).update(notaData.url ? { texto: newText } : { nota: newText })
               .then(() => {
-                if(notaData.url) {
-                  const noteContainer = content.querySelector('.polaroid-note');
-                  noteContainer.textContent = newText;
-                } else {
-                  const newP = document.createElement('div');
-                  newP.classList.add('text-note');
-                  newP.textContent = newText;
-                  editInput.replaceWith(newP);
-                }
-                footerRight.replaceChild(editButton, saveEditButton);
+                const noteContainer = card.querySelector('.note-content');
+                noteContainer.textContent = newText;
+                menuBar.replaceChild(editButton, saveEditButton);
               })
               .catch((error) => {
                 console.error('Error al actualizar la nota: ', error);
               });
           }
         };
-        footerRight.replaceChild(saveEditButton, editButton);
+        menuBar.replaceChild(saveEditButton, editButton);
       };
-      footerRight.appendChild(editButton);
       
+      // Icono de eliminar (cruz)
       const deleteButton = document.createElement('button');
-      deleteButton.classList.add('footer-icon');
+      deleteButton.classList.add('menu-icon');
       deleteButton.innerHTML = '✖';
       deleteButton.onclick = function() {
         db.collection('notas').doc(doc.id).delete()
@@ -489,12 +345,13 @@
             console.error("Error al eliminar la nota: ", error);
           });
       };
-      footerRight.appendChild(deleteButton);
       
-      noteFooter.appendChild(footerLeft);
-      noteFooter.appendChild(footerRight);
-      content.appendChild(noteFooter);
+      menuBar.appendChild(editButton);
+      menuBar.appendChild(deleteButton);
       
+      // Se agrega la barra de menú a la tarjeta
+      card.appendChild(menuBar);
+      content.appendChild(card);
       gridItem.appendChild(content);
       
       // Posición de la nota dentro del grid
@@ -513,7 +370,7 @@
       grid.removeAll();
     }
     
-    // Escuchar cambios en la colección "notas"
+    // Escucha cambios en la colección "notas" para actualizar las notas
     db.collection('notas')
       .orderBy('__name__')
       .onSnapshot((snapshot) => {
@@ -523,7 +380,7 @@
         });
       });
     
-    // Manejo de la interfaz para agregar notas
+    // Manejo de la interfaz para agregar nuevas notas
     const addNoteButton = document.getElementById('addNoteButton');
     const addNoteOptions = document.getElementById('addNoteOptions');
     const addImageLinkOption = document.getElementById('addImageLinkOption');
@@ -558,7 +415,7 @@
       addingNewNote = false;
     };
     
-    // Función para guardar nota con enlace de imagen (transforma enlace de Drive)
+    // Función para guardar nota con enlace de imagen
     function guardarLinkDeImagen() {
       let link = imageLinkInput.value;
       const texto = imageNoteText.value;
@@ -579,7 +436,7 @@
       }
     }
     
-    // Función para guardar nota de texto
+    // Función para guardar nota de solo texto
     function guardarNotaTexto() {
       const nota = textNoteInput.value;
       if(nota.trim() !== '') {
@@ -599,7 +456,7 @@
     saveImageLinkButton.onclick = guardarLinkDeImagen;
     saveTextNoteButton.onclick = guardarNotaTexto;
     
-    // Actualizar posición de la nota al finalizar el arrastre
+    // Actualizar la posición de la nota al finalizar el arrastre
     grid.on('dragstop', function(event, el) {
       setTimeout(() => {
         const noteId = el.getAttribute('data-note-id');
@@ -613,28 +470,6 @@
           }).catch(error => console.error("Error guardando posición:", error));
         }
       }, 100);
-    });
-    
-    // Inicialización de FullCalendar
-    document.addEventListener('DOMContentLoaded', function() {
-      var calendarEl = document.getElementById('calendarContainer');
-      var calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        initialDate: '2025-04-10',
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
-        selectable: true,
-        navLinks: true,
-        businessHours: true,
-        dayMaxEvents: true,
-        dateClick: function(info) {
-          console.log("Fecha seleccionada: " + info.dateStr);
-        }
-      });
-      calendar.render();
     });
   </script>
 </body>
