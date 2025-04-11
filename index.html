@@ -24,8 +24,16 @@
     #notaDisplay {
       margin-top: 20px;
     }
+    /* Ocultar ghost element del drag */
+    .grid-stack-placeholder {
+      display: none !important;
+    }
+    /* Agregar transición suave al contenedor de cada widget */
+    .grid-stack-item {
+      transition: transform 0.3s ease-out;
+    }
     /* ---------------------- */
-    /* Nuevo estilo de tarjeta */
+    /* Nuevo estilo de tarjeta (Polaroid) */
     /* ---------------------- */
     .card-wrapper {
       background-color: #fff;
@@ -64,9 +72,9 @@
       min-height: 50px;
       box-sizing: border-box;
     }
-    /* La barra inferior integrada, con tono oceánico */
+    /* La barra de menú integrada, con tono oceánico */
     .menu-bar {
-      background-color: #0288D1; /* color oceánico; ajústalo si deseas */
+      background-color: #0288D1; /* color oceánico */
       display: flex;
       justify-content: space-around;
       align-items: center;
@@ -95,7 +103,7 @@
       padding: 10px;
     }
     /* ---------------------- */
-    /* Estilos para la interfaz de agregar nota */
+    /* Interfaz para agregar nota (se conservan las funciones) */
     /* ---------------------- */
     #addNoteButton {
       position: fixed;
@@ -121,7 +129,7 @@
       transform: scale(1.05);
     }
     #addNoteOptions, #inputArea, #imageLinkInputArea, #textNoteInputArea {
-      display: none; /* Se pueden activar según la función */
+      display: none;
     }
     #inputArea {
       position: fixed;
@@ -161,9 +169,7 @@
       flex-direction: column;
       gap: 5px;
     }
-    /* ---------------------- */
-    /* Se eliminan los estilos de sidebar, calendario y demás extras */
-    /* ---------------------- */
+    /* Se eliminan los estilos de sidebar, calendario y otros extras */
   </style>
 </head>
 <body>
@@ -173,7 +179,7 @@
   <!-- Botón para agregar nota -->
   <button id="addNoteButton">+</button>
   
-  <!-- Opciones e interfaz para agregar una nueva nota (se mantienen las funciones) -->
+  <!-- Opciones para agregar nueva nota -->
   <div id="addNoteOptions">
     <button id="addImageLinkOption">Guardar link de imagen</button>
     <button id="addTextNoteOption">Subir nota</button>
@@ -226,15 +232,16 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     
-    // Inicializar GridStack con celda de altura 'auto'
+    // Inicializar GridStack con opción de animación
     const grid = GridStack.init({
       margin: 5,
       cellHeight: 'auto',
       disableResize: true,
-      float: true
+      float: true,
+      animate: true
     });
     
-    // Autoajuste de textareas en la interfaz de agregar nota
+    // Autoajuste de textareas en la interfaz para agregar nota
     function autoResizeTextarea(el) {
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
@@ -244,7 +251,7 @@
     textNoteInput.addEventListener('input', () => autoResizeTextarea(textNoteInput));
     imageNoteText.addEventListener('input', () => autoResizeTextarea(imageNoteText));
     
-    // Función para mostrar cada nota en pantalla con el nuevo formato
+    // Función para mostrar cada nota en pantalla con el formato Polaroid
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       const gridItem = document.createElement('div');
@@ -252,15 +259,14 @@
       gridItem.setAttribute('data-note-id', doc.id);
       
       const content = document.createElement('div');
-      // Usamos una estructura de tarjeta: contenedor (card) + barra de menú inferior.
       
       let card;
       if(notaData.url) {
-        // Nota con imagen: estructura "Polaroid"
+        // Nota con imagen: estructura Polaroid
         card = document.createElement('div');
         card.classList.add('card-wrapper');
         
-        // Contenedor fijo para imagen
+        // Contenedor fijo para la imagen
         const imageContainer = document.createElement('div');
         imageContainer.classList.add('image-container');
         const img = document.createElement('img');
@@ -269,13 +275,13 @@
         imageContainer.appendChild(img);
         card.appendChild(imageContainer);
         
-        // Área para texto (nota o descripción)
+        // Área para la nota (texto o descripción)
         const noteContent = document.createElement('div');
         noteContent.classList.add('note-content');
         noteContent.textContent = notaData.texto ? notaData.texto : '';
         card.appendChild(noteContent);
       } else if(notaData.nota) {
-        // Nota de solo texto: estructura similar pero sin imagen
+        // Nota de solo texto
         card = document.createElement('div');
         card.classList.add('text-card');
         
@@ -285,11 +291,11 @@
         card.appendChild(noteContent);
       }
       
-      // Barra de menú integrada, pegada al final de la tarjeta
+      // Barra de menú integrada (color oceánico) con iconos editar y eliminar
       const menuBar = document.createElement('div');
       menuBar.classList.add('menu-bar');
       
-      // Icono de editar (lápiz)
+      // Icono editar (lápiz)
       const editButton = document.createElement('button');
       editButton.classList.add('menu-icon');
       editButton.innerHTML = '✎';
@@ -298,19 +304,11 @@
         const editInput = document.createElement('input');
         editInput.type = 'text';
         editInput.value = currentText;
-        // Reemplazamos el contenido de la nota según corresponda
-        if(notaData.url) {
-          const noteContainer = card.querySelector('.note-content');
-          if(noteContainer) {
-            noteContainer.innerHTML = '';
-            noteContainer.appendChild(editInput);
-          }
-        } else {
-          const noteContainer = card.querySelector('.note-content');
-          if(noteContainer) {
-            noteContainer.innerHTML = '';
-            noteContainer.appendChild(editInput);
-          }
+        // Reemplazar el contenido de la nota según corresponda
+        const noteContainer = card.querySelector('.note-content');
+        if(noteContainer) {
+          noteContainer.innerHTML = '';
+          noteContainer.appendChild(editInput);
         }
         const saveEditButton = document.createElement('button');
         saveEditButton.classList.add('menu-icon');
@@ -332,7 +330,7 @@
         menuBar.replaceChild(saveEditButton, editButton);
       };
       
-      // Icono de eliminar (cruz)
+      // Icono eliminar (cruz)
       const deleteButton = document.createElement('button');
       deleteButton.classList.add('menu-icon');
       deleteButton.innerHTML = '✖';
@@ -349,12 +347,12 @@
       menuBar.appendChild(editButton);
       menuBar.appendChild(deleteButton);
       
-      // Se agrega la barra de menú a la tarjeta
+      // Agregar la barra de menú a la tarjeta
       card.appendChild(menuBar);
       content.appendChild(card);
       gridItem.appendChild(content);
       
-      // Posición de la nota dentro del grid
+      // Definir posición dentro del grid
       const pos = {
         x: notaData.x || 0,
         y: typeof notaData.y === 'number' ? notaData.y : 0,
@@ -365,12 +363,12 @@
       grid.addWidget(gridItem, pos);
     }
     
-    // Función para limpiar todas las notas en pantalla
+    // Función para limpiar las notas mostradas
     function limpiarNotasDisplay() {
       grid.removeAll();
     }
     
-    // Escucha cambios en la colección "notas" para actualizar las notas
+    // Escucha cambios en la colección "notas" para actualizar la vista en tiempo real
     db.collection('notas')
       .orderBy('__name__')
       .onSnapshot((snapshot) => {
@@ -415,7 +413,7 @@
       addingNewNote = false;
     };
     
-    // Función para guardar nota con enlace de imagen
+    // Función para guardar una nota con enlace de imagen
     function guardarLinkDeImagen() {
       let link = imageLinkInput.value;
       const texto = imageNoteText.value;
@@ -436,7 +434,7 @@
       }
     }
     
-    // Función para guardar nota de solo texto
+    // Función para guardar una nota de solo texto
     function guardarNotaTexto() {
       const nota = textNoteInput.value;
       if(nota.trim() !== '') {
@@ -456,7 +454,7 @@
     saveImageLinkButton.onclick = guardarLinkDeImagen;
     saveTextNoteButton.onclick = guardarNotaTexto;
     
-    // Actualizar la posición de la nota al finalizar el arrastre
+    // Actualizar la posición de la nota al soltar el widget arrastrado
     grid.on('dragstop', function(event, el) {
       setTimeout(() => {
         const noteId = el.getAttribute('data-note-id');
