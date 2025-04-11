@@ -42,51 +42,78 @@
       padding: 20px;
       flex-grow: 1;
     }
-    /* Cada nota se muestra como una "carta de solitario" */
+    /* Cada nota se muestra dentro de un widget de GridStack */
     .grid-stack-item-content {
-      min-width: 180px;
-      /* Se reduce el min-height para permitir que el contenedor se expanda según la imagen */
-      min-height: 100px;
       padding: 10px;
-      background-color: #fff;
-      border: 2px solid #0077a3;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      display: flex;
-      flex-direction: column;
-      overflow: visible;
+      background-color: transparent; /* vamos a usar el polaroid para notas con imagen y otro estilo para texto */
+      border: none;
+      box-shadow: none;
       box-sizing: border-box;
     }
     .ui-resizable-handle { 
       display: none !important; 
     }
-    /* Cuerpo de la nota */
-    .note-body {
+    /* Nota de solo texto (mantiene estilo previo) */
+    .text-note {
+      min-width: 180px;
+      min-height: 100px;
       padding: 10px;
-      flex-grow: 1;
+      background-color: #fff;
+      border: 2px solid #0077a3;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
       font-size: 16px;
       white-space: pre-wrap;
       word-wrap: break-word;
       line-height: 1.5;
+      position: relative;
     }
-    /* Imágenes adaptadas: máxima anchura 100% y auto en altura,
-       para evitar que salgan del contenedor y provoquen scroll */
-    .note-body img {
-      max-width: 100%;
-      height: auto;
+    /* Estilo Polaroid para notas con imagen */
+    .polaroid {
+      background-color: white;
+      width: 240px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .polaroid-image-container {
+      width: 240px;
+      height: 240px;
+      overflow: hidden;
+      position: relative;
+    }
+    .polaroid-image-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
       display: block;
-      object-fit: contain;
-      border-radius: 4px;
     }
-    /* Barra de control inferior */
+    .polaroid-note {
+      background-color: #fff;
+      width: 100%;
+      padding: 10px;
+      text-align: center;
+      font-size: 16px;
+      color: #333;
+      min-height: 50px;
+      box-sizing: border-box;
+    }
+    /* Barra de control inferior (para ambas opciones, si se requiere) */
     .note-footer {
-      background-color: rgba(0, 85, 119, 0.8);
-      color: white;
-      height: 30px;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      background-color: rgba(0, 85, 119, 0.8);
+      color: white;
       padding: 0 5px;
+      height: 30px;
+      box-sizing: border-box;
     }
     .footer-left,
     .footer-right {
@@ -294,21 +321,17 @@
     function transformDriveLink(url) {
       if (!url.includes("drive.google.com")) return url;
       let fileId = null;
+      // Caso 1: /file/d/FILE_ID/
       const regex1 = /\/file\/d\/([^\/]+)\//;
       let match = url.match(regex1);
-      if (match && match[1]) {
-        fileId = match[1];
-      }
+      if (match && match[1]) fileId = match[1];
+      // Caso 2: ?id=FILE_ID o &id=FILE_ID
       if (!fileId) {
         const regex2 = /[?&]id=([^&]+)/;
         match = url.match(regex2);
-        if (match && match[1]) {
-          fileId = match[1];
-        }
+        if (match && match[1]) fileId = match[1];
       }
-      if (fileId) {
-        return "https://drive.google.com/uc?export=view&id=" + fileId;
-      }
+      if (fileId) return "https://drive.google.com/uc?export=view&id=" + fileId;
       return url;
     }
     
@@ -350,30 +373,40 @@
       gridItem.classList.add('grid-stack-item');
       gridItem.setAttribute('data-note-id', doc.id);
       
+      // Contenedor interno
       const content = document.createElement('div');
       content.classList.add('grid-stack-item-content');
       
-      const noteBody = document.createElement('div');
-      noteBody.classList.add('note-body');
-      
+      // Si existe url (nota con imagen) usamos el estilo polaroid
       if(notaData.url) {
+        const polaroid = document.createElement('div');
+        polaroid.classList.add('polaroid');
+        
+        // Contenedor fijo para la imagen (240x240)
+        const imageContainer = document.createElement('div');
+        imageContainer.classList.add('polaroid-image-container');
         const img = document.createElement('img');
-        // Se transforma el enlace para asegurar visualización
         img.src = transformDriveLink(notaData.url);
-        noteBody.appendChild(img);
-        if(notaData.texto) {
-          const p = document.createElement('p');
-          p.textContent = notaData.texto;
-          noteBody.appendChild(p);
-        }
+        img.alt = 'Imagen de la nota';
+        imageContainer.appendChild(img);
+        
+        // Parte inferior para la nota o descripción
+        const noteDiv = document.createElement('div');
+        noteDiv.classList.add('polaroid-note');
+        noteDiv.textContent = notaData.texto ? notaData.texto : '';
+        
+        polaroid.appendChild(imageContainer);
+        polaroid.appendChild(noteDiv);
+        content.appendChild(polaroid);
       } else if(notaData.nota) {
-        const p = document.createElement('p');
-        p.textContent = notaData.nota;
-        noteBody.appendChild(p);
+        // Nota de solo texto, se mantiene estilo anterior
+        const textDiv = document.createElement('div');
+        textDiv.classList.add('text-note');
+        textDiv.textContent = notaData.nota;
+        content.appendChild(textDiv);
       }
       
-      content.appendChild(noteBody);
-      
+      // Barra de control inferior (edición y eliminación), se posiciona sobre la nota
       const noteFooter = document.createElement('div');
       noteFooter.classList.add('note-footer');
       const footerLeft = document.createElement('div');
@@ -399,12 +432,22 @@
       editButton.classList.add('footer-icon');
       editButton.innerHTML = '✎';
       editButton.onclick = function() {
+        // Para edición, dependiendo si es imagen o texto
+        let currentText = notaData.texto || notaData.nota || '';
         const editInput = document.createElement('input');
         editInput.type = 'text';
-        editInput.value = notaData.texto || notaData.nota || '';
-        const pElement = noteBody.querySelector('p');
-        if(pElement) {
-          noteBody.replaceChild(editInput, pElement);
+        editInput.value = currentText;
+        // Reemplazamos el texto según el tipo de nota
+        if(notaData.url) {
+          const noteContainer = content.querySelector('.polaroid-note');
+          if(noteContainer) {
+            noteContainer.replaceChild(editInput, noteContainer.firstChild);
+          }
+        } else {
+          const pElement = content.querySelector('.text-note');
+          if(pElement) {
+            pElement.replaceWith(editInput);
+          }
         }
         const saveEditButton = document.createElement('button');
         saveEditButton.classList.add('footer-icon');
@@ -414,9 +457,15 @@
           if(newText.trim() !== '') {
             db.collection('notas').doc(doc.id).update(notaData.url ? { texto: newText } : { nota: newText })
               .then(() => {
-                const newP = document.createElement('p');
-                newP.textContent = newText;
-                noteBody.replaceChild(newP, editInput);
+                if(notaData.url) {
+                  const noteContainer = content.querySelector('.polaroid-note');
+                  noteContainer.textContent = newText;
+                } else {
+                  const newP = document.createElement('div');
+                  newP.classList.add('text-note');
+                  newP.textContent = newText;
+                  editInput.replaceWith(newP);
+                }
                 footerRight.replaceChild(editButton, saveEditButton);
               })
               .catch((error) => {
@@ -445,9 +494,10 @@
       noteFooter.appendChild(footerLeft);
       noteFooter.appendChild(footerRight);
       content.appendChild(noteFooter);
+      
       gridItem.appendChild(content);
       
-      // Se usa autoPosition para que la nota se ajuste de forma dinámica
+      // Posición de la nota dentro del grid
       const pos = {
         x: notaData.x || 0,
         y: typeof notaData.y === 'number' ? notaData.y : 0,
