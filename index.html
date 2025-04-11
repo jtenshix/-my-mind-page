@@ -169,7 +169,74 @@
       flex-direction: column;
       gap: 5px;
     }
-    /* Se eliminan los estilos de sidebar, calendario y otros extras */
+    /* ---------------------- */
+    /* Estilos para el Calendario */
+    /* ---------------------- */
+    .calendar-icon {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      width: 40px;
+      height: 40px;
+      background-color: #006994;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 2;
+    }
+    .calendar-widget {
+      position: fixed;
+      bottom: 70px;
+      left: 20px;
+      background: #fff;
+      border: 1px solid #ccc;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      padding: 10px;
+      display: none;
+      z-index: 2;
+      width: 250px;
+    }
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .calendar-header button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .calendar-header span {
+      font-weight: bold;
+    }
+    .calendar-days-header,
+    .calendar-dates-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-size: 12px;
+    }
+    .calendar-days-header {
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .calendar-day,
+    .calendar-date {
+      padding: 3px;
+      border-radius: 3px;
+    }
+    .calendar-date.empty {
+      background: none;
+    }
+    .calendar-date:hover {
+      background-color: #e0e0e0;
+    }
   </style>
 </head>
 <body>
@@ -201,6 +268,11 @@
       <button id="saveTextNote">Guardar Nota</button>
     </div>
   </div>
+  
+  <!-- Ícono del Calendario (esquina inferior izquierda) -->
+  <div id="calendarIcon" class="calendar-icon">📅</div>
+  <!-- Contenedor del Calendario desplegable -->
+  <div id="calendarWidget" class="calendar-widget"></div>
   
   <script>
     // Función para transformar enlaces de Google Drive en enlaces embebibles
@@ -459,6 +531,141 @@
         }
       }, 100);
     });
+    
+    /* -------------------------------------------------- */
+    /* Funcionalidad del Calendario (desplegable al hover) */
+    /* -------------------------------------------------- */
+    
+    // Variables globales para el estado del calendario
+    let currentCalendarMonth, currentCalendarYear;
+    
+    // Obtiene la fecha actual para Chile usando el truco de toLocaleString
+    function getChileDate() {
+      return new Date(new Date().toLocaleString("en-US", {timeZone: "America/Santiago"}));
+    }
+    
+    // Función para inicializar el mes del calendario: si la fecha actual en Chile es anterior a diciembre 2024, se fija en diciembre 2024
+    function initCalendarDate() {
+      let today = getChileDate();
+      let year = today.getFullYear();
+      let month = today.getMonth();
+      // Diciembre es el mes 11 (0-indexado)
+      if (year < 2024 || (year === 2024 && month < 11)) {
+        return { month: 11, year: 2024 };
+      }
+      return { month, year };
+    }
+    
+    // Función que devuelve el nombre del mes en español
+    function getMonthName(monthIndex) {
+      const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+      return months[monthIndex];
+    }
+    
+    // Función para generar el calendario en el contenedor
+    function generateCalendar(month, year) {
+      const calendarDiv = document.getElementById('calendarWidget');
+      calendarDiv.innerHTML = ''; // Limpiar contenido previo
+      
+      // Encabezado del calendario con botones de navegación
+      const header = document.createElement('div');
+      header.className = 'calendar-header';
+      
+      const prevBtn = document.createElement('button');
+      prevBtn.textContent = '<';
+      prevBtn.onclick = function() {
+        let newMonth = month - 1;
+        let newYear = year;
+        if(newMonth < 0) { newMonth = 11; newYear--; }
+        // Si se intenta ir a antes de diciembre 2024, no se actualiza
+        if(newYear < 2024 || (newYear === 2024 && newMonth < 11)) return;
+        generateCalendar(newMonth, newYear);
+      };
+      
+      const nextBtn = document.createElement('button');
+      nextBtn.textContent = '>';
+      nextBtn.onclick = function() {
+        let newMonth = month + 1;
+        let newYear = year;
+        if(newMonth > 11) { newMonth = 0; newYear++; }
+        generateCalendar(newMonth, newYear);
+      };
+      
+      const title = document.createElement('span');
+      title.textContent = getMonthName(month) + ' ' + year;
+      
+      header.appendChild(prevBtn);
+      header.appendChild(title);
+      header.appendChild(nextBtn);
+      calendarDiv.appendChild(header);
+      
+      // Días de la semana (encabezado)
+      const daysHeader = document.createElement('div');
+      daysHeader.className = 'calendar-days-header';
+      const daysOfWeek = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+      daysOfWeek.forEach(day => {
+        const dayElem = document.createElement('div');
+        dayElem.textContent = day;
+        dayElem.className = 'calendar-day';
+        daysHeader.appendChild(dayElem);
+      });
+      calendarDiv.appendChild(daysHeader);
+      
+      // Crear la cuadrícula de fechas
+      const datesGrid = document.createElement('div');
+      datesGrid.className = 'calendar-dates-grid';
+      
+      // Primer día de la semana del primer día del mes
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      
+      // Agregar celdas vacías si es necesario
+      for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'calendar-date empty';
+        datesGrid.appendChild(emptyCell);
+      }
+      // Agregar números de cada día
+      for (let date = 1; date <= daysInMonth; date++) {
+        const dateCell = document.createElement('div');
+        dateCell.className = 'calendar-date';
+        dateCell.textContent = date;
+        datesGrid.appendChild(dateCell);
+      }
+      calendarDiv.appendChild(datesGrid);
+      
+      // Actualizar el estado actual del calendario
+      currentCalendarMonth = month;
+      currentCalendarYear = year;
+    }
+    
+    // Mostrar/ocultar el calendario al interactuar con el ícono
+    const calendarIcon = document.getElementById('calendarIcon');
+    const calendarWidget = document.getElementById('calendarWidget');
+    let calendarTimeout;
+    
+    function showCalendar() {
+      // Inicializa la fecha según Chile o establece diciembre 2024 si es menor
+      const { month, year } = initCalendarDate();
+      generateCalendar(month, year);
+      calendarWidget.style.display = 'block';
+    }
+    
+    function hideCalendar() {
+      calendarTimeout = setTimeout(() => { calendarWidget.style.display = 'none'; }, 200);
+    }
+    
+    calendarIcon.addEventListener('mouseover', () => {
+      clearTimeout(calendarTimeout);
+      showCalendar();
+    });
+    calendarIcon.addEventListener('mouseout', hideCalendar);
+    calendarWidget.addEventListener('mouseover', () => {
+      clearTimeout(calendarTimeout);
+      calendarWidget.style.display = 'block';
+    });
+    calendarWidget.addEventListener('mouseout', hideCalendar);
+    
   </script>
 </body>
 </html>
