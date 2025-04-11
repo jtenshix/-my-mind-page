@@ -23,7 +23,7 @@
       position: relative;
       overflow: hidden;
       padding-left: 20px;
-      padding-bottom: 100px; /* Espacio para íconos inferiores */
+      padding-bottom: 100px;
     }
     /* Overlay de luz solar */
     .sun-overlay {
@@ -44,19 +44,18 @@
     }
     /* Cada nota se muestra como una "carta de solitario" */
     .grid-stack-item-content {
-      min-width: 180px;        /* Ancho base tipo carta */
-      min-height: 280px;       /* Alto base tipo carta */
+      min-width: 180px;
+      min-height: 280px;
       padding: 10px;
       background-color: #fff;
-      border: 2px solid #0077a3;  /* Tono oceánico */
+      border: 2px solid #0077a3;
       border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra flotante */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       display: flex;
       flex-direction: column;
-      overflow: visible; /* Permite que la nota se expanda según su contenido */
+      overflow: visible;
       box-sizing: border-box;
     }
-    /* Ocultar cualquier manejador de resize que pudiera quedar activo */
     .ui-resizable-handle { 
       display: none !important; 
     }
@@ -78,7 +77,7 @@
     }
     /* Barra de control inferior */
     .note-footer {
-      background-color: rgba(0, 85, 119, 0.8); /* Azul profundo semitransparente */
+      background-color: rgba(0, 85, 119, 0.8);
       color: white;
       height: 30px;
       display: flex;
@@ -92,7 +91,6 @@
       align-items: center;
       gap: 5px;
     }
-    /* Iconos de la barra inferior */
     .footer-icon {
       background: none;
       border: none;
@@ -101,7 +99,6 @@
       font-size: 16px;
       padding: 2px;
     }
-    /* Estilo para la estrella draggable */
     .drag-star {
       font-size: 30px;
       color: gold;
@@ -199,7 +196,7 @@
       flex-direction: column;
       gap: 5px;
     }
-    /* Íconos minimalistas en blanco en la esquina inferior izquierda */
+    /* Íconos minimalistas en la esquina inferior izquierda */
     #sidebar {
       position: fixed;
       bottom: 20px;
@@ -240,7 +237,6 @@
       box-shadow: 0 3px 8px rgba(0,0,0,0.3);
       padding: 10px;
     }
-    /* Contenedor para FullCalendar */
     #calendarContainer {
       width: 100%;
       height: 100%;
@@ -251,7 +247,7 @@
   <!-- Overlay -->
   <div class="sun-overlay"></div>
   
-  <!-- Íconos minimalistas en blanco en la esquina inferior izquierda -->
+  <!-- Íconos laterales -->
   <div id="sidebar">
     <div class="sidebar-icon" title="Música">♪</div>
     <div class="sidebar-icon" title="Archivos">📁</div>
@@ -260,12 +256,12 @@
     <div class="sidebar-icon" title="Contactos">☎</div>
   </div>
   
-  <!-- Calendario flotante con FullCalendar -->
+  <!-- Calendario flotante -->
   <div id="floatingCalendar">
     <div id="calendarContainer"></div>
   </div>
   
-  <!-- Contenedor de notas con GridStack -->
+  <!-- Contenedor de notas -->
   <div id="notaDisplay" class="grid-stack"></div>
   <button id="addNoteButton">+</button>
   <div id="addNoteOptions">
@@ -291,19 +287,30 @@
   </div>
   
   <script>
-    // Función para transformar enlaces de Google Drive a enlaces embebibles
+    // Función para transformar enlaces de Google Drive a formato embebible
     function transformDriveLink(url) {
-      // Detecta el formato típico de Google Drive: /file/d/FILE_ID/view
-      const driveFileRegex = /\/file\/d\/([^\/]+)\/view/;
-      const match = url.match(driveFileRegex);
+      let fileId;
+      // Caso 1: Enlaces del formato /file/d/FILE_ID/view
+      let match = url.match(/\/file\/d\/([^\/]+)\/view/);
       if (match && match[1]) {
-        return "https://drive.google.com/uc?export=view&id=" + match[1];
+        fileId = match[1];
       }
-      // Si no es enlace de Drive, retorna el enlace original
+      // Caso 2: Enlaces del formato /open?id=FILE_ID
+      if (!fileId) {
+        match = url.match(/open\?id=([^&]+)/);
+        if (match && match[1]) {
+          fileId = match[1];
+        }
+      }
+      // Si se detectó el ID, se genera el enlace embebible
+      if (fileId) {
+        return "https://drive.google.com/uc?export=view&id=" + fileId;
+      }
+      // Si el enlace no corresponde a un enlace de Drive, se retorna sin cambios
       return url;
     }
     
-    // Configuración de Firebase (reemplaza con tus datos)
+    // Configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
       authDomain: "oasis-b036d.firebaseapp.com",
@@ -316,7 +323,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     
-    // Inicializar GridStack con cellHeight en "auto" para que el widget se expanda según su contenido
+    // Inicializar GridStack
     const grid = GridStack.init({
       margin: 5,
       cellHeight: 'auto',
@@ -324,7 +331,7 @@
       float: true
     });
     
-    // Autoajuste en textareas
+    // Autoajuste de textareas
     function autoResizeTextarea(el) {
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
@@ -334,20 +341,16 @@
     textNoteInput.addEventListener('input', () => autoResizeTextarea(textNoteInput));
     imageNoteText.addEventListener('input', () => autoResizeTextarea(imageNoteText));
     
-    // Función para crear y mostrar cada nota en pantalla
+    // Función para mostrar cada nota
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
-      
-      // Crear widget (nota) y su contenedor
       const gridItem = document.createElement('div');
       gridItem.classList.add('grid-stack-item');
       gridItem.setAttribute('data-note-id', doc.id);
       
-      // Contenedor de la nota (tipo carta)
       const content = document.createElement('div');
       content.classList.add('grid-stack-item-content');
       
-      // Cuerpo de la nota
       const noteBody = document.createElement('div');
       noteBody.classList.add('note-body');
       
@@ -368,7 +371,6 @@
       
       content.appendChild(noteBody);
       
-      // Footer con controles (editar, eliminar, draggable)
       const noteFooter = document.createElement('div');
       noteFooter.classList.add('note-footer');
       const footerLeft = document.createElement('div');
@@ -442,7 +444,6 @@
       content.appendChild(noteFooter);
       gridItem.appendChild(content);
       
-      // Configurar posición y dimensiones (persistentes o por defecto)
       const pos = {
         x: notaData.x || 0,
         y: typeof notaData.y === 'number' ? notaData.y : 0,
@@ -453,7 +454,7 @@
       grid.addWidget(gridItem, pos);
     }
     
-    // Función para limpiar todas las notas
+    // Limpieza de notas en pantalla
     function limpiarNotasDisplay() {
       grid.removeAll();
     }
@@ -468,7 +469,7 @@
         });
       });
     
-    // Manejo de la interfaz para agregar notas
+    // Manejo de interfaz para agregar notas
     const addNoteButton = document.getElementById('addNoteButton');
     const addNoteOptions = document.getElementById('addNoteOptions');
     const addImageLinkOption = document.getElementById('addImageLinkOption');
@@ -503,12 +504,11 @@
       addingNewNote = false;
     };
     
-    // Función para guardar nota con link de imagen (ahora transforma enlaces de Drive)
+    // Guardar nota con enlace de imagen (se transforma enlace de Drive si es necesario)
     function guardarLinkDeImagen() {
       let link = imageLinkInput.value;
       const texto = imageNoteText.value;
       if(link.trim() !== '') {
-        // Transformar enlace si es de Google Drive
         link = transformDriveLink(link);
         db.collection('notas').add({
           url: link,
@@ -525,7 +525,7 @@
       }
     }
     
-    // Función para guardar nota de texto
+    // Guardar nota de texto
     function guardarNotaTexto() {
       const nota = textNoteInput.value;
       if(nota.trim() !== '') {
@@ -545,7 +545,7 @@
     saveImageLinkButton.onclick = guardarLinkDeImagen;
     saveTextNoteButton.onclick = guardarNotaTexto;
     
-    // Actualizar posición de la nota al finalizar arrastre
+    // Actualización de posición de nota al finalizar el arrastre
     grid.on('dragstop', function(event, el) {
       setTimeout(() => {
         const noteId = el.getAttribute('data-note-id');
@@ -577,7 +577,6 @@
         businessHours: true,
         dayMaxEvents: true,
         dateClick: function(info) {
-          // Ejemplo: asignar fecha a la nota (completar según lógica deseada)
           console.log("Fecha seleccionada: " + info.dateStr);
         }
       });
