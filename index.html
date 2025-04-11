@@ -287,26 +287,31 @@
   </div>
   
   <script>
-    // Función para transformar enlaces de Google Drive a formato embebible
+    // Función actualizada para transformar enlaces de Google Drive
     function transformDriveLink(url) {
-      let fileId;
-      // Caso 1: Enlaces del formato /file/d/FILE_ID/view
-      let match = url.match(/\/file\/d\/([^\/]+)\/view/);
+      // Si el enlace no contiene "drive.google.com", se retorna igual.
+      if (!url.includes("drive.google.com")) return url;
+      
+      let fileId = null;
+      // Caso 1: Enlaces tipo /file/d/FILE_ID/
+      const regex1 = /\/file\/d\/([^\/]+)\//;
+      let match = url.match(regex1);
       if (match && match[1]) {
         fileId = match[1];
       }
-      // Caso 2: Enlaces del formato /open?id=FILE_ID
+      // Caso 2: Enlaces que contengan ?id=FILE_ID o &id=FILE_ID
       if (!fileId) {
-        match = url.match(/open\?id=([^&]+)/);
+        const regex2 = /[?&]id=([^&]+)/;
+        match = url.match(regex2);
         if (match && match[1]) {
           fileId = match[1];
         }
       }
-      // Si se detectó el ID, se genera el enlace embebible
+      // Si se extrajo un ID, se retorna el enlace embebible.
       if (fileId) {
         return "https://drive.google.com/uc?export=view&id=" + fileId;
       }
-      // Si el enlace no corresponde a un enlace de Drive, se retorna sin cambios
+      // Si no se pudo extraer el ID, retorna el enlace original.
       return url;
     }
     
@@ -341,7 +346,7 @@
     textNoteInput.addEventListener('input', () => autoResizeTextarea(textNoteInput));
     imageNoteText.addEventListener('input', () => autoResizeTextarea(imageNoteText));
     
-    // Función para mostrar cada nota
+    // Función para mostrar cada nota en pantalla
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       const gridItem = document.createElement('div');
@@ -454,7 +459,7 @@
       grid.addWidget(gridItem, pos);
     }
     
-    // Limpieza de notas en pantalla
+    // Función para limpiar todas las notas en pantalla
     function limpiarNotasDisplay() {
       grid.removeAll();
     }
@@ -469,7 +474,7 @@
         });
       });
     
-    // Manejo de interfaz para agregar notas
+    // Manejo de la interfaz para agregar notas
     const addNoteButton = document.getElementById('addNoteButton');
     const addNoteOptions = document.getElementById('addNoteOptions');
     const addImageLinkOption = document.getElementById('addImageLinkOption');
@@ -504,7 +509,7 @@
       addingNewNote = false;
     };
     
-    // Guardar nota con enlace de imagen (se transforma enlace de Drive si es necesario)
+    // Función para guardar nota con enlace de imagen (transforma enlace de Drive)
     function guardarLinkDeImagen() {
       let link = imageLinkInput.value;
       const texto = imageNoteText.value;
@@ -525,7 +530,7 @@
       }
     }
     
-    // Guardar nota de texto
+    // Función para guardar nota de texto
     function guardarNotaTexto() {
       const nota = textNoteInput.value;
       if(nota.trim() !== '') {
@@ -545,7 +550,7 @@
     saveImageLinkButton.onclick = guardarLinkDeImagen;
     saveTextNoteButton.onclick = guardarNotaTexto;
     
-    // Actualización de posición de nota al finalizar el arrastre
+    // Actualizar posición de la nota al finalizar el arrastre
     grid.on('dragstop', function(event, el) {
       setTimeout(() => {
         const noteId = el.getAttribute('data-note-id');
