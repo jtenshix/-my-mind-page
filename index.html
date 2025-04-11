@@ -291,6 +291,18 @@
   </div>
   
   <script>
+    // Función para transformar enlaces de Google Drive a enlaces embebibles
+    function transformDriveLink(url) {
+      // Detecta el formato típico de Google Drive: /file/d/FILE_ID/view
+      const driveFileRegex = /\/file\/d\/([^\/]+)\/view/;
+      const match = url.match(driveFileRegex);
+      if (match && match[1]) {
+        return "https://drive.google.com/uc?export=view&id=" + match[1];
+      }
+      // Si no es enlace de Drive, retorna el enlace original
+      return url;
+    }
+    
     // Configuración de Firebase (reemplaza con tus datos)
     const firebaseConfig = {
       apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
@@ -491,11 +503,13 @@
       addingNewNote = false;
     };
     
-    // Función para guardar nota con link de imagen
+    // Función para guardar nota con link de imagen (ahora transforma enlaces de Drive)
     function guardarLinkDeImagen() {
-      const link = imageLinkInput.value;
+      let link = imageLinkInput.value;
       const texto = imageNoteText.value;
       if(link.trim() !== '') {
+        // Transformar enlace si es de Google Drive
+        link = transformDriveLink(link);
         db.collection('notas').add({
           url: link,
           texto: texto.trim() !== '' ? texto : null
@@ -547,7 +561,7 @@
       }, 100);
     });
     
-    // Inicialización de FullCalendar (sin cambios en esta parte)
+    // Inicialización de FullCalendar
     document.addEventListener('DOMContentLoaded', function() {
       var calendarEl = document.getElementById('calendarContainer');
       var calendar = new FullCalendar.Calendar(calendarEl, {
