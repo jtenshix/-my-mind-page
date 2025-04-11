@@ -321,16 +321,22 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     
-    // Inicializar GridStack con animación habilitada
+    // Inicializar GridStack permitiendo movimiento libre y reduciendo márgenes.
     const grid = GridStack.init({
-      margin: 5,
+      margin: 2,
       cellHeight: 'auto',
       disableResize: true,
       float: true,
-      animate: true
+      animate: true,
+      // Permitir movimiento libre sin adherirse a la cuadrícula.
+      disableGrid: true,
+      // Configuración de arrastre con inercia para simular resistencia.
+      dragOptions: {
+        inertia: true
+      }
     });
     
-    // Ajuste automático de textareas en la interfaz para agregar nota
+    // Ajuste automático de textareas en la interfaz para agregar nota.
     function autoResizeTextarea(el) {
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
@@ -340,7 +346,7 @@
     textNoteInput.addEventListener('input', () => autoResizeTextarea(textNoteInput));
     imageNoteText.addEventListener('input', () => autoResizeTextarea(imageNoteText));
     
-    // Función para mostrar cada nota en pantalla en formato Polaroid
+    // Función para mostrar cada nota en pantalla en formato Polaroid.
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       const gridItem = document.createElement('div');
@@ -351,7 +357,7 @@
       
       let card;
       if(notaData.url) {
-        // Nota con imagen: estructura Polaroid
+        // Nota con imagen: estructura Polaroid.
         card = document.createElement('div');
         card.classList.add('card-wrapper');
         
@@ -368,7 +374,7 @@
         noteContent.textContent = notaData.texto ? notaData.texto : '';
         card.appendChild(noteContent);
       } else if(notaData.nota) {
-        // Nota de solo texto
+        // Nota de solo texto.
         card = document.createElement('div');
         card.classList.add('text-card');
         
@@ -435,6 +441,7 @@
       content.appendChild(card);
       gridItem.appendChild(content);
       
+      // Usamos la posición actual dada en la nota y dejamos que se mantenga libre.
       const pos = {
         x: notaData.x || 0,
         y: typeof notaData.y === 'number' ? notaData.y : 0,
@@ -445,12 +452,12 @@
       grid.addWidget(gridItem, pos);
     }
     
-    // Función para limpiar las notas mostradas
+    // Función para limpiar las notas mostradas.
     function limpiarNotasDisplay() {
       grid.removeAll();
     }
     
-    // Escucha los cambios en la colección "notas" para actualizar la vista en tiempo real
+    // Escucha los cambios en la colección "notas" para actualizar la vista en tiempo real.
     db.collection('notas')
       .orderBy('__name__')
       .onSnapshot((snapshot) => {
@@ -460,7 +467,7 @@
         });
       });
     
-    // Interfaz para agregar nuevas notas
+    // Interfaz para agregar nuevas notas.
     const addNoteButton = document.getElementById('addNoteButton');
     const addNoteOptions = document.getElementById('addNoteOptions');
     const addImageLinkOption = document.getElementById('addImageLinkOption');
@@ -534,6 +541,7 @@
     saveImageLinkButton.onclick = guardarLinkDeImagen;
     saveTextNoteButton.onclick = guardarNotaTexto;
     
+    // Al finalizar el arrastre, actualizamos la posición de la nota.
     grid.on('dragstop', function(event, el) {
       setTimeout(() => {
         const noteId = el.getAttribute('data-note-id');
@@ -553,38 +561,36 @@
     /* Funcionalidad del Calendario (desplegable minimalista y fijo) */
     /* -------------------------------------------------- */
     
-    // Variables globales para el estado del calendario
+    // Variables globales para el estado del calendario.
     let currentCalendarMonth, currentCalendarYear;
     
-    // Obtiene la fecha actual para Chile usando la zona horaria
+    // Obtiene la fecha actual para Chile usando la zona horaria.
     function getChileDate() {
       return new Date(new Date().toLocaleString("en-US", {timeZone: "America/Santiago"}));
     }
     
-    // Función para inicializar el mes del calendario: si la fecha actual en Chile es anterior a diciembre 2024, se fija en diciembre 2024
+    // Inicializa el mes del calendario: si la fecha en Chile es anterior a diciembre 2024, se fija en diciembre 2024.
     function initCalendarDate() {
       let today = getChileDate();
       let year = today.getFullYear();
       let month = today.getMonth();
-      // Diciembre es el mes 11 (0-indexado)
       if (year < 2024 || (year === 2024 && month < 11)) {
         return { month: 11, year: 2024 };
       }
       return { month, year };
     }
     
-    // Función que devuelve el nombre del mes en español
+    // Devuelve el nombre del mes en español.
     function getMonthName(monthIndex) {
       const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
       return months[monthIndex];
     }
     
-    // Función para generar el calendario con 6 filas siempre (42 celdas)
+    // Genera el calendario con 6 filas (42 celdas).
     function generateCalendar(month, year) {
       const calendarDiv = document.getElementById('calendarWidget');
       calendarDiv.innerHTML = ''; // Limpiar contenido previo
       
-      // Encabezado del calendario con botones de navegación
       const header = document.createElement('div');
       header.className = 'calendar-header';
       
@@ -594,7 +600,6 @@
         let newMonth = month - 1;
         let newYear = year;
         if(newMonth < 0) { newMonth = 11; newYear--; }
-        // Si se intenta ir a antes de diciembre 2024, no se actualiza
         if(newYear < 2024 || (newYear === 2024 && newMonth < 11)) return;
         generateCalendar(newMonth, newYear);
       };
@@ -616,7 +621,6 @@
       header.appendChild(nextBtn);
       calendarDiv.appendChild(header);
       
-      // Días de la semana (encabezado)
       const daysHeader = document.createElement('div');
       daysHeader.className = 'calendar-days-header';
       const daysOfWeek = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -628,28 +632,23 @@
       });
       calendarDiv.appendChild(daysHeader);
       
-      // Crear la cuadrícula de fechas con 42 celdas (6 filas x 7 días)
       const datesGrid = document.createElement('div');
       datesGrid.className = 'calendar-dates-grid';
       
-      // Primer día de la semana del primer día del mes
       const firstDay = new Date(year, month, 1).getDay();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       
-      // Agregar celdas vacías antes del primer día
       for (let i = 0; i < firstDay; i++) {
         const emptyCell = document.createElement('div');
         emptyCell.className = 'calendar-date empty';
         datesGrid.appendChild(emptyCell);
       }
-      // Agregar números de cada día
       for (let date = 1; date <= daysInMonth; date++) {
         const dateCell = document.createElement('div');
         dateCell.className = 'calendar-date';
         dateCell.textContent = date;
         datesGrid.appendChild(dateCell);
       }
-      // Calcular cuántas celdas adicionales se requieren para llegar a 42
       const totalCells = firstDay + daysInMonth;
       const cellsToAdd = 42 - totalCells;
       for (let i = 0; i < cellsToAdd; i++) {
@@ -659,18 +658,15 @@
       }
       calendarDiv.appendChild(datesGrid);
       
-      // Actualizar el estado actual del calendario
       currentCalendarMonth = month;
       currentCalendarYear = year;
     }
     
-    // Mostrar/ocultar el calendario al interactuar con el ícono
     const calendarIcon = document.getElementById('calendarIcon');
     const calendarWidget = document.getElementById('calendarWidget');
     let calendarTimeout;
     
     function showCalendar() {
-      // Inicializa la fecha según Chile o establece diciembre 2024 si es menor
       const { month, year } = initCalendarDate();
       generateCalendar(month, year);
       calendarWidget.style.display = 'block';
