@@ -11,14 +11,23 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
   <style>
-    /* Estilos generales */
-    body {
-      font-family: sans-serif;
+    /* Forzar pantalla fija sin scroll y ocupar el 100% del viewport */
+    html, body {
       margin: 0;
-      min-height: 100vh;
+      padding: 0;
+      height: 100vh;
+      overflow: hidden;
+    }
+    /* Contenedor principal general: centrado y ocupando el 100% del viewport */
+    .container {
+      height: 100%;
+      width: 100%;
       background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
-      padding: 20px;
-      padding-bottom: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
     }
     /* Contenedor principal de notas (GridStack) */
     #notaDisplay {
@@ -74,7 +83,7 @@
     }
     /* La barra de menú integrada, con tono oceánico */
     .menu-bar {
-      background-color: #0288D1; /* tono oceánico */
+      background-color: #0288D1;
       display: flex;
       justify-content: space-around;
       align-items: center;
@@ -106,7 +115,7 @@
     /* Interfaz para agregar nota (se conservan las funciones) */
     /* ---------------------- */
     #addNoteButton {
-      position: fixed;
+      position: absolute;
       bottom: 20px;
       right: 20px;
       background-color: #006994;
@@ -122,7 +131,7 @@
       cursor: pointer;
       box-shadow: 0 3px 8px rgba(0,0,0,0.3);
       transition: background-color 0.3s ease, transform 0.3s ease;
-      z-index: 2;
+      z-index: 3;
     }
     #addNoteButton:hover {
       background-color: #005577;
@@ -132,7 +141,7 @@
       display: none;
     }
     #inputArea {
-      position: fixed;
+      position: absolute;
       bottom: 90px;
       left: 50%;
       transform: translateX(-50%);
@@ -144,7 +153,7 @@
       gap: 10px;
       width: 80%;
       max-width: 500px;
-      z-index: 2;
+      z-index: 3;
     }
     #inputArea textarea,
     #inputArea input[type="text"] {
@@ -173,7 +182,7 @@
     /* Estilos para el Calendario - Diseño minimalista */
     /* ---------------------- */
     .calendar-icon {
-      position: fixed;
+      position: absolute;
       bottom: 20px;
       left: 20px;
       width: 40px;
@@ -187,22 +196,20 @@
       color: #333;
       font-size: 20px;
       cursor: pointer;
-      z-index: 2;
+      z-index: 3;
     }
     .calendar-widget {
-      position: fixed;
+      position: absolute;
       bottom: 70px;
       left: 20px;
       background: #fff;
-      /* Diseño minimalista: sin sombras ni bordes notables */
       border: 1px solid #ddd;
       box-shadow: none;
       padding: 10px;
       display: none;
-      z-index: 2;
+      z-index: 3;
       width: 250px;
-      /* Forzamos el alto mínimo para 6 filas (puedes ajustar según necesidad) */
-      min-height: 180px;
+      min-height: 180px; /* Fijamos altura para 6 filas */
     }
     .calendar-header {
       display: flex;
@@ -248,39 +255,41 @@
   </style>
 </head>
 <body>
-  <!-- Contenedor de notas -->
-  <div id="notaDisplay" class="grid-stack"></div>
-  
-  <!-- Botón para agregar nota -->
-  <button id="addNoteButton">+</button>
-  
-  <!-- Opciones para agregar nueva nota -->
-  <div id="addNoteOptions">
-    <button id="addImageLinkOption">Guardar link de imagen</button>
-    <button id="addTextNoteOption">Subir nota</button>
-  </div>
-  <div id="inputArea">
-    <div id="imageLinkInputArea">
-      <div class="input-group">
-        <label for="imageLink">Link de la imagen:</label>
-        <input type="text" id="imageLink" placeholder="Ej: https://..." />
-      </div>
-      <div class="input-group">
-        <label for="imageNoteText">Texto de la imagen (opcional):</label>
-        <textarea id="imageNoteText" placeholder="Descripción o nota..."></textarea>
-      </div>
-      <button id="saveImageLink">Guardar Link</button>
+  <div class="container">
+    <!-- Contenedor de notas -->
+    <div id="notaDisplay" class="grid-stack"></div>
+    
+    <!-- Botón para agregar nota -->
+    <button id="addNoteButton">+</button>
+    
+    <!-- Opciones para agregar nueva nota -->
+    <div id="addNoteOptions">
+      <button id="addImageLinkOption">Guardar link de imagen</button>
+      <button id="addTextNoteOption">Subir nota</button>
     </div>
-    <div id="textNoteInputArea">
-      <textarea id="textNote" placeholder="Escribe tu nota aquí..."></textarea>
-      <button id="saveTextNote">Guardar Nota</button>
+    <div id="inputArea">
+      <div id="imageLinkInputArea">
+        <div class="input-group">
+          <label for="imageLink">Link de la imagen:</label>
+          <input type="text" id="imageLink" placeholder="Ej: https://..." />
+        </div>
+        <div class="input-group">
+          <label for="imageNoteText">Texto de la imagen (opcional):</label>
+          <textarea id="imageNoteText" placeholder="Descripción o nota..."></textarea>
+        </div>
+        <button id="saveImageLink">Guardar Link</button>
+      </div>
+      <div id="textNoteInputArea">
+        <textarea id="textNote" placeholder="Escribe tu nota aquí..."></textarea>
+        <button id="saveTextNote">Guardar Nota</button>
+      </div>
     </div>
+    
+    <!-- Ícono del Calendario (esquina inferior izquierda) -->
+    <div id="calendarIcon" class="calendar-icon">☰</div>
+    <!-- Contenedor del Calendario desplegable -->
+    <div id="calendarWidget" class="calendar-widget"></div>
   </div>
-  
-  <!-- Ícono del Calendario (esquina inferior izquierda) -->
-  <div id="calendarIcon" class="calendar-icon">☰</div>
-  <!-- Contenedor del Calendario desplegable -->
-  <div id="calendarWidget" class="calendar-widget"></div>
   
   <script>
     // Función para transformar enlaces de Google Drive en enlaces embebibles
@@ -541,7 +550,7 @@
     });
     
     /* -------------------------------------------------- */
-    /* Funcionalidad del Calendario (desplegable minimalista) */
+    /* Funcionalidad del Calendario (desplegable minimalista y fijo) */
     /* -------------------------------------------------- */
     
     // Variables globales para el estado del calendario
@@ -570,7 +579,7 @@
       return months[monthIndex];
     }
     
-    // Función para generar el calendario con 6 filas siempre
+    // Función para generar el calendario con 6 filas siempre (42 celdas)
     function generateCalendar(month, year) {
       const calendarDiv = document.getElementById('calendarWidget');
       calendarDiv.innerHTML = ''; // Limpiar contenido previo
@@ -619,7 +628,7 @@
       });
       calendarDiv.appendChild(daysHeader);
       
-      // Crear la cuadrícula de fechas siempre con 42 celdas (6 filas x 7 días)
+      // Crear la cuadrícula de fechas con 42 celdas (6 filas x 7 días)
       const datesGrid = document.createElement('div');
       datesGrid.className = 'calendar-dates-grid';
       
