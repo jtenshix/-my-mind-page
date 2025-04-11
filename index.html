@@ -45,7 +45,8 @@
     /* Cada nota se muestra como una "carta de solitario" */
     .grid-stack-item-content {
       min-width: 180px;
-      min-height: 280px;
+      /* Se reduce el min-height para permitir que el contenedor se expanda según la imagen */
+      min-height: 100px;
       padding: 10px;
       background-color: #fff;
       border: 2px solid #0077a3;
@@ -68,10 +69,12 @@
       word-wrap: break-word;
       line-height: 1.5;
     }
-    /* Imágenes adaptadas al tamaño de la nota */
+    /* Imágenes adaptadas: máxima anchura 100% y auto en altura,
+       para evitar que salgan del contenedor y provoquen scroll */
     .note-body img {
-      width: 100%;
+      max-width: 100%;
       height: auto;
+      display: block;
       object-fit: contain;
       border-radius: 4px;
     }
@@ -289,17 +292,13 @@
   <script>
     // Función para transformar enlaces de Google Drive en enlaces embebibles
     function transformDriveLink(url) {
-      // Si el enlace no contiene "drive.google.com", se retorna igual.
       if (!url.includes("drive.google.com")) return url;
-      
       let fileId = null;
-      // Caso 1: Enlaces tipo /file/d/FILE_ID/
       const regex1 = /\/file\/d\/([^\/]+)\//;
       let match = url.match(regex1);
       if (match && match[1]) {
         fileId = match[1];
       }
-      // Caso 2: Enlaces que contengan ?id=FILE_ID o &id=FILE_ID
       if (!fileId) {
         const regex2 = /[?&]id=([^&]+)/;
         match = url.match(regex2);
@@ -307,11 +306,9 @@
           fileId = match[1];
         }
       }
-      // Si se extrajo un ID, se retorna el enlace embebible.
       if (fileId) {
         return "https://drive.google.com/uc?export=view&id=" + fileId;
       }
-      // Si no se pudo extraer el ID, retorna el enlace original.
       return url;
     }
     
@@ -328,7 +325,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     
-    // Inicializar GridStack
+    // Inicializar GridStack con celda de altura 'auto'
     const grid = GridStack.init({
       margin: 5,
       cellHeight: 'auto',
@@ -361,7 +358,7 @@
       
       if(notaData.url) {
         const img = document.createElement('img');
-        // Se transforma el enlace, en caso de ser de Drive, para que sea embebible
+        // Se transforma el enlace para asegurar visualización
         img.src = transformDriveLink(notaData.url);
         noteBody.appendChild(img);
         if(notaData.texto) {
@@ -450,6 +447,7 @@
       content.appendChild(noteFooter);
       gridItem.appendChild(content);
       
+      // Se usa autoPosition para que la nota se ajuste de forma dinámica
       const pos = {
         x: notaData.x || 0,
         y: typeof notaData.y === 'number' ? notaData.y : 0,
