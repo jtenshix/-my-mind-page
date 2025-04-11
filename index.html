@@ -287,7 +287,7 @@
   </div>
   
   <script>
-    // Función actualizada para transformar enlaces de Google Drive
+    // Función para transformar enlaces de Google Drive en enlaces embebibles
     function transformDriveLink(url) {
       // Si el enlace no contiene "drive.google.com", se retorna igual.
       if (!url.includes("drive.google.com")) return url;
@@ -361,7 +361,8 @@
       
       if(notaData.url) {
         const img = document.createElement('img');
-        img.src = notaData.url;
+        // Se transforma el enlace, en caso de ser de Drive, para que sea embebible
+        img.src = transformDriveLink(notaData.url);
         noteBody.appendChild(img);
         if(notaData.texto) {
           const p = document.createElement('p');
