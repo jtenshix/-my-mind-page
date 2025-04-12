@@ -552,14 +552,14 @@
           url: link,
           texto: texto.trim() !== '' ? texto : null
         })
-          .then(() => {
-            imageLinkInput.value = '';
-            imageNoteText.value = '';
-            inputArea.style.display = 'none';
-          })
-          .catch((error) => {
-            console.error('Error al guardar el link de imagen: ', error);
-          });
+        .then(() => {
+          imageLinkInput.value = '';
+          imageNoteText.value = '';
+          inputArea.style.display = 'none';
+        })
+        .catch((error) => {
+          console.error('Error al guardar el link de imagen: ', error);
+        });
       }
     }
 
@@ -569,13 +569,13 @@
         db.collection('notas').add({
           nota: nota
         })
-          .then(() => {
-            textNoteInput.value = '';
-            inputArea.style.display = 'none';
-          })
-          .catch((error) => {
-            console.error('Error al guardar la nota de texto: ', error);
-          });
+        .then(() => {
+          textNoteInput.value = '';
+          inputArea.style.display = 'none';
+        })
+        .catch((error) => {
+          console.error('Error al guardar la nota de texto: ', error);
+        });
       }
     }
 
