@@ -84,7 +84,7 @@
       color: #0077a3;
       text-decoration: underline;
     }
-    /* Área de controles (botones) de la nota */
+    /* Área de controles (botones) en la parte inferior de la nota */
     .menu-bar {
       background-color: #0288D1;
       padding: 5px;
@@ -103,9 +103,9 @@
     }
     /* Estilo específico para la burbuja */
     .bubble-icon {
-      color: #FFCD05; /* por ejemplo, amarillo brillante */
+      color: #FFCD05; /* amarillo brillante, por ejemplo */
       font-size: 22px;
-      margin-right: 8px; /* Se separa del grupo de botones siguientes */
+      margin-right: 8px;
     }
     /* Botón principal para agregar nota o imagen */
     #addNoteButton {
@@ -131,7 +131,7 @@
       background-color: #005577;
       transform: scale(1.05);
     }
-    /* Menú emergente para seleccionar entre imagen o nota */
+    /* Menú emergente para seleccionar entre imagen o nota (en horizontal) */
     #addNoteOptions {
       position: absolute;
       top: 50%;
@@ -232,6 +232,7 @@
       cursor: pointer;
       z-index: 4;
     }
+    /* Se hace el calendario un poco más grande */
     .calendar-widget {
       position: absolute;
       bottom: 70px;
@@ -242,8 +243,8 @@
       padding: 10px;
       display: none;
       z-index: 4;
-      width: 250px;
-      min-height: 180px;
+      width: 300px;      /* aumentamos un poco la anchura */
+      min-height: 220px; /* y también la altura mínima */
     }
     .calendar-header {
       display: flex;
@@ -262,12 +263,14 @@
       font-weight: bold;
       color: #333;
     }
+    /* Cada celda del calendario tendrá un pequeño margen inferior para que la burbuja se asiente */
     .calendar-days-header,
     .calendar-dates-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       text-align: center;
       font-size: 12px;
+      gap: 4px 0; /* gap vertical de 4px */
     }
     .calendar-days-header {
       margin-bottom: 5px;
@@ -279,10 +282,19 @@
       padding: 3px;
       border-radius: 3px;
       color: #333;
+      border: 1px solid transparent;
     }
     .calendar-date.empty { background: none; }
     .calendar-date:hover { background-color: #e0e0e0; }
-    /* Capa para cerrar menús al hacer clic fuera */
+    /* Estilo para la burbuja asignada en el calendario */
+    .assigned-bubble {
+      color: #FFCD05;
+      font-size: 20px;
+      display: block;
+      margin: auto;
+      margin-top: 4px;
+    }
+    /* Capa para detectar clics fuera y cerrar menús */
     .blur-background {
       position: fixed;
       top: 0;
@@ -300,7 +312,7 @@
   <div class="container">
     <div id="notaDisplay" class="grid-stack"></div>
     <button id="addNoteButton">+</button>
-    <!-- Menú emergente: opciones de imagen o nota en formato de tarjetas horizontales -->
+    <!-- Menú emergente: opciones de imagen o nota (tarjetas horizontales) -->
     <div id="addNoteOptions">
       <div class="card" id="addImageLinkOption">
         <h2>Imagen</h2>
@@ -348,8 +360,7 @@
         match = url.match(regex2);
         if (match && match[1]) fileId = match[1];
       }
-      if (fileId) return "https://drive.google.com/uc?export=view&id=" + fileId;
-      return url;
+      return fileId ? "https://drive.google.com/uc?export=view&id=" + fileId : url;
     }
     // Función para transformar URLs en enlaces clickeables
     function linkify(text) {
@@ -422,31 +433,30 @@
         noteContent.innerHTML = linkify(notaData.nota);
         card.appendChild(noteContent);
       }
-      // Aseguramos que todos los enlaces se abran en una nueva pestaña
-      const links = noteContent.getElementsByTagName('a');
-      for (let link of links) {
+      // Aseguramos que los enlaces se abran en una nueva pestaña
+      for (let link of noteContent.getElementsByTagName('a')) {
         link.setAttribute('target', '_blank');
       }
-
-      // Creación del área de controles
+      // Creación del área de controles (se agrega en la parte inferior de la nota)
       const menuBar = document.createElement('div');
       menuBar.classList.add('menu-bar');
-      // Se crea el botón de burbuja
+      // Botón de la burbuja (arrastrable) – se añade a la izquierda
       const bubbleButton = document.createElement('button');
       bubbleButton.classList.add('menu-icon', 'bubble-icon');
       bubbleButton.innerHTML = '●';
       bubbleButton.setAttribute('draggable', 'true');
-      // Cuando se inicia el arrastre o el click, se abre el calendario
       bubbleButton.addEventListener('dragstart', function(e) {
+        // Evitamos el recuadro azul usando una imagen transparente
+        var img = new Image();
+        img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PboX9AAAAABJRU5ErkJggg==';
+        e.dataTransfer.setDragImage(img, 0, 0);
         e.dataTransfer.setData("application/note-id", doc.id);
-        openCalendar(); // función para abrir el calendario
+        openCalendar(); // Abre el calendario al iniciar el arrastre
       });
       bubbleButton.addEventListener('click', function(e) {
         openCalendar();
       });
-      // Se agregan los controles: primero la burbuja, luego el botón de editar y eliminación juntos
-      menuBar.appendChild(bubbleButton);
-      // Botón de editar
+      // Agregamos los controles existentes: los botones de editar y eliminar
       const editButton = document.createElement('button');
       editButton.classList.add('menu-icon');
       editButton.innerHTML = '✎';
@@ -481,7 +491,6 @@
         };
         menuBar.replaceChild(saveEditButton, editButton);
       };
-      // Botón de eliminar
       const deleteButton = document.createElement('button');
       deleteButton.classList.add('menu-icon');
       deleteButton.innerHTML = '✖';
@@ -490,19 +499,19 @@
           .then(() => { grid.removeWidget(gridItem); })
           .catch((error) => { console.error("Error al eliminar la nota: ", error); });
       };
-      // Se agrupan los botones de editar y eliminar sin espacio extra entre ellos
+      // Contenedor para los botones de editar y eliminar (juntos)
       const editDeleteContainer = document.createElement('div');
       editDeleteContainer.style.display = 'flex';
       editDeleteContainer.style.gap = '4px';
       editDeleteContainer.appendChild(editButton);
       editDeleteContainer.appendChild(deleteButton);
-      // Se agregan los controles a la barra: primero la burbuja, luego el grupo edit-delete
+      // Se agrega al área de controles: primero la burbuja y luego el grupo de editar/eliminar
+      menuBar.appendChild(bubbleButton);
       menuBar.appendChild(editDeleteContainer);
-      // Se añade la barra de controles a la tarjeta
       card.appendChild(menuBar);
       content.appendChild(card);
       gridItem.appendChild(content);
-      // Se establece la posición en GridStack
+      // Se define la posición en GridStack
       const pos = {
         x: notaData.x || 0,
         y: typeof notaData.y === 'number' ? notaData.y : 0,
@@ -512,18 +521,15 @@
       };
       grid.addWidget(gridItem, pos);
     }
-    // Función para limpiar notas en pantalla
-    function limpiarNotasDisplay() {
-      grid.removeAll();
-    }
-    // Escucha en tiempo real para actualizar las notas de Firestore
-    db.collection('notas')
-      .orderBy('__name__')
+    // Función para limpiar las notas en pantalla
+    function limpiarNotasDisplay() { grid.removeAll(); }
+    // Escucha en tiempo real para actualizar las notas desde Firestore
+    db.collection('notas').orderBy('__name__')
       .onSnapshot((snapshot) => {
         limpiarNotasDisplay();
         snapshot.forEach((doc) => { mostrarNotaEnPantalla(doc); });
       });
-    // Manejo de interfaz para agregar nuevas notas
+    // Manejo de la interfaz para agregar nuevas notas
     const addNoteButton = document.getElementById('addNoteButton');
     const addNoteOptions = document.getElementById('addNoteOptions');
     const addImageLinkOption = document.getElementById('addImageLinkOption');
@@ -569,10 +575,9 @@
       blurBackground.style.display = 'block';
       addingNewNote = false;
     };
-    // Cierra los menús al hacer clic en la capa de blur
-    blurBackground.onclick = function () {
-      hideMenus();
-    };
+    // Cierra los menús al hacer clic en el área de blur
+    blurBackground.onclick = function () { hideMenus(); };
+
     function guardarLinkDeImagen() {
       let link = imageLinkInput.value;
       const texto = imageNoteText.value;
@@ -589,9 +594,7 @@
     function guardarNotaTexto() {
       const nota = textNoteInput.value;
       if (nota.trim() !== '') {
-        db.collection('notas').add({
-          nota: nota
-        })
+        db.collection('notas').add({ nota: nota })
           .then(() => { textNoteInput.value = ''; hideMenus(); })
           .catch((error) => { console.error('Error al guardar la nota de texto: ', error); });
       }
@@ -604,10 +607,7 @@
         const node = el.gridstackNode;
         if (noteId && node) {
           db.collection('notas').doc(noteId).update({
-            x: node.x,
-            y: node.y,
-            w: node.w,
-            h: node.h
+            x: node.x, y: node.y, w: node.w, h: node.h
           }).catch(error => console.error("Error guardando posición:", error));
         }
       }, 100);
@@ -638,8 +638,7 @@
       const prevBtn = document.createElement('button');
       prevBtn.textContent = '<';
       prevBtn.onclick = function () {
-        let newMonth = month - 1;
-        let newYear = year;
+        let newMonth = month - 1, newYear = year;
         if (newMonth < 0) { newMonth = 11; newYear--; }
         if (newYear < 2024 || (newYear === 2024 && newMonth < 11)) return;
         generateCalendar(newMonth, newYear);
@@ -647,8 +646,7 @@
       const nextBtn = document.createElement('button');
       nextBtn.textContent = '>';
       nextBtn.onclick = function () {
-        let newMonth = month + 1;
-        let newYear = year;
+        let newMonth = month + 1, newYear = year;
         if (newMonth > 11) { newMonth = 0; newYear++; }
         generateCalendar(newMonth, newYear);
       };
@@ -660,8 +658,7 @@
       calendarDiv.appendChild(header);
       const daysHeader = document.createElement('div');
       daysHeader.className = 'calendar-days-header';
-      const daysOfWeek = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-      daysOfWeek.forEach(day => {
+      ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'].forEach(day => {
         const dayElem = document.createElement('div');
         dayElem.textContent = day;
         dayElem.className = 'calendar-day';
@@ -672,17 +669,39 @@
       datesGrid.className = 'calendar-dates-grid';
       const firstDay = new Date(year, month, 1).getDay();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
+      // Se crean celdas vacías para la primera fila:
       for (let i = 0; i < firstDay; i++) {
         const emptyCell = document.createElement('div');
         emptyCell.className = 'calendar-date empty';
         datesGrid.appendChild(emptyCell);
       }
+      // Celdas con números:
       for (let date = 1; date <= daysInMonth; date++) {
         const dateCell = document.createElement('div');
         dateCell.className = 'calendar-date';
         dateCell.textContent = date;
+        // Permitir que cada celda sea drop target y tenga un pequeño espacio debajo:
+        dateCell.style.minHeight = '30px';
+        dateCell.style.paddingBottom = '8px';
+        dateCell.addEventListener('dragover', function(e) { e.preventDefault(); });
+        dateCell.addEventListener('drop', function(e) {
+          e.preventDefault();
+          const noteId = e.dataTransfer.getData("application/note-id");
+          if (noteId) {
+            // Se asigna la fecha a la nota (por ejemplo, se guarda en Firestore)
+            const assignedDate = `${date}/${month+1}/${year}`;
+            db.collection('notas').doc(noteId)
+              .update({ assignedDate: assignedDate })
+              .then(() => console.log('Fecha asignada:', assignedDate))
+              .catch((error) => console.error('Error asignando fecha:', error));
+            // Se muestra la burbuja en la celda (indicando asignación) y se oculta en la nota.
+            this.innerHTML += "<span class='assigned-bubble'>●</span>";
+            // Opcional: aquí podrías actualizar la interfaz de la nota para remover la burbuja.
+          }
+        });
         datesGrid.appendChild(dateCell);
       }
+      // Se llenan celdas vacías al final de la grilla, hasta tener 42 celdas:
       const totalCells = firstDay + daysInMonth;
       const cellsToAdd = 42 - totalCells;
       for (let i = 0; i < cellsToAdd; i++) {
@@ -721,7 +740,7 @@
       calendarWidget.style.display = 'block';
     });
     calendarWidget.addEventListener('mouseout', hideCalendar);
-    // Prevenir que clics internos en los menús propaguen y cierren el blur
+    // Prevenir propagación de clics internos en los menús para no cerrar el blur
     document.getElementById('addNoteOptions').addEventListener('click', function(e){ e.stopPropagation(); });
     document.getElementById('inputArea').addEventListener('click', function(e){ e.stopPropagation(); });
   </script>
