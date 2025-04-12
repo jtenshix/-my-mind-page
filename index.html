@@ -45,7 +45,7 @@
       border: 2px solid #0077a3;
       border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       width: 240px;
       display: flex;
       flex-direction: column;
@@ -99,7 +99,7 @@
       background-color: #fff;
       border: 2px solid #0077a3;
       border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       width: 240px;
       display: flex;
       flex-direction: column;
@@ -124,7 +124,7 @@
       justify-content: center;
       align-items: center;
       cursor: pointer;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
       transition: background-color 0.3s ease, transform 0.3s ease;
       z-index: 3;
     }
@@ -173,10 +173,10 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background-color: rgba(255,255,255,0.95);
+      background-color: rgba(255, 255, 255, 0.95);
       padding: 20px;
       border-radius: 8px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
       flex-direction: column;
       gap: 10px;
       width: 80%;
@@ -351,7 +351,7 @@
       apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
       authDomain: "oasis-b036d.firebaseapp.com",
       projectId: "oasis-b036d",
-      storageBucket: "oasis-b036d.firebasestorage.app",
+      storageBucket: "oasis-b036d.appspot.com",
       messagingSenderId: "141546637821",
       appId: "1:141546637821:web:0a861aeb13831774ed3194",
       measurementId: "G-HB2P17H5YL"
@@ -552,14 +552,14 @@
           url: link,
           texto: texto.trim() !== '' ? texto : null
         })
-        .then(() => {
-          imageLinkInput.value = '';
-          imageNoteText.value = '';
-          inputArea.style.display = 'none';
-        })
-        .catch((error) => {
-          console.error('Error al guardar el link de imagen: ', error);
-        });
+          .then(() => {
+            imageLinkInput.value = '';
+            imageNoteText.value = '';
+            inputArea.style.display = 'none';
+          })
+          .catch((error) => {
+            console.error('Error al guardar el link de imagen: ', error);
+          });
       }
     }
 
@@ -569,13 +569,13 @@
         db.collection('notas').add({
           nota: nota
         })
-        .then(() => {
-          textNoteInput.value = '';
-          inputArea.style.display = 'none';
-        })
-        .catch((error) => {
-          console.error('Error al guardar la nota de texto: ', error);
-        });
+          .then(() => {
+            textNoteInput.value = '';
+            inputArea.style.display = 'none';
+          })
+          .catch((error) => {
+            console.error('Error al guardar la nota de texto: ', error);
+          });
       }
     }
 
