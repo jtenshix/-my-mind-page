@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
   <style>
-    /* ===================== Estilos globales ===================== */
+    /* ===================== Estilos Globales ===================== */
     html, body {
       margin: 0;
       padding: 0;
@@ -20,7 +20,7 @@
       background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
       font-family: Arial, sans-serif;
     }
-    /* Contenedor principal con padding para que las notas no estén pegadas a la pantalla */
+    /* Contenedor principal: se deja un padding de 2cm en todas direcciones */
     .container {
       height: 100%;
       width: 100%;
@@ -32,7 +32,7 @@
       justify-content: center;
       position: relative;
     }
-    /* Área donde se muestran las notas (GridStack) */
+    /* Área de notas (GridStack) ocupa el total del contenedor */
     #notaDisplay {
       margin: 0;
       width: 100%;
@@ -86,7 +86,6 @@
       justify-content: flex-end;
       align-items: center;
     }
-    /* Los botones en la barra */
     .menu-icon {
       background: none;
       border: none;
@@ -95,14 +94,14 @@
       cursor: pointer;
       margin-left: 4px;
     }
-    /* Estilo específico para la bolita */
+    /* Botón de la bolita: se le asignará un id para identificarla (ej. "bubble-<doc.id>") */
     .bubble-icon {
       color: #FFCD05;
       font-size: 22px;
-      margin-right: 8px; /* para separarla de los demás botones */
+      margin-right: 8px;
     }
 
-    /* ===================== Botón Principal (Agregar Nota/Imagen) ===================== */
+    /* ===================== Botón Principal para Agregar Nota/Imagen ===================== */
     #addNoteButton {
       position: absolute;
       bottom: 20px;
@@ -224,8 +223,8 @@
       padding: 10px;
       display: none;
       z-index: 4;
-      width: 300px;      /* Calendario un poquito más ancho */
-      min-height: 220px; /* y con mayor altura mínima */
+      width: 300px;      /* Calendario un poco más ancho */
+      min-height: 220px; /* Mayor altura mínima */
     }
     .calendar-header {
       display: flex;
@@ -259,7 +258,7 @@
     }
     .calendar-date.empty { background: none; }
     .calendar-date:hover { background-color: #e0e0e0; }
-    /* Cuando se asigna la burbuja a una celda, se muestra aquí */
+    /* Indicador de la bolita asignada en el calendario */
     .assigned-bubble {
       color: #FFCD05;
       font-size: 20px;
@@ -287,10 +286,10 @@
     <!-- Área de Notas usando GridStack -->
     <div id="notaDisplay" class="grid-stack"></div>
     
-    <!-- Botón principal para agregar nota/imagen -->
+    <!-- Botón Principal para Agregar Nota/Imagen -->
     <button id="addNoteButton">+</button>
     
-    <!-- Menú emergente: seleccionar entre imagen o nota -->
+    <!-- Menú Emergente: Seleccionar entre Imagen o Nota -->
     <div id="addNoteOptions">
       <div class="card" id="addImageLinkOption">
         <h2>Imagen</h2>
@@ -302,7 +301,7 @@
       </div>
     </div>
     
-    <!-- Submenú para ingresar datos -->
+    <!-- Submenú para Ingresar Datos -->
     <div id="inputArea">
       <div id="imageLinkInputArea">
         <div class="input-group">
@@ -321,7 +320,7 @@
       </div>
     </div>
     
-    <!-- Calendario: icono y widget -->
+    <!-- Calendario: Icono y Widget -->
     <div id="calendarIcon" class="calendar-icon">☰</div>
     <div id="calendarWidget" class="calendar-widget"></div>
     
@@ -331,7 +330,6 @@
 
   <script>
     /****************** Utilidades y Configuración de Firebase ******************/
-    // Función para transformar un link de Google Drive
     function transformDriveLink(url) {
       if (!url.includes("drive.google.com")) return url;
       let fileId = null;
@@ -345,13 +343,11 @@
       }
       return fileId ? "https://drive.google.com/uc?export=view&id=" + fileId : url;
     }
-    // Función que transforma URLs en enlaces clickeables
     function linkify(text) {
       if (!text) return "";
       const replacedText = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
       return replacedText.replace(/\n/g, '<br>');
     }
-    // Configuración de Firebase (usa tus propios datos)
     const firebaseConfig = {
       apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
       authDomain: "oasis-b036d.firebaseapp.com",
@@ -366,7 +362,7 @@
 
     /****************** Inicialización de GridStack ******************/
     const grid = GridStack.init({
-      margin: 75,             // Aproximadamente 2 cm de separación
+      margin: 75, // Aproximadamente 2cm en píxeles (ajustado para homogeneidad)
       cellHeight: 'auto',
       disableResize: true,
       float: true,
@@ -375,7 +371,6 @@
       draggable: { handle: '.menu-bar' }
     });
 
-    // Autoajuste de textarea (para notas)
     function autoResizeTextarea(el) {
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
@@ -386,7 +381,6 @@
     imageNoteText.addEventListener('input', () => autoResizeTextarea(imageNoteText));
 
     /****************** Renderización de Notas ******************/
-    // Función para mostrar la nota en pantalla con controles actualizados
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       const gridItem = document.createElement('div');
@@ -394,8 +388,7 @@
       gridItem.setAttribute('data-note-id', doc.id);
       const content = document.createElement('div');
       let card, noteContent = document.createElement('div');
-      
-      // Se muestra la nota ya sea de imagen o texto
+
       if (notaData.url) {
         card = document.createElement('div');
         card.classList.add('card-wrapper');
@@ -418,31 +411,32 @@
         noteContent.innerHTML = linkify(notaData.nota);
         card.appendChild(noteContent);
       }
-      // Aseguramos que los enlaces se abran en nueva pestaña
       for (let link of noteContent.getElementsByTagName('a')) {
         link.setAttribute('target', '_blank');
       }
       
-      /* ===== Área de Controles de la Nota ===== */
+      /***** Área de Controles de la Nota *****/
       const menuBar = document.createElement('div');
       menuBar.classList.add('menu-bar');
-      // Creamos el botón de la bolita (draggable)
+
+      // Botón de la bolita (draggable) – se le asigna id único basado en doc.id
       const bubbleButton = document.createElement('button');
       bubbleButton.classList.add('menu-icon', 'bubble-icon');
       bubbleButton.innerHTML = '●';
       bubbleButton.setAttribute('draggable', 'true');
+      bubbleButton.id = "bubble-" + doc.id;
       bubbleButton.addEventListener('dragstart', function(e) {
-        // Se asigna un drag image transparente para no ver el recuadro azul
         var img = new Image();
         img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PboX9AAAAABJRU5ErkJggg==';
         e.dataTransfer.setDragImage(img, 0, 0);
+        // Se transfiere el id de la nota
         e.dataTransfer.setData("application/note-id", doc.id);
-        openCalendar(); // Abre el calendario al iniciar el arrastre
+        openCalendar();
       });
       bubbleButton.addEventListener('click', function(e) {
         openCalendar();
       });
-      // Creamos el botón de editar
+      // Botón de editar
       const editButton = document.createElement('button');
       editButton.classList.add('menu-icon');
       editButton.innerHTML = '✎';
@@ -477,7 +471,7 @@
         };
         menuBar.replaceChild(saveEditButton, editButton);
       };
-      // Botón de eliminar la nota
+      // Botón de eliminar
       const deleteButton = document.createElement('button');
       deleteButton.classList.add('menu-icon');
       deleteButton.innerHTML = '✖';
@@ -485,28 +479,25 @@
         db.collection('notas').doc(doc.id).delete()
           .then(() => {
             grid.removeWidget(gridItem);
-            // Además, se remueven las bolitas asignadas en el calendario para esta nota.
-            // En este ejemplo se eliminan todas; en la versión real se identificaría la correspondiente.
-            document.querySelectorAll(".assigned-bubble").forEach(b => b.remove());
+            // Elimina el indicador de la bolita asignada en el calendario
+            document.querySelectorAll(".assigned-bubble[data-note='"+doc.id+"']").forEach(b => b.remove());
           })
           .catch((error) => { console.error("Error al eliminar la nota: ", error); });
       };
-      // Contenedor para los botones de editar y eliminar (juntos, con poco espacio entre ellos)
+      // Contenedor para los botones de editar y eliminar (juntos)
       const editDeleteContainer = document.createElement('div');
       editDeleteContainer.style.display = 'flex';
       editDeleteContainer.style.gap = '4px';
       editDeleteContainer.appendChild(editButton);
       editDeleteContainer.appendChild(deleteButton);
-      // Se agregan los controles: primero la bolita y luego el contenedor edit-delete
+      // Se agregan los controles: primero la bolita, luego el grupo edit/delete
       menuBar.appendChild(bubbleButton);
       menuBar.appendChild(editDeleteContainer);
-      // Se agrega la barra de controles al final de la tarjeta
-      card.appendChild(menuBar);
       
+      card.appendChild(menuBar);
       content.appendChild(card);
       gridItem.appendChild(content);
-      
-      // Se define la posición en GridStack usando las propiedades almacenadas, o se ubica automáticamente
+
       const pos = {
         x: notaData.x || 0,
         y: typeof notaData.y === 'number' ? notaData.y : 0,
@@ -516,11 +507,7 @@
       };
       grid.addWidget(gridItem, pos);
     }
-    
-    // Función para limpiar las notas en pantalla (antes de re-renderizar)
     function limpiarNotasDisplay() { grid.removeAll(); }
-    
-    // Escucha en tiempo real de los documentos en la colección "notas"
     db.collection('notas').orderBy('__name__')
       .onSnapshot((snapshot) => {
         limpiarNotasDisplay();
@@ -541,14 +528,12 @@
     const blurBackground = document.querySelector('.blur-background');
     let addingNewNote = false;
     
-    // Función para ocultar todos los menús emergentes
     function hideMenus() {
       addNoteOptions.style.display = 'none';
       inputArea.style.display = 'none';
       blurBackground.style.display = 'none';
       addingNewNote = false;
     }
-    
     addNoteButton.onclick = function (event) {
       event.stopPropagation();
       addingNewNote = !addingNewNote;
@@ -557,7 +542,6 @@
         blurBackground.style.display = 'block';
       } else { hideMenus(); }
     };
-    
     addImageLinkOption.onclick = function (event) {
       event.stopPropagation();
       addNoteOptions.style.display = 'none';
@@ -567,7 +551,6 @@
       blurBackground.style.display = 'block';
       addingNewNote = false;
     };
-    
     addTextNoteOption.onclick = function (event) {
       event.stopPropagation();
       addNoteOptions.style.display = 'none';
@@ -577,8 +560,6 @@
       blurBackground.style.display = 'block';
       addingNewNote = false;
     };
-    
-    // Cierra los menús al hacer clic fuera (en la capa de blur)
     blurBackground.onclick = function () { hideMenus(); };
     
     function guardarLinkDeImagen() {
@@ -594,7 +575,6 @@
           .catch((error) => { console.error('Error al guardar el link de imagen: ', error); });
       }
     }
-    
     function guardarNotaTexto() {
       const nota = textNoteInput.value;
       if (nota.trim() !== '') {
@@ -603,11 +583,9 @@
           .catch((error) => { console.error('Error al guardar la nota de texto: ', error); });
       }
     }
-    
     saveImageLinkButton.onclick = guardarLinkDeImagen;
     saveTextNoteButton.onclick = guardarNotaTexto;
     
-    // Guardar la posición de la nota al moverla en GridStack
     grid.on('dragstop', function (event, el) {
       setTimeout(() => {
         const noteId = el.getAttribute('data-note-id');
@@ -664,6 +642,7 @@
       header.appendChild(title);
       header.appendChild(nextBtn);
       calendarDiv.appendChild(header);
+      
       const daysHeader = document.createElement('div');
       daysHeader.className = 'calendar-days-header';
       ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'].forEach(day => {
@@ -673,51 +652,49 @@
         daysHeader.appendChild(dayElem);
       });
       calendarDiv.appendChild(daysHeader);
+      
       const datesGrid = document.createElement('div');
       datesGrid.className = 'calendar-dates-grid';
       const firstDay = new Date(year, month, 1).getDay();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
-      // Celdas vacías para la primera fila
+      
       for (let i = 0; i < firstDay; i++) {
         const emptyCell = document.createElement('div');
         emptyCell.className = 'calendar-date empty';
         datesGrid.appendChild(emptyCell);
       }
-      // Celdas con números (cada celda tiene un pequeño espacio inferior)
       for (let date = 1; date <= daysInMonth; date++) {
         const dateCell = document.createElement('div');
         dateCell.className = 'calendar-date';
         dateCell.textContent = date;
         dateCell.style.minHeight = '30px';
         dateCell.style.paddingBottom = '8px';
-        // Permite drop para la bolita
         dateCell.addEventListener('dragover', function(e){ e.preventDefault(); });
-        dateCell.addEventListener('drop', function(e){
+        dateCell.addEventListener('drop', function(e) {
           e.preventDefault();
-          const bubbleId = e.dataTransfer.getData("application/note-id");
-          // Aquí podrías obtener datos adicionales si fuera necesario
-          if (bubbleId) {
-            // Se asigna la fecha (por ejemplo, "date/month/year") a la nota en Firestore
+          const noteId = e.dataTransfer.getData("application/note-id");
+          if (noteId) {
             const assignedDate = `${date}/${month+1}/${year}`;
-            db.collection('notas').doc(bubbleId)
+            db.collection('notas').doc(noteId)
               .update({ assignedDate: assignedDate })
               .then(() => console.log('Fecha asignada:', assignedDate))
               .catch((error) => console.error('Error asignando fecha:', error));
-            // Se añade un indicador visual en la celda para marcar la asignación
+            // Agregar el indicador en la celda y marcar con atributo para saber a qué nota pertenece
             if (!e.currentTarget.querySelector(".assigned-bubble")) {
               const assigned = document.createElement("span");
               assigned.classList.add("assigned-bubble");
+              // Almacenar el id de la nota en un atributo data
+              assigned.setAttribute("data-note", noteId);
               assigned.textContent = "●";
               e.currentTarget.appendChild(assigned);
             }
-            // Se oculta la bolita de la nota, ya asignada
-            const bubble = document.getElementById("bubble-" + bubbleId);
+            // Ocultar la bolita en la nota
+            const bubble = document.getElementById("bubble-" + noteId);
             if (bubble) { bubble.style.display = "none"; }
           }
         });
         datesGrid.appendChild(dateCell);
       }
-      // Llenar celdas vacías al final para completar 42 celdas
       const totalCells = firstDay + daysInMonth;
       const cellsToAdd = 42 - totalCells;
       for (let i = 0; i < cellsToAdd; i++) {
@@ -729,13 +706,11 @@
       currentCalendarMonth = month;
       currentCalendarYear = year;
     }
-    // Función para abrir el calendario
     function openCalendar() {
       const { month, year } = initCalendarDate();
       generateCalendar(month, year);
       document.getElementById('calendarWidget').style.display = 'block';
     }
-    // Eventos para el icono del calendario
     const calendarIcon = document.getElementById('calendarIcon');
     const calendarWidget = document.getElementById('calendarWidget');
     let calendarTimeout;
@@ -752,7 +727,7 @@
     calendarWidget.addEventListener('mouseover', () => { clearTimeout(calendarTimeout); calendarWidget.style.display = 'block'; });
     calendarWidget.addEventListener('mouseout', hideCalendar);
     
-    // Prevenir que los clics internos en los menús cierren la capa de blur
+    /****************** Prevenir que clics en los menús propaguen para no cerrar el blur ******************/
     document.getElementById('addNoteOptions').addEventListener('click', function(e){ e.stopPropagation(); });
     document.getElementById('inputArea').addEventListener('click', function(e){ e.stopPropagation(); });
   </script>
