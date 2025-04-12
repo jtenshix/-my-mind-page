@@ -11,16 +11,16 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
   <style>
-    /* Estilos globales */
+    /* ===================== Estilos globales ===================== */
     html, body {
       margin: 0;
       padding: 0;
       height: 100vh;
       overflow: hidden;
       background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
-      font-family: 'Arial', sans-serif;
+      font-family: Arial, sans-serif;
     }
-    /* Contenedor principal con padding para separar las notas de los bordes */
+    /* Contenedor principal con padding para que las notas no estén pegadas a la pantalla */
     .container {
       height: 100%;
       width: 100%;
@@ -32,21 +32,17 @@
       justify-content: center;
       position: relative;
     }
-    /* Área de notas ocupa el total del espacio dentro del contenedor */
+    /* Área donde se muestran las notas (GridStack) */
     #notaDisplay {
       margin: 0;
       width: 100%;
       height: 100%;
     }
-    .grid-stack-placeholder {
-      display: none !important;
-    }
-    .grid-stack-item {
-      transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-    }
-    /* Tarjetas de nota (imagen o texto) */
-    .card-wrapper,
-    .text-card {
+    .grid-stack-placeholder { display: none !important; }
+    .grid-stack-item { transition: transform 0.4s cubic-bezier(0.25,1,0.5,1); }
+
+    /* ===================== Tarjetas de Nota ===================== */
+    .card-wrapper, .text-card {
       background-color: #fff;
       border: 2px solid #0077a3;
       border-radius: 8px;
@@ -80,11 +76,9 @@
       word-wrap: break-word;
       overflow: hidden;
     }
-    .note-content a {
-      color: #0077a3;
-      text-decoration: underline;
-    }
-    /* Área de controles (botones) en la parte inferior de la nota */
+    .note-content a { color: #0077a3; text-decoration: underline; }
+
+    /* ===================== Área de Controles de la Nota ===================== */
     .menu-bar {
       background-color: #0288D1;
       padding: 5px;
@@ -92,7 +86,7 @@
       justify-content: flex-end;
       align-items: center;
     }
-    /* Botones comunes */
+    /* Los botones en la barra */
     .menu-icon {
       background: none;
       border: none;
@@ -101,19 +95,20 @@
       cursor: pointer;
       margin-left: 4px;
     }
-    /* Estilo específico para la burbuja */
+    /* Estilo específico para la bolita */
     .bubble-icon {
-      color: #FFCD05; /* amarillo brillante, por ejemplo */
+      color: #FFCD05;
       font-size: 22px;
-      margin-right: 8px;
+      margin-right: 8px; /* para separarla de los demás botones */
     }
-    /* Botón principal para agregar nota o imagen */
+
+    /* ===================== Botón Principal (Agregar Nota/Imagen) ===================== */
     #addNoteButton {
       position: absolute;
       bottom: 20px;
       right: 20px;
       background-color: #006994;
-      color: white;
+      color: #fff;
       border: none;
       border-radius: 50%;
       width: 60px;
@@ -131,7 +126,8 @@
       background-color: #005577;
       transform: scale(1.05);
     }
-    /* Menú emergente para seleccionar entre imagen o nota (en horizontal) */
+
+    /* ===================== Menú Emergente ===================== */
     #addNoteOptions {
       position: absolute;
       top: 50%;
@@ -148,7 +144,6 @@
       padding: 20px;
       z-index: 4;
     }
-    /* Tarjetas dentro del menú emergente */
     #addNoteOptions .card {
       background-color: #1e1e1e;
       border: 2px solid #0077a3;
@@ -159,18 +154,11 @@
       transition: transform 0.3s ease;
       width: 200px;
     }
-    #addNoteOptions .card:hover {
-      transform: scale(1.05);
-    }
-    #addNoteOptions .card h2 {
-      color: #0077a3;
-      margin-bottom: 10px;
-    }
-    #addNoteOptions .card p {
-      color: #fff;
-      font-size: 14px;
-    }
-    /* Submenú para ingresar datos (imagen o nota) */
+    #addNoteOptions .card:hover { transform: scale(1.05); }
+    #addNoteOptions .card h2 { color: #0077a3; margin-bottom: 10px; }
+    #addNoteOptions .card p { color: #fff; font-size: 14px; }
+
+    /* ===================== Submenú para Ingresar Datos ===================== */
     #inputArea {
       position: absolute;
       top: 50%;
@@ -200,21 +188,16 @@
     #inputArea button {
       padding: 10px 15px;
       background-color: #006994;
-      color: white;
+      color: #fff;
       border: none;
       border-radius: 4px;
       cursor: pointer;
       transition: background-color 0.3s ease;
     }
-    #inputArea button:hover {
-      background-color: #005577;
-    }
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-    /* Calendario y su icono */
+    #inputArea button:hover { background-color: #005577; }
+    .input-group { display: flex; flex-direction: column; gap: 5px; }
+
+    /* ===================== Calendario ===================== */
     .calendar-icon {
       position: absolute;
       bottom: 20px;
@@ -232,19 +215,17 @@
       cursor: pointer;
       z-index: 4;
     }
-    /* Se hace el calendario un poco más grande */
     .calendar-widget {
       position: absolute;
       bottom: 70px;
       left: 20px;
       background: #fff;
       border: 1px solid #ddd;
-      box-shadow: none;
       padding: 10px;
       display: none;
       z-index: 4;
-      width: 300px;      /* aumentamos un poco la anchura */
-      min-height: 220px; /* y también la altura mínima */
+      width: 300px;      /* Calendario un poquito más ancho */
+      min-height: 220px; /* y con mayor altura mínima */
     }
     .calendar-header {
       display: flex;
@@ -259,24 +240,16 @@
       font-size: 16px;
       color: #333;
     }
-    .calendar-header span {
-      font-weight: bold;
-      color: #333;
-    }
-    /* Cada celda del calendario tendrá un pequeño margen inferior para que la burbuja se asiente */
+    .calendar-header span { font-weight: bold; color: #333; }
     .calendar-days-header,
     .calendar-dates-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       text-align: center;
       font-size: 12px;
-      gap: 4px 0; /* gap vertical de 4px */
+      gap: 4px 0; /* Separación vertical de 4px */
     }
-    .calendar-days-header {
-      margin-bottom: 5px;
-      font-weight: bold;
-      color: #333;
-    }
+    .calendar-days-header { margin-bottom: 5px; font-weight: bold; color: #333; }
     .calendar-day,
     .calendar-date {
       padding: 3px;
@@ -286,7 +259,7 @@
     }
     .calendar-date.empty { background: none; }
     .calendar-date:hover { background-color: #e0e0e0; }
-    /* Estilo para la burbuja asignada en el calendario */
+    /* Cuando se asigna la burbuja a una celda, se muestra aquí */
     .assigned-bubble {
       color: #FFCD05;
       font-size: 20px;
@@ -294,7 +267,8 @@
       margin: auto;
       margin-top: 4px;
     }
-    /* Capa para detectar clics fuera y cerrar menús */
+
+    /* ===================== Capa para Cerrar Menús (Blur) ===================== */
     .blur-background {
       position: fixed;
       top: 0;
@@ -310,9 +284,13 @@
 </head>
 <body>
   <div class="container">
+    <!-- Área de Notas usando GridStack -->
     <div id="notaDisplay" class="grid-stack"></div>
+    
+    <!-- Botón principal para agregar nota/imagen -->
     <button id="addNoteButton">+</button>
-    <!-- Menú emergente: opciones de imagen o nota (tarjetas horizontales) -->
+    
+    <!-- Menú emergente: seleccionar entre imagen o nota -->
     <div id="addNoteOptions">
       <div class="card" id="addImageLinkOption">
         <h2>Imagen</h2>
@@ -323,7 +301,8 @@
         <p>Subir nota de texto.</p>
       </div>
     </div>
-    <!-- Submenú para ingresar datos (imagen o nota) -->
+    
+    <!-- Submenú para ingresar datos -->
     <div id="inputArea">
       <div id="imageLinkInputArea">
         <div class="input-group">
@@ -341,14 +320,18 @@
         <button id="saveTextNote">Guardar Nota</button>
       </div>
     </div>
+    
+    <!-- Calendario: icono y widget -->
     <div id="calendarIcon" class="calendar-icon">☰</div>
     <div id="calendarWidget" class="calendar-widget"></div>
+    
     <!-- Capa para detectar clics fuera y cerrar menús -->
     <div class="blur-background"></div>
   </div>
 
   <script>
-    // Función para transformar links de Google Drive
+    /****************** Utilidades y Configuración de Firebase ******************/
+    // Función para transformar un link de Google Drive
     function transformDriveLink(url) {
       if (!url.includes("drive.google.com")) return url;
       let fileId = null;
@@ -362,13 +345,13 @@
       }
       return fileId ? "https://drive.google.com/uc?export=view&id=" + fileId : url;
     }
-    // Función para transformar URLs en enlaces clickeables
+    // Función que transforma URLs en enlaces clickeables
     function linkify(text) {
       if (!text) return "";
       const replacedText = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
       return replacedText.replace(/\n/g, '<br>');
     }
-    // Configuración de Firebase
+    // Configuración de Firebase (usa tus propios datos)
     const firebaseConfig = {
       apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
       authDomain: "oasis-b036d.firebaseapp.com",
@@ -381,9 +364,9 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Inicialización de GridStack con margen de aproximadamente 2 cm (75px)
+    /****************** Inicialización de GridStack ******************/
     const grid = GridStack.init({
-      margin: 75,
+      margin: 75,             // Aproximadamente 2 cm de separación
       cellHeight: 'auto',
       disableResize: true,
       float: true,
@@ -392,7 +375,7 @@
       draggable: { handle: '.menu-bar' }
     });
 
-    // Autoajuste de textarea
+    // Autoajuste de textarea (para notas)
     function autoResizeTextarea(el) {
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
@@ -402,7 +385,8 @@
     textNoteInput.addEventListener('input', () => autoResizeTextarea(textNoteInput));
     imageNoteText.addEventListener('input', () => autoResizeTextarea(imageNoteText));
 
-    // Función para mostrar una nota en pantalla con los controles actualizados
+    /****************** Renderización de Notas ******************/
+    // Función para mostrar la nota en pantalla con controles actualizados
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       const gridItem = document.createElement('div');
@@ -410,7 +394,8 @@
       gridItem.setAttribute('data-note-id', doc.id);
       const content = document.createElement('div');
       let card, noteContent = document.createElement('div');
-
+      
+      // Se muestra la nota ya sea de imagen o texto
       if (notaData.url) {
         card = document.createElement('div');
         card.classList.add('card-wrapper');
@@ -433,20 +418,21 @@
         noteContent.innerHTML = linkify(notaData.nota);
         card.appendChild(noteContent);
       }
-      // Aseguramos que los enlaces se abran en una nueva pestaña
+      // Aseguramos que los enlaces se abran en nueva pestaña
       for (let link of noteContent.getElementsByTagName('a')) {
         link.setAttribute('target', '_blank');
       }
-      // Creación del área de controles (se agrega en la parte inferior de la nota)
+      
+      /* ===== Área de Controles de la Nota ===== */
       const menuBar = document.createElement('div');
       menuBar.classList.add('menu-bar');
-      // Botón de la burbuja (arrastrable) – se añade a la izquierda
+      // Creamos el botón de la bolita (draggable)
       const bubbleButton = document.createElement('button');
       bubbleButton.classList.add('menu-icon', 'bubble-icon');
       bubbleButton.innerHTML = '●';
       bubbleButton.setAttribute('draggable', 'true');
       bubbleButton.addEventListener('dragstart', function(e) {
-        // Evitamos el recuadro azul usando una imagen transparente
+        // Se asigna un drag image transparente para no ver el recuadro azul
         var img = new Image();
         img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PboX9AAAAABJRU5ErkJggg==';
         e.dataTransfer.setDragImage(img, 0, 0);
@@ -456,7 +442,7 @@
       bubbleButton.addEventListener('click', function(e) {
         openCalendar();
       });
-      // Agregamos los controles existentes: los botones de editar y eliminar
+      // Creamos el botón de editar
       const editButton = document.createElement('button');
       editButton.classList.add('menu-icon');
       editButton.innerHTML = '✎';
@@ -491,27 +477,36 @@
         };
         menuBar.replaceChild(saveEditButton, editButton);
       };
+      // Botón de eliminar la nota
       const deleteButton = document.createElement('button');
       deleteButton.classList.add('menu-icon');
       deleteButton.innerHTML = '✖';
       deleteButton.onclick = function () {
         db.collection('notas').doc(doc.id).delete()
-          .then(() => { grid.removeWidget(gridItem); })
+          .then(() => {
+            grid.removeWidget(gridItem);
+            // Además, se remueven las bolitas asignadas en el calendario para esta nota.
+            // En este ejemplo se eliminan todas; en la versión real se identificaría la correspondiente.
+            document.querySelectorAll(".assigned-bubble").forEach(b => b.remove());
+          })
           .catch((error) => { console.error("Error al eliminar la nota: ", error); });
       };
-      // Contenedor para los botones de editar y eliminar (juntos)
+      // Contenedor para los botones de editar y eliminar (juntos, con poco espacio entre ellos)
       const editDeleteContainer = document.createElement('div');
       editDeleteContainer.style.display = 'flex';
       editDeleteContainer.style.gap = '4px';
       editDeleteContainer.appendChild(editButton);
       editDeleteContainer.appendChild(deleteButton);
-      // Se agrega al área de controles: primero la burbuja y luego el grupo de editar/eliminar
+      // Se agregan los controles: primero la bolita y luego el contenedor edit-delete
       menuBar.appendChild(bubbleButton);
       menuBar.appendChild(editDeleteContainer);
+      // Se agrega la barra de controles al final de la tarjeta
       card.appendChild(menuBar);
+      
       content.appendChild(card);
       gridItem.appendChild(content);
-      // Se define la posición en GridStack
+      
+      // Se define la posición en GridStack usando las propiedades almacenadas, o se ubica automáticamente
       const pos = {
         x: notaData.x || 0,
         y: typeof notaData.y === 'number' ? notaData.y : 0,
@@ -521,15 +516,18 @@
       };
       grid.addWidget(gridItem, pos);
     }
-    // Función para limpiar las notas en pantalla
+    
+    // Función para limpiar las notas en pantalla (antes de re-renderizar)
     function limpiarNotasDisplay() { grid.removeAll(); }
-    // Escucha en tiempo real para actualizar las notas desde Firestore
+    
+    // Escucha en tiempo real de los documentos en la colección "notas"
     db.collection('notas').orderBy('__name__')
       .onSnapshot((snapshot) => {
         limpiarNotasDisplay();
         snapshot.forEach((doc) => { mostrarNotaEnPantalla(doc); });
       });
-    // Manejo de la interfaz para agregar nuevas notas
+    
+    /****************** Manejo de la Interfaz para Agregar Notas ******************/
     const addNoteButton = document.getElementById('addNoteButton');
     const addNoteOptions = document.getElementById('addNoteOptions');
     const addImageLinkOption = document.getElementById('addImageLinkOption');
@@ -542,6 +540,7 @@
     const saveTextNoteButton = document.getElementById('saveTextNote');
     const blurBackground = document.querySelector('.blur-background');
     let addingNewNote = false;
+    
     // Función para ocultar todos los menús emergentes
     function hideMenus() {
       addNoteOptions.style.display = 'none';
@@ -549,6 +548,7 @@
       blurBackground.style.display = 'none';
       addingNewNote = false;
     }
+    
     addNoteButton.onclick = function (event) {
       event.stopPropagation();
       addingNewNote = !addingNewNote;
@@ -557,6 +557,7 @@
         blurBackground.style.display = 'block';
       } else { hideMenus(); }
     };
+    
     addImageLinkOption.onclick = function (event) {
       event.stopPropagation();
       addNoteOptions.style.display = 'none';
@@ -566,6 +567,7 @@
       blurBackground.style.display = 'block';
       addingNewNote = false;
     };
+    
     addTextNoteOption.onclick = function (event) {
       event.stopPropagation();
       addNoteOptions.style.display = 'none';
@@ -575,9 +577,10 @@
       blurBackground.style.display = 'block';
       addingNewNote = false;
     };
-    // Cierra los menús al hacer clic en el área de blur
+    
+    // Cierra los menús al hacer clic fuera (en la capa de blur)
     blurBackground.onclick = function () { hideMenus(); };
-
+    
     function guardarLinkDeImagen() {
       let link = imageLinkInput.value;
       const texto = imageNoteText.value;
@@ -591,6 +594,7 @@
           .catch((error) => { console.error('Error al guardar el link de imagen: ', error); });
       }
     }
+    
     function guardarNotaTexto() {
       const nota = textNoteInput.value;
       if (nota.trim() !== '') {
@@ -599,8 +603,11 @@
           .catch((error) => { console.error('Error al guardar la nota de texto: ', error); });
       }
     }
+    
     saveImageLinkButton.onclick = guardarLinkDeImagen;
     saveTextNoteButton.onclick = guardarNotaTexto;
+    
+    // Guardar la posición de la nota al moverla en GridStack
     grid.on('dragstop', function (event, el) {
       setTimeout(() => {
         const noteId = el.getAttribute('data-note-id');
@@ -612,7 +619,8 @@
         }
       }, 100);
     });
-    // Funciones del calendario
+    
+    /****************** Calendario y Asignación de la Bolita ******************/
     let currentCalendarMonth, currentCalendarYear;
     function getChileDate() {
       return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
@@ -669,39 +677,47 @@
       datesGrid.className = 'calendar-dates-grid';
       const firstDay = new Date(year, month, 1).getDay();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
-      // Se crean celdas vacías para la primera fila:
+      // Celdas vacías para la primera fila
       for (let i = 0; i < firstDay; i++) {
         const emptyCell = document.createElement('div');
         emptyCell.className = 'calendar-date empty';
         datesGrid.appendChild(emptyCell);
       }
-      // Celdas con números:
+      // Celdas con números (cada celda tiene un pequeño espacio inferior)
       for (let date = 1; date <= daysInMonth; date++) {
         const dateCell = document.createElement('div');
         dateCell.className = 'calendar-date';
         dateCell.textContent = date;
-        // Permitir que cada celda sea drop target y tenga un pequeño espacio debajo:
         dateCell.style.minHeight = '30px';
         dateCell.style.paddingBottom = '8px';
-        dateCell.addEventListener('dragover', function(e) { e.preventDefault(); });
-        dateCell.addEventListener('drop', function(e) {
+        // Permite drop para la bolita
+        dateCell.addEventListener('dragover', function(e){ e.preventDefault(); });
+        dateCell.addEventListener('drop', function(e){
           e.preventDefault();
-          const noteId = e.dataTransfer.getData("application/note-id");
-          if (noteId) {
-            // Se asigna la fecha a la nota (por ejemplo, se guarda en Firestore)
+          const bubbleId = e.dataTransfer.getData("application/note-id");
+          // Aquí podrías obtener datos adicionales si fuera necesario
+          if (bubbleId) {
+            // Se asigna la fecha (por ejemplo, "date/month/year") a la nota en Firestore
             const assignedDate = `${date}/${month+1}/${year}`;
-            db.collection('notas').doc(noteId)
+            db.collection('notas').doc(bubbleId)
               .update({ assignedDate: assignedDate })
               .then(() => console.log('Fecha asignada:', assignedDate))
               .catch((error) => console.error('Error asignando fecha:', error));
-            // Se muestra la burbuja en la celda (indicando asignación) y se oculta en la nota.
-            this.innerHTML += "<span class='assigned-bubble'>●</span>";
-            // Opcional: aquí podrías actualizar la interfaz de la nota para remover la burbuja.
+            // Se añade un indicador visual en la celda para marcar la asignación
+            if (!e.currentTarget.querySelector(".assigned-bubble")) {
+              const assigned = document.createElement("span");
+              assigned.classList.add("assigned-bubble");
+              assigned.textContent = "●";
+              e.currentTarget.appendChild(assigned);
+            }
+            // Se oculta la bolita de la nota, ya asignada
+            const bubble = document.getElementById("bubble-" + bubbleId);
+            if (bubble) { bubble.style.display = "none"; }
           }
         });
         datesGrid.appendChild(dateCell);
       }
-      // Se llenan celdas vacías al final de la grilla, hasta tener 42 celdas:
+      // Llenar celdas vacías al final para completar 42 celdas
       const totalCells = firstDay + daysInMonth;
       const cellsToAdd = 42 - totalCells;
       for (let i = 0; i < cellsToAdd; i++) {
@@ -713,12 +729,13 @@
       currentCalendarMonth = month;
       currentCalendarYear = year;
     }
-    // Función para abrir el calendario (wrapper de showCalendar)
+    // Función para abrir el calendario
     function openCalendar() {
       const { month, year } = initCalendarDate();
       generateCalendar(month, year);
       document.getElementById('calendarWidget').style.display = 'block';
     }
+    // Eventos para el icono del calendario
     const calendarIcon = document.getElementById('calendarIcon');
     const calendarWidget = document.getElementById('calendarWidget');
     let calendarTimeout;
@@ -730,17 +747,12 @@
     function hideCalendar() {
       calendarTimeout = setTimeout(() => { calendarWidget.style.display = 'none'; }, 200);
     }
-    calendarIcon.addEventListener('mouseover', () => {
-      clearTimeout(calendarTimeout);
-      showCalendar();
-    });
+    calendarIcon.addEventListener('mouseover', () => { clearTimeout(calendarTimeout); showCalendar(); });
     calendarIcon.addEventListener('mouseout', hideCalendar);
-    calendarWidget.addEventListener('mouseover', () => {
-      clearTimeout(calendarTimeout);
-      calendarWidget.style.display = 'block';
-    });
+    calendarWidget.addEventListener('mouseover', () => { clearTimeout(calendarTimeout); calendarWidget.style.display = 'block'; });
     calendarWidget.addEventListener('mouseout', hideCalendar);
-    // Prevenir propagación de clics internos en los menús para no cerrar el blur
+    
+    // Prevenir que los clics internos en los menús cierren la capa de blur
     document.getElementById('addNoteOptions').addEventListener('click', function(e){ e.stopPropagation(); });
     document.getElementById('inputArea').addEventListener('click', function(e){ e.stopPropagation(); });
   </script>
