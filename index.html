@@ -348,6 +348,14 @@
       return url;
     }
 
+    // Función para transformar URLs en enlaces clickeables
+    function linkify(text) {
+      if (!text) return "";
+      // Reemplaza URL's con etiquetas <a> que abren en nueva pestaña
+      const replacedText = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+      return replacedText.replace(/\n/g, '<br>');
+    }
+
     // Configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
@@ -393,6 +401,8 @@
 
       const content = document.createElement('div');
       let card;
+      let noteContent = document.createElement('div'); // Declarada para ambos casos
+
       if (notaData.url) {
         card = document.createElement('div');
         card.classList.add('card-wrapper');
@@ -405,21 +415,22 @@
         imageContainer.appendChild(img);
         card.appendChild(imageContainer);
 
-        var noteContent = document.createElement('div');
+        noteContent = document.createElement('div');
         noteContent.classList.add('note-content');
-        noteContent.innerHTML = notaData.texto ? notaData.texto.replace(/\n/g, '<br>') : '';
+        // Uso de linkify para convertir links en la descripción
+        noteContent.innerHTML = notaData.texto ? linkify(notaData.texto) : '';
         card.appendChild(noteContent);
       } else if (notaData.nota) {
         card = document.createElement('div');
         card.classList.add('text-card');
 
-        var noteContent = document.createElement('div');
+        noteContent = document.createElement('div');
         noteContent.classList.add('note-content');
-        noteContent.innerHTML = notaData.nota.replace(/\n/g, '<br>');
+        noteContent.innerHTML = linkify(notaData.nota);
         card.appendChild(noteContent);
       }
 
-      // Hacer que los enlaces sean clickeables
+      // Hacer que los enlaces sean clickeables (por si acaso, aunque linkify ya lo hace)
       const links = noteContent.getElementsByTagName('a');
       for (let link of links) {
         link.setAttribute('target', '_blank');
@@ -432,7 +443,6 @@
       editButton.classList.add('menu-icon');
       editButton.innerHTML = '✎';
       editButton.onclick = function () {
-        // Obtener el texto actual de la nota
         let currentText = notaData.texto || notaData.nota || '';
         const editInput = document.createElement('textarea');
         editInput.value = currentText;
@@ -440,26 +450,22 @@
         editInput.style.height = '100px';
         editInput.style.resize = 'none';
         editInput.style.overflowY = 'auto';
-        // Reemplazamos el contenido de la nota por el textarea de edición
         const noteContainer = card.querySelector('.note-content');
         if (noteContainer) {
           noteContainer.innerHTML = '';
           noteContainer.appendChild(editInput);
         }
-        // Botón para guardar la edición con update real en Firestore
         const saveEditButton = document.createElement('button');
         saveEditButton.classList.add('menu-icon');
         saveEditButton.innerHTML = '💾';
         saveEditButton.onclick = function () {
           const newText = editInput.value;
           if (newText.trim() !== '') {
-            // Realizamos el update en Firestore dependiendo si es nota de imagen o de texto
             db.collection('notas').doc(doc.id)
               .update(notaData.url ? { texto: newText } : { nota: newText })
               .then(() => {
-                // Una vez actualizado, se refleja el nuevo contenido en pantalla
                 const noteContainer = card.querySelector('.note-content');
-                noteContainer.innerHTML = newText.replace(/\n/g, '<br>');
+                noteContainer.innerHTML = linkify(newText);
                 menuBar.replaceChild(editButton, saveEditButton);
               })
               .catch((error) => {
@@ -489,7 +495,6 @@
       content.appendChild(card);
       gridItem.appendChild(content);
 
-      // Definición de la posición en GridStack
       const pos = {
         x: notaData.x || 0,
         y: typeof notaData.y === 'number' ? notaData.y : 0,
@@ -556,7 +561,6 @@
       addingNewNote = false;
     };
 
-    // Función para guardar una nota de imagen
     function guardarLinkDeImagen() {
       let link = imageLinkInput.value;
       const texto = imageNoteText.value;
@@ -577,7 +581,6 @@
       }
     }
 
-    // Función para guardar una nota de texto
     function guardarNotaTexto() {
       const nota = textNoteInput.value;
       if (nota.trim() !== '') {
@@ -597,7 +600,6 @@
     saveImageLinkButton.onclick = guardarLinkDeImagen;
     saveTextNoteButton.onclick = guardarNotaTexto;
 
-    // Guardar la posición actualizada de la nota al moverla
     grid.on('dragstop', function (event, el) {
       setTimeout(() => {
         const noteId = el.getAttribute('data-note-id');
