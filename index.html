@@ -23,15 +23,17 @@
       height: 100%;
       width: 100%;
       background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      /* Si bien se usaba flex para centrar, puede interferir con el movimiento libre del grid.
+         Considera quitar align-items y justify-content para que #notaDisplay ocupe toda la zona. */
       position: relative;
     }
     /* Contenedor de notas (GridStack) */
     #notaDisplay {
-      margin-top: 20px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
     }
     /* Ocultar ghost element durante el drag */
     .grid-stack-placeholder {
@@ -53,9 +55,6 @@
       display: flex;
       flex-direction: column;
       position: relative;
-    }
-    .card-content {
-      flex-grow: 1;
     }
     .image-container {
       width: 240px;
@@ -316,20 +315,18 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     
-    // Inicializamos GridStack con una cuadrícula de 3 columnas para representar los 3 lanes.
+    // Inicializamos GridStack con 3 columnas.
     const grid = GridStack.init({
       margin: 2,
       cellHeight: 'auto',
       disableResize: true,
       float: true,
       animate: true,
-      column: 3, // 3 lanes: izquierda (0), centro (1) y derecha (2).
-      dragOptions: {
-        inertia: true
-      }
+      column: 3,
+      dragOptions: { inertia: true }
     });
     
-    // Ajuste automático de textareas en la interfaz para agregar notas.
+    // Ajuste automático de textareas.
     function autoResizeTextarea(el) {
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
@@ -339,17 +336,19 @@
     textNoteInput.addEventListener('input', () => autoResizeTextarea(textNoteInput));
     imageNoteText.addEventListener('input', () => autoResizeTextarea(imageNoteText));
     
-    // Función para mostrar cada nota en pantalla en formato Polaroid.
+    // Función para mostrar cada nota en pantalla (estructura actualizada).
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       const gridItem = document.createElement('div');
       gridItem.classList.add('grid-stack-item');
       gridItem.setAttribute('data-note-id', doc.id);
       
+      // Importante: usar un contenedor interno con esta clase para que se pueda hacer drag.
       const content = document.createElement('div');
+      content.classList.add('grid-stack-item-content');
       
       let card;
-      if(notaData.url) {
+      if (notaData.url) {
         card = document.createElement('div');
         card.classList.add('card-wrapper');
         
@@ -365,17 +364,16 @@
         noteContent.classList.add('note-content');
         noteContent.textContent = notaData.texto ? notaData.texto : '';
         card.appendChild(noteContent);
-      } else if(notaData.nota) {
+      } else if (notaData.nota) {
         card = document.createElement('div');
         card.classList.add('text-card');
-        
         const noteContent = document.createElement('div');
         noteContent.classList.add('note-content');
         noteContent.textContent = notaData.nota;
         card.appendChild(noteContent);
       }
       
-      // Barra de menú (editar y eliminar).
+      // Barra de menú: editar y eliminar.
       const menuBar = document.createElement('div');
       menuBar.classList.add('menu-bar');
       
@@ -388,7 +386,7 @@
         editInput.type = 'text';
         editInput.value = currentText;
         const noteContainer = card.querySelector('.note-content');
-        if(noteContainer) {
+        if (noteContainer) {
           noteContainer.innerHTML = '';
           noteContainer.appendChild(editInput);
         }
@@ -397,7 +395,7 @@
         saveEditButton.innerHTML = '💾';
         saveEditButton.onclick = function() {
           const newText = editInput.value;
-          if(newText.trim() !== '') {
+          if (newText.trim() !== '') {
             db.collection('notas').doc(doc.id).update(notaData.url ? { texto: newText } : { nota: newText })
               .then(() => {
                 const noteContainer = card.querySelector('.note-content');
@@ -427,14 +425,13 @@
       
       menuBar.appendChild(editButton);
       menuBar.appendChild(deleteButton);
-      
       card.appendChild(menuBar);
       content.appendChild(card);
       gridItem.appendChild(content);
       
-      // Para la posición: si no existe, asignamos la lane del centro (x = 1).
+      // Posición: si no existe en Firestore, se inicia en x:0, y:0.
       const pos = {
-        x: (typeof notaData.x === 'number') ? notaData.x : 1,
+        x: (typeof notaData.x === 'number') ? notaData.x : 0,
         y: (typeof notaData.y === 'number') ? notaData.y : 0,
         w: notaData.w || 1,
         h: notaData.h || 2,
@@ -443,7 +440,7 @@
       grid.addWidget(gridItem, pos);
     }
     
-    // Limpia todas las notas mostradas.
+    // Limpia todas las notas mostradas (para refrescar la vista).
     function limpiarNotasDisplay() {
       grid.removeAll();
     }
@@ -496,7 +493,7 @@
     function guardarLinkDeImagen() {
       let link = imageLinkInput.value;
       const texto = imageNoteText.value;
-      if(link.trim() !== '') {
+      if (link.trim() !== '') {
         link = transformDriveLink(link);
         db.collection('notas').add({
           url: link,
@@ -514,13 +511,13 @@
     }
     
     function guardarNotaTexto() {
-      const nota = textNoteInput.value;
-      if(nota.trim() !== '') {
+      const nota = textNote.value;
+      if (nota.trim() !== '') {
         db.collection('notas').add({
           nota: nota
         })
         .then(() => {
-          textNoteInput.value = '';
+          textNote.value = '';
           inputArea.style.display = 'none';
         })
         .catch((error) => {
@@ -532,12 +529,12 @@
     saveImageLinkButton.onclick = guardarLinkDeImagen;
     saveTextNoteButton.onclick = guardarNotaTexto;
     
-    // Al finalizar el arrastre, actualizamos la posición de la nota en Firebase.
+    // Al finalizar el arrastre, actualizamos la posición de la nota en Firestore.
     grid.on('dragstop', function(event, el) {
       setTimeout(() => {
         const noteId = el.getAttribute('data-note-id');
         const node = el.gridstackNode;
-        if(noteId && node) {
+        if (noteId && node) {
           db.collection('notas').doc(noteId).update({
             x: node.x,
             y: node.y,
