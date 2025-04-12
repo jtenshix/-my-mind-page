@@ -332,6 +332,7 @@
   </div>
 
   <script>
+    // Función para transformar links de Google Drive
     function transformDriveLink(url) {
       if (!url.includes("drive.google.com")) return url;
       let fileId = null;
@@ -347,6 +348,7 @@
       return url;
     }
 
+    // Configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
       authDomain: "oasis-b036d.firebaseapp.com",
@@ -359,6 +361,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    // Inicialización de GridStack
     const grid = GridStack.init({
       margin: 5,
       cellHeight: 'auto',
@@ -371,6 +374,7 @@
       }
     });
 
+    // Autoajuste del textarea
     function autoResizeTextarea(el) {
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
@@ -380,6 +384,7 @@
     textNoteInput.addEventListener('input', () => autoResizeTextarea(textNoteInput));
     imageNoteText.addEventListener('input', () => autoResizeTextarea(imageNoteText));
 
+    // Función para mostrar la nota en pantalla
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       const gridItem = document.createElement('div');
@@ -387,7 +392,6 @@
       gridItem.setAttribute('data-note-id', doc.id);
 
       const content = document.createElement('div');
-
       let card;
       if (notaData.url) {
         card = document.createElement('div');
@@ -401,7 +405,7 @@
         imageContainer.appendChild(img);
         card.appendChild(imageContainer);
 
-        const noteContent = document.createElement('div');
+        var noteContent = document.createElement('div');
         noteContent.classList.add('note-content');
         noteContent.innerHTML = notaData.texto ? notaData.texto.replace(/\n/g, '<br>') : '';
         card.appendChild(noteContent);
@@ -409,7 +413,7 @@
         card = document.createElement('div');
         card.classList.add('text-card');
 
-        const noteContent = document.createElement('div');
+        var noteContent = document.createElement('div');
         noteContent.classList.add('note-content');
         noteContent.innerHTML = notaData.nota.replace(/\n/g, '<br>');
         card.appendChild(noteContent);
@@ -428,6 +432,7 @@
       editButton.classList.add('menu-icon');
       editButton.innerHTML = '✎';
       editButton.onclick = function () {
+        // Obtener el texto actual de la nota
         let currentText = notaData.texto || notaData.nota || '';
         const editInput = document.createElement('textarea');
         editInput.value = currentText;
@@ -435,19 +440,24 @@
         editInput.style.height = '100px';
         editInput.style.resize = 'none';
         editInput.style.overflowY = 'auto';
+        // Reemplazamos el contenido de la nota por el textarea de edición
         const noteContainer = card.querySelector('.note-content');
         if (noteContainer) {
           noteContainer.innerHTML = '';
           noteContainer.appendChild(editInput);
         }
+        // Botón para guardar la edición con update real en Firestore
         const saveEditButton = document.createElement('button');
         saveEditButton.classList.add('menu-icon');
         saveEditButton.innerHTML = '💾';
         saveEditButton.onclick = function () {
           const newText = editInput.value;
           if (newText.trim() !== '') {
-            db.collection('notas').doc(doc.id).update(notaData.url ? { texto: newText } : { nota: newText })
+            // Realizamos el update en Firestore dependiendo si es nota de imagen o de texto
+            db.collection('notas').doc(doc.id)
+              .update(notaData.url ? { texto: newText } : { nota: newText })
               .then(() => {
+                // Una vez actualizado, se refleja el nuevo contenido en pantalla
                 const noteContainer = card.querySelector('.note-content');
                 noteContainer.innerHTML = newText.replace(/\n/g, '<br>');
                 menuBar.replaceChild(editButton, saveEditButton);
@@ -475,11 +485,11 @@
 
       menuBar.appendChild(editButton);
       menuBar.appendChild(deleteButton);
-
       card.appendChild(menuBar);
       content.appendChild(card);
       gridItem.appendChild(content);
 
+      // Definición de la posición en GridStack
       const pos = {
         x: notaData.x || 0,
         y: typeof notaData.y === 'number' ? notaData.y : 0,
@@ -490,10 +500,12 @@
       grid.addWidget(gridItem, pos);
     }
 
+    // Función para limpiar las notas en pantalla
     function limpiarNotasDisplay() {
       grid.removeAll();
     }
 
+    // Escucha en tiempo real de los documentos en la colección 'notas'
     db.collection('notas')
       .orderBy('__name__')
       .onSnapshot((snapshot) => {
@@ -503,6 +515,7 @@
         });
       });
 
+    // Manejo de la interfaz para agregar nuevas notas
     const addNoteButton = document.getElementById('addNoteButton');
     const addNoteOptions = document.getElementById('addNoteOptions');
     const addImageLinkOption = document.getElementById('addImageLinkOption');
@@ -543,6 +556,7 @@
       addingNewNote = false;
     };
 
+    // Función para guardar una nota de imagen
     function guardarLinkDeImagen() {
       let link = imageLinkInput.value;
       const texto = imageNoteText.value;
@@ -563,6 +577,7 @@
       }
     }
 
+    // Función para guardar una nota de texto
     function guardarNotaTexto() {
       const nota = textNoteInput.value;
       if (nota.trim() !== '') {
@@ -582,6 +597,7 @@
     saveImageLinkButton.onclick = guardarLinkDeImagen;
     saveTextNoteButton.onclick = guardarNotaTexto;
 
+    // Guardar la posición actualizada de la nota al moverla
     grid.on('dragstop', function (event, el) {
       setTimeout(() => {
         const noteId = el.getAttribute('data-note-id');
@@ -597,6 +613,7 @@
       }, 100);
     });
 
+    // Funciones del calendario
     let currentCalendarMonth, currentCalendarYear;
 
     function getChileDate() {
