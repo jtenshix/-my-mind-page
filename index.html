@@ -18,16 +18,15 @@
       height: 100vh;
       overflow: hidden;
     }
-    /* Contenedor principal: ocupa 100% del viewport y mantiene el fondo oceánico */
+    /* Contenedor principal: ocupa 100% del viewport con fondo oceánico.
+       Se quita el centrado por flex para que el grid ocupe todo el espacio disponible. */
     .container {
       height: 100%;
       width: 100%;
       background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
-      /* Si bien se usaba flex para centrar, puede interferir con el movimiento libre del grid.
-         Considera quitar align-items y justify-content para que #notaDisplay ocupe toda la zona. */
       position: relative;
     }
-    /* Contenedor de notas (GridStack) */
+    /* Contenedor del grid, ocupa todo el viewport para permitir arrastrar en toda el área */
     #notaDisplay {
       position: absolute;
       top: 0;
@@ -203,7 +202,7 @@
       display: none;
       z-index: 3;
       width: 250px;
-      min-height: 180px; /* Altura fija para 6 filas */
+      min-height: 180px;
     }
     .calendar-header {
       display: flex;
@@ -336,14 +335,14 @@
     textNoteInput.addEventListener('input', () => autoResizeTextarea(textNoteInput));
     imageNoteText.addEventListener('input', () => autoResizeTextarea(imageNoteText));
     
-    // Función para mostrar cada nota en pantalla (estructura actualizada).
+    // Función para mostrar cada nota en pantalla usando la estructura de GridStack.
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       const gridItem = document.createElement('div');
       gridItem.classList.add('grid-stack-item');
       gridItem.setAttribute('data-note-id', doc.id);
       
-      // Importante: usar un contenedor interno con esta clase para que se pueda hacer drag.
+      // Se crea el contenedor interno que GridStack utiliza para aplicar el drag.
       const content = document.createElement('div');
       content.classList.add('grid-stack-item-content');
       
@@ -373,7 +372,7 @@
         card.appendChild(noteContent);
       }
       
-      // Barra de menú: editar y eliminar.
+      // Barra de menú (editar y eliminar).
       const menuBar = document.createElement('div');
       menuBar.classList.add('menu-bar');
       
@@ -429,7 +428,7 @@
       content.appendChild(card);
       gridItem.appendChild(content);
       
-      // Posición: si no existe en Firestore, se inicia en x:0, y:0.
+      // Posición: si no está definida en Firestore se inicia en x:0, y:0.
       const pos = {
         x: (typeof notaData.x === 'number') ? notaData.x : 0,
         y: (typeof notaData.y === 'number') ? notaData.y : 0,
@@ -440,12 +439,12 @@
       grid.addWidget(gridItem, pos);
     }
     
-    // Limpia todas las notas mostradas (para refrescar la vista).
+    // Limpia todas las notas mostradas en el grid.
     function limpiarNotasDisplay() {
       grid.removeAll();
     }
     
-    // Escucha cambios en la colección "notas" para actualizar la vista en tiempo real.
+    // Se escucha la colección "notas" en Firestore para actualizar la vista en tiempo real.
     db.collection('notas')
       .orderBy('__name__')
       .onSnapshot((snapshot) => {
@@ -511,13 +510,14 @@
     }
     
     function guardarNotaTexto() {
-      const nota = textNote.value;
+      // Se usa textNoteInput en lugar de una variable inexistente.
+      const nota = textNoteInput.value;
       if (nota.trim() !== '') {
         db.collection('notas').add({
           nota: nota
         })
         .then(() => {
-          textNote.value = '';
+          textNoteInput.value = '';
           inputArea.style.display = 'none';
         })
         .catch((error) => {
@@ -529,7 +529,7 @@
     saveImageLinkButton.onclick = guardarLinkDeImagen;
     saveTextNoteButton.onclick = guardarNotaTexto;
     
-    // Al finalizar el arrastre, actualizamos la posición de la nota en Firestore.
+    // Al finalizar el arrastre, se actualiza la posición de la nota en Firestore.
     grid.on('dragstop', function(event, el) {
       setTimeout(() => {
         const noteId = el.getAttribute('data-note-id');
