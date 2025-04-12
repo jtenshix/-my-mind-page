@@ -41,7 +41,7 @@
       transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     }
     .card-wrapper {
-      background-color: #1e1e1e;
+      background-color: #fff;
       border: 2px solid #0077a3;
       border-radius: 8px;
       overflow: hidden;
@@ -67,13 +67,15 @@
       display: block;
     }
     .note-content {
-      background-color: #1e1e1e;
+      background-color: #fff;
       padding: 10px;
       text-align: center;
       font-size: 16px;
-      color: #fff;
+      color: #333;
       min-height: 50px;
       box-sizing: border-box;
+      overflow-y: auto;
+      max-height: calc(100vh - 300px); /* Ajusta según sea necesario */
     }
     .menu-bar {
       background-color: #0288D1;
@@ -90,7 +92,7 @@
       cursor: pointer;
     }
     .text-card {
-      background-color: #1e1e1e;
+      background-color: #fff;
       border: 2px solid #0077a3;
       border-radius: 8px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
@@ -187,8 +189,6 @@
       width: 100%;
       box-sizing: border-box;
       line-height: 1.5;
-      background-color: #1e1e1e;
-      color: #fff;
     }
     #inputArea button {
       padding: 10px 15px;
@@ -419,9 +419,12 @@
       editButton.innerHTML = '✎';
       editButton.onclick = function() {
         let currentText = notaData.texto || notaData.nota || '';
-        const editInput = document.createElement('input');
-        editInput.type = 'text';
+        const editInput = document.createElement('textarea');
         editInput.value = currentText;
+        editInput.style.width = '100%';
+        editInput.style.height = '100px';
+        editInput.style.resize = 'none';
+        editInput.style.overflowY = 'auto';
         const noteContainer = card.querySelector('.note-content');
         if(noteContainer) {
           noteContainer.innerHTML = '';
