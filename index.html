@@ -1,674 +1,404 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Notas Oceánicas - Polaroid</title>
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
-  <!-- GridStack CSS & JS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
-  <style>
-    /* Pantalla fija sin scroll */
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100vh;
-      overflow: hidden;
-    }
-    /* Contenedor principal: ocupa 100% del viewport con fondo oceánico.
-       Se quita el centrado por flex para que el grid ocupe todo el espacio disponible. */
-    .container {
-      height: 100%;
-      width: 100%;
-      background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
-      position: relative;
-    }
-    /* Contenedor del grid, ocupa todo el viewport para permitir arrastrar en toda el área */
-    #notaDisplay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-    }
-    /* Ocultar ghost element durante el drag */
-    .grid-stack-placeholder {
-      display: none !important;
-    }
-    /* Transición para el movimiento de cada widget */
-    .grid-stack-item {
-      transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-    }
-    /* ---------------------- */
-    /* Estilo de tarjeta tipo Polaroid */
-    /* ---------------------- */
-    .card-wrapper {
-      background-color: #fff;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      width: 240px;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-    .image-container {
-      width: 240px;
-      height: 240px;
-      overflow: hidden;
-      position: relative;
-    }
-    .image-container img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    .note-content {
-      background-color: #fff;
-      padding: 10px;
-      text-align: center;
-      font-size: 16px;
-      color: #333;
-      min-height: 50px;
-      box-sizing: border-box;
-    }
-    .menu-bar {
-      background-color: #0288D1;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      padding: 5px 0;
-    }
-    .menu-icon {
-      background: none;
-      border: none;
-      font-size: 20px;
-      color: #fff;
-      cursor: pointer;
-    }
-    .text-card {
-      background-color: #fff;
-      border: 2px solid #0077a3;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      width: 240px;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-    .text-card .note-content {
-      min-height: 120px;
-      padding: 10px;
-    }
-    /* ---------------------- */
-    /* Interfaz para agregar notas */
-    /* ---------------------- */
-    #addNoteButton {
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
-      background-color: #006994;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 60px;
-      height: 60px;
-      font-size: 30px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-      transition: background-color 0.3s ease, transform 0.3s ease;
-      z-index: 3;
-    }
-    #addNoteButton:hover {
-      background-color: #005577;
-      transform: scale(1.05);
-    }
-    #addNoteOptions, #inputArea, #imageLinkInputArea, #textNoteInputArea {
-      display: none;
-    }
-    #inputArea {
-      position: absolute;
-      bottom: 90px;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: rgba(255,255,255,0.95);
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-      flex-direction: column;
-      gap: 10px;
-      width: 80%;
-      max-width: 500px;
-      z-index: 3;
-    }
-    #inputArea textarea,
-    #inputArea input[type="text"] {
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      resize: none;
-      width: 100%;
-      box-sizing: border-box;
-      line-height: 1.5;
-    }
-    #inputArea button {
-      padding: 10px 15px;
-      background-color: #006994;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-    /* ---------------------- */
-    /* Calendario minimalista */
-    /* ---------------------- */
-    .calendar-icon {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      width: 40px;
-      height: 40px;
-      background-color: #fff;
-      border: 1px solid #ccc;
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: #333;
-      font-size: 20px;
-      cursor: pointer;
-      z-index: 3;
-    }
-    .calendar-widget {
-      position: absolute;
-      bottom: 70px;
-      left: 20px;
-      background: #fff;
-      border: 1px solid #ddd;
-      box-shadow: none;
-      padding: 10px;
-      display: none;
-      z-index: 3;
-      width: 250px;
-      min-height: 180px;
-    }
-    .calendar-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 5px;
-    }
-    .calendar-header button {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      color: #333;
-    }
-    .calendar-header span {
-      font-weight: bold;
-      color: #333;
-    }
-    .calendar-days-header,
-    .calendar-dates-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      text-align: center;
-      font-size: 12px;
-    }
-    .calendar-days-header {
-      margin-bottom: 5px;
-      font-weight: bold;
-      color: #333;
-    }
-    .calendar-day,
-    .calendar-date {
-      padding: 3px;
-      border-radius: 3px;
-      color: #333;
-    }
-    .calendar-date.empty {
-      background: none;
-    }
-    .calendar-date:hover {
-      background-color: #e0e0e0;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notas Oceánicas - Polaroid</title>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
+    <style>
+        /* Pantalla fija sin scroll */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+        /* Contenedor principal: ocupa 100% del viewport con fondo oceánico.
+            Se quita el centrado por flex para que el grid ocupe todo el espacio disponible. */
+        .container {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
+            position: relative;
+        }
+        /* Contenedor del grid, ocupa todo el viewport para permitir arrastrar en toda el área */
+        #notaDisplay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+        /* Ocultar ghost element durante el drag */
+        .grid-stack-placeholder {
+            display: none !important;
+        }
+        /* Transición para el movimiento de cada widget */
+        .grid-stack-item {
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        /* ---------------------- */
+        /* Estilo de tarjeta tipo Polaroid */
+        /* ---------------------- */
+        .card-wrapper {
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            width: 240px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .image-container {
+            width: 240px;
+            height: 240px;
+            overflow: hidden;
+            position: relative;
+        }
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .note-content {
+            background-color: #fff;
+            padding: 10px;
+            text-align: center;
+            font-size: 16px;
+            color: #333;
+            min-height: 50px;
+            box-sizing: border-box;
+        }
+        .menu-bar {
+            background-color: #0288D1;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 5px 0;
+        }
+        .menu-icon {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #fff;
+            cursor: pointer;
+        }
+        .text-card {
+            background-color: #fff;
+            border: 2px solid #0077a3;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            width: 240px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .text-card .note-content {
+            min-height: 120px;
+            padding: 10px;
+        }
+        /* ---------------------- */
+        /* Interfaz para agregar notas */
+        /* ---------------------- */
+        #addNoteButton {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: #006994;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            z-index: 3;
+        }
+        #addNoteButton:hover {
+            background-color: #005577;
+            transform: scale(1.05);
+        }
+        #addNoteOptions, #inputArea, #imageLinkInputArea, #textNoteInputArea {
+            display: none;
+        }
+        #addNoteOptions {
+            position: absolute;
+            bottom: 90px;
+            right: 20px;
+            background-color: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 3;
+        }
+        #addNoteOptions button {
+            padding: 10px 15px;
+            background-color: #006994;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #inputArea {
+            position: absolute;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+            flex-direction: column;
+            gap: 10px;
+            width: 80%;
+            max-width: 500px;
+            z-index: 3;
+        }
+        #inputArea textarea,
+        #inputArea input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: none;
+            width: 100%;
+            box-sizing: border-box;
+            line-height: 1.5;
+        }
+        #inputArea button {
+            padding: 10px 15px;
+            background-color: #006994;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        /* ---------------------- */
+        /* Calendario minimalista */
+        /* ---------------------- */
+        .calendar-icon {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 3;
+        }
+        .calendar-widget {
+            position: absolute;
+            bottom: 70px;
+            left: 20px;
+            background: #fff;
+            border: 1px solid #ddd;
+            box-shadow: none;
+            padding: 10px;
+            display: none;
+            z-index: 3;
+            width: 250px;
+            min-height: 180px;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .calendar-header button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #333;
+        }
+        .calendar-header span {
+            font-weight: bold;
+            color: #333;
+        }
+        .calendar-days-header,
+        .calendar-dates-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-size: 12px;
+        }
+        .calendar-days-header {
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        .calendar-day,
+        .calendar-date {
+            padding: 3px;
+            border-radius: 3px;
+            color: #333;
+        }
+        .calendar-date.empty {
+            background: none;
+        }
+        .calendar-date:hover {
+            background-color: #e0e0e0;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Contenedor de notas con GridStack -->
-    <div id="notaDisplay" class="grid-stack"></div>
-    
-    <!-- Botón para agregar nota -->
-    <button id="addNoteButton">+</button>
-    
-    <!-- Opciones para agregar nueva nota -->
-    <div id="addNoteOptions">
-      <button id="addImageLinkOption">Guardar link de imagen</button>
-      <button id="addTextNoteOption">Subir nota</button>
-    </div>
-    <div id="inputArea">
-      <div id="imageLinkInputArea">
-        <div class="input-group">
-          <label for="imageLink">Link de la imagen:</label>
-          <input type="text" id="imageLink" placeholder="Ej: https://..." />
+    <div class="container">
+        <div id="notaDisplay" class="grid-stack"></div>
+
+        <button id="addNoteButton">+</button>
+
+        <div id="addNoteOptions">
+            <button id="addImageLinkOption">Guardar link de imagen</button>
+            <button id="addTextNoteOption">Subir nota</button>
         </div>
-        <div class="input-group">
-          <label for="imageNoteText">Texto de la imagen (opcional):</label>
-          <textarea id="imageNoteText" placeholder="Descripción o nota..."></textarea>
+        <div id="inputArea">
+            <div id="imageLinkInputArea">
+                <div class="input-group">
+                    <label for="imageLink">Link de la imagen:</label>
+                    <input type="text" id="imageLink" placeholder="Ej: https://..." />
+                </div>
+                <div class="input-group">
+                    <label for="imageNoteText">Texto de la imagen (opcional):</label>
+                    <textarea id="imageNoteText" placeholder="Descripción o nota..."></textarea>
+                </div>
+                <button id="saveImageLink">Guardar Link</button>
+            </div>
+            <div id="textNoteInputArea">
+                <textarea id="textNote" placeholder="Escribe tu nota aquí..."></textarea>
+                <button id="saveTextNote">Guardar Nota</button>
+            </div>
         </div>
-        <button id="saveImageLink">Guardar Link</button>
-      </div>
-      <div id="textNoteInputArea">
-        <textarea id="textNote" placeholder="Escribe tu nota aquí..."></textarea>
-        <button id="saveTextNote">Guardar Nota</button>
-      </div>
+
+        <div id="calendarIcon" class="calendar-icon">☰</div>
+        <div id="calendarWidget" class="calendar-widget"></div>
     </div>
-    
-    <!-- Ícono del Calendario -->
-    <div id="calendarIcon" class="calendar-icon">☰</div>
-    <!-- Calendario desplegable -->
-    <div id="calendarWidget" class="calendar-widget"></div>
-  </div>
-  
-  <script>
-    // Función para transformar enlaces de Google Drive en enlaces embebibles.
-    function transformDriveLink(url) {
-      if (!url.includes("drive.google.com")) return url;
-      let fileId = null;
-      const regex1 = /\/file\/d\/([^\/]+)\//;
-      let match = url.match(regex1);
-      if (match && match[1]) fileId = match[1];
-      if (!fileId) {
-        const regex2 = /[?&]id=([^&]+)/;
-        match = url.match(regex2);
-        if (match && match[1]) fileId = match[1];
-      }
-      if (fileId) return "https://drive.google.com/uc?export=view&id=" + fileId;
-      return url;
-    }
-    
-    // Configuración de Firebase.
-    const firebaseConfig = {
-      apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
-      authDomain: "oasis-b036d.firebaseapp.com",
-      projectId: "oasis-b036d",
-      storageBucket: "oasis-b036d.firebasestorage.app",
-      messagingSenderId: "141546637821",
-      appId: "1:141546637821:web:0a861aeb13831774ed3194",
-      measurementId: "G-HB2P17H5YL"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    
-    // Inicializamos GridStack con 3 columnas.
-    const grid = GridStack.init({
-      margin: 2,
-      cellHeight: 'auto',
-      disableResize: true,
-      float: true,
-      animate: true,
-      column: 3,
-      dragOptions: { inertia: true }
-    });
-    
-    // Ajuste automático de textareas.
-    function autoResizeTextarea(el) {
-      el.style.height = 'auto';
-      el.style.height = el.scrollHeight + 'px';
-    }
-    const textNoteInput = document.getElementById('textNote');
-    const imageNoteText = document.getElementById('imageNoteText');
-    textNoteInput.addEventListener('input', () => autoResizeTextarea(textNoteInput));
-    imageNoteText.addEventListener('input', () => autoResizeTextarea(imageNoteText));
-    
-    // Función para mostrar cada nota en pantalla usando la estructura de GridStack.
-    function mostrarNotaEnPantalla(doc) {
-      const notaData = doc.data();
-      const gridItem = document.createElement('div');
-      gridItem.classList.add('grid-stack-item');
-      gridItem.setAttribute('data-note-id', doc.id);
-      
-      // Se crea el contenedor interno que GridStack utiliza para aplicar el drag.
-      const content = document.createElement('div');
-      content.classList.add('grid-stack-item-content');
-      
-      let card;
-      if (notaData.url) {
-        card = document.createElement('div');
-        card.classList.add('card-wrapper');
-        
-        const imageContainer = document.createElement('div');
-        imageContainer.classList.add('image-container');
-        const img = document.createElement('img');
-        img.src = transformDriveLink(notaData.url);
-        img.alt = 'Imagen de la nota';
-        imageContainer.appendChild(img);
-        card.appendChild(imageContainer);
-        
-        const noteContent = document.createElement('div');
-        noteContent.classList.add('note-content');
-        noteContent.textContent = notaData.texto ? notaData.texto : '';
-        card.appendChild(noteContent);
-      } else if (notaData.nota) {
-        card = document.createElement('div');
-        card.classList.add('text-card');
-        const noteContent = document.createElement('div');
-        noteContent.classList.add('note-content');
-        noteContent.textContent = notaData.nota;
-        card.appendChild(noteContent);
-      }
-      
-      // Barra de menú (editar y eliminar).
-      const menuBar = document.createElement('div');
-      menuBar.classList.add('menu-bar');
-      
-      const editButton = document.createElement('button');
-      editButton.classList.add('menu-icon');
-      editButton.innerHTML = '✎';
-      editButton.onclick = function() {
-        let currentText = notaData.texto || notaData.nota || '';
-        const editInput = document.createElement('input');
-        editInput.type = 'text';
-        editInput.value = currentText;
-        const noteContainer = card.querySelector('.note-content');
-        if (noteContainer) {
-          noteContainer.innerHTML = '';
-          noteContainer.appendChild(editInput);
+
+    <script>
+        // Función para transformar enlaces de Google Drive en enlaces embebibles.
+        function transformDriveLink(url) {
+            if (!url.includes("drive.google.com")) return url;
+            let fileId = null;
+            const regex1 = /\/file\/d\/([^\/]+)\//;
+            let match = url.match(regex1);
+            if (match && match[1]) fileId = match[1];
+            if (!fileId) {
+                const regex2 = /[?&]id=([^&]+)/;
+                match = url.match(regex2);
+                if (match && match[1]) fileId = match[1];
+            }
+            if (fileId) return "https://drive.google.com/uc?export=view&id=" + fileId;
+            return url;
         }
-        const saveEditButton = document.createElement('button');
-        saveEditButton.classList.add('menu-icon');
-        saveEditButton.innerHTML = '💾';
-        saveEditButton.onclick = function() {
-          const newText = editInput.value;
-          if (newText.trim() !== '') {
-            db.collection('notas').doc(doc.id).update(notaData.url ? { texto: newText } : { nota: newText })
-              .then(() => {
-                const noteContainer = card.querySelector('.note-content');
-                noteContainer.textContent = newText;
-                menuBar.replaceChild(editButton, saveEditButton);
-              })
-              .catch((error) => {
-                console.error('Error al actualizar la nota: ', error);
-              });
-          }
+
+        // Configuración de Firebase.
+        const firebaseConfig = {
+            apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
+            authDomain: "oasis-b036d.firebaseapp.com",
+            projectId: "oasis-b036d",
+            storageBucket: "oasis-b036d.firebasestorage.app",
+            messagingSenderId: "141546637821",
+            appId: "1:141546637821:web:0a861aeb13831774ed3194",
+            measurementId: "G-HB2P17H5YL"
         };
-        menuBar.replaceChild(saveEditButton, editButton);
-      };
-      
-      const deleteButton = document.createElement('button');
-      deleteButton.classList.add('menu-icon');
-      deleteButton.innerHTML = '✖';
-      deleteButton.onclick = function() {
-        db.collection('notas').doc(doc.id).delete()
-          .then(() => {
-            grid.removeWidget(gridItem);
-          })
-          .catch((error) => {
-            console.error("Error al eliminar la nota: ", error);
-          });
-      };
-      
-      menuBar.appendChild(editButton);
-      menuBar.appendChild(deleteButton);
-      card.appendChild(menuBar);
-      content.appendChild(card);
-      gridItem.appendChild(content);
-      
-      // Posición: si no está definida en Firestore se inicia en x:0, y:0.
-      const pos = {
-        x: (typeof notaData.x === 'number') ? notaData.x : 0,
-        y: (typeof notaData.y === 'number') ? notaData.y : 0,
-        w: notaData.w || 1,
-        h: notaData.h || 2,
-        autoPosition: (notaData.x === undefined || notaData.y === undefined)
-      };
-      grid.addWidget(gridItem, pos);
-    }
-    
-    // Limpia todas las notas mostradas en el grid.
-    function limpiarNotasDisplay() {
-      grid.removeAll();
-    }
-    
-    // Se escucha la colección "notas" en Firestore para actualizar la vista en tiempo real.
-    db.collection('notas')
-      .orderBy('__name__')
-      .onSnapshot((snapshot) => {
-        limpiarNotasDisplay();
-        snapshot.forEach((doc) => {
-          mostrarNotaEnPantalla(doc);
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Inicializamos GridStack con 3 columnas.
+        const grid = GridStack.init({
+            margin: 2,
+            cellHeight: 'auto',
+            disableResize: true,
+            float: true,
+            animate: true,
+            column: 3,
+            dragOptions: { inertia: true }
         });
-      });
-    
-    // Interfaz para agregar nuevas notas.
-    const addNoteButton = document.getElementById('addNoteButton');
-    const addNoteOptions = document.getElementById('addNoteOptions');
-    const addImageLinkOption = document.getElementById('addImageLinkOption');
-    const addTextNoteOption = document.getElementById('addTextNoteOption');
-    const inputArea = document.getElementById('inputArea');
-    const imageLinkInputArea = document.getElementById('imageLinkInputArea');
-    const imageLinkInput = document.getElementById('imageLink');
-    const saveImageLinkButton = document.getElementById('saveImageLink');
-    const textNoteInputArea = document.getElementById('textNoteInputArea');
-    const saveTextNoteButton = document.getElementById('saveTextNote');
-    let addingNewNote = false;
-    
-    addNoteButton.onclick = function() {
-      addingNewNote = !addingNewNote;
-      addNoteOptions.style.display = addingNewNote ? 'flex' : 'none';
-      inputArea.style.display = 'none';
-      imageLinkInputArea.style.display = 'none';
-      textNoteInputArea.style.display = 'none';
-    };
-    addImageLinkOption.onclick = function() {
-      addNoteOptions.style.display = 'none';
-      inputArea.style.display = 'flex';
-      imageLinkInputArea.style.display = 'flex';
-      textNoteInputArea.style.display = 'none';
-      addingNewNote = false;
-    };
-    addTextNoteOption.onclick = function() {
-      addNoteOptions.style.display = 'none';
-      inputArea.style.display = 'flex';
-      imageLinkInputArea.style.display = 'none';
-      textNoteInputArea.style.display = 'flex';
-      addingNewNote = false;
-    };
-    
-    function guardarLinkDeImagen() {
-      let link = imageLinkInput.value;
-      const texto = imageNoteText.value;
-      if (link.trim() !== '') {
-        link = transformDriveLink(link);
-        db.collection('notas').add({
-          url: link,
-          texto: texto.trim() !== '' ? texto : null
-        })
-        .then(() => {
-          imageLinkInput.value = '';
-          imageNoteText.value = '';
-          inputArea.style.display = 'none';
-        })
-        .catch((error) => {
-          console.error('Error al guardar el link de imagen: ', error);
-        });
-      }
-    }
-    
-    function guardarNotaTexto() {
-      // Se usa textNoteInput en lugar de una variable inexistente.
-      const nota = textNoteInput.value;
-      if (nota.trim() !== '') {
-        db.collection('notas').add({
-          nota: nota
-        })
-        .then(() => {
-          textNoteInput.value = '';
-          inputArea.style.display = 'none';
-        })
-        .catch((error) => {
-          console.error('Error al guardar la nota de texto: ', error);
-        });
-      }
-    }
-    
-    saveImageLinkButton.onclick = guardarLinkDeImagen;
-    saveTextNoteButton.onclick = guardarNotaTexto;
-    
-    // Al finalizar el arrastre, se actualiza la posición de la nota en Firestore.
-    grid.on('dragstop', function(event, el) {
-      setTimeout(() => {
-        const noteId = el.getAttribute('data-note-id');
-        const node = el.gridstackNode;
-        if (noteId && node) {
-          db.collection('notas').doc(noteId).update({
-            x: node.x,
-            y: node.y,
-            w: node.w,
-            h: node.h
-          }).catch(error => console.error("Error guardando posición:", error));
+
+        // Ajuste automático de textareas.
+        function autoResizeTextarea(el) {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
         }
-      }, 100);
-    });
-    
-    /* -------------------------------------------------- */
-    /* Funcionalidad del Calendario (desplegable minimalista y fijo) */
-    /* -------------------------------------------------- */
-    let currentCalendarMonth, currentCalendarYear;
-    
-    function getChileDate() {
-      return new Date(new Date().toLocaleString("en-US", {timeZone: "America/Santiago"}));
-    }
-    
-    function initCalendarDate() {
-      let today = getChileDate();
-      let year = today.getFullYear();
-      let month = today.getMonth();
-      if (year < 2024 || (year === 2024 && month < 11)) {
-        return { month: 11, year: 2024 };
-      }
-      return { month, year };
-    }
-    
-    function getMonthName(monthIndex) {
-      const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-      return months[monthIndex];
-    }
-    
-    function generateCalendar(month, year) {
-      const calendarDiv = document.getElementById('calendarWidget');
-      calendarDiv.innerHTML = '';
-      
-      const header = document.createElement('div');
-      header.className = 'calendar-header';
-      
-      const prevBtn = document.createElement('button');
-      prevBtn.textContent = '<';
-      prevBtn.onclick = function() {
-        let newMonth = month - 1;
-        let newYear = year;
-        if(newMonth < 0) { newMonth = 11; newYear--; }
-        if(newYear < 2024 || (newYear === 2024 && newMonth < 11)) return;
-        generateCalendar(newMonth, newYear);
-      };
-      
-      const nextBtn = document.createElement('button');
-      nextBtn.textContent = '>';
-      nextBtn.onclick = function() {
-        let newMonth = month + 1;
-        let newYear = year;
-        if(newMonth > 11) { newMonth = 0; newYear++; }
-        generateCalendar(newMonth, newYear);
-      };
-      
-      const title = document.createElement('span');
-      title.textContent = getMonthName(month) + ' ' + year;
-      
-      header.appendChild(prevBtn);
-      header.appendChild(title);
-      header.appendChild(nextBtn);
-      calendarDiv.appendChild(header);
-      
-      const daysHeader = document.createElement('div');
-      daysHeader.className = 'calendar-days-header';
-      const daysOfWeek = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-      daysOfWeek.forEach(day => {
-        const dayElem = document.createElement('div');
-        dayElem.textContent = day;
-        dayElem.className = 'calendar-day';
-        daysHeader.appendChild(dayElem);
-      });
-      calendarDiv.appendChild(daysHeader);
-      
-      const datesGrid = document.createElement('div');
-      datesGrid.className = 'calendar-dates-grid';
-      
-      const firstDay = new Date(year, month, 1).getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      
-      for (let i = 0; i < firstDay; i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = 'calendar-date empty';
-        datesGrid.appendChild(emptyCell);
-      }
-      for (let date = 1; date <= daysInMonth; date++) {
-        const dateCell = document.createElement('div');
-        dateCell.className = 'calendar-date';
-        dateCell.textContent = date;
-        datesGrid.appendChild(dateCell);
-      }
-      const totalCells = firstDay + daysInMonth;
-      const cellsToAdd = 42 - totalCells;
-      for (let i = 0; i < cellsToAdd; i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = 'calendar-date empty';
-        datesGrid.appendChild(emptyCell);
-      }
-      calendarDiv.appendChild(datesGrid);
-      
-      currentCalendarMonth = month;
-      currentCalendarYear = year;
-    }
-    
-    const calendarIcon = document.getElementById('calendarIcon');
-    const calendarWidget = document.getElementById('calendarWidget');
-    let calendarTimeout;
-    
-    function showCalendar() {
-      const { month, year } = initCalendarDate();
-      generateCalendar(month, year);
-      calendarWidget.style.display = 'block';
-    }
-    
-    function hideCalendar() {
-      calendarTimeout = setTimeout(() => { calendarWidget.style.display = 'none'; }, 200);
-    }
-    
-    calendarIcon.addEventListener('mouseover', () => {
-      clearTimeout(calendarTimeout);
-      showCalendar();
-    });
-    calendarIcon.addEventListener('mouseout', hideCalendar);
-    calendarWidget.addEventListener('mouseover', () => {
-      clearTimeout(calendarTimeout);
-      calendarWidget.style.display = 'block';
-    });
-    calendarWidget.addEventListener('mouseout', hideCalendar);
-    
-  </script>
-</body>
-</html>
+        const textNoteInput = document.getElementById('textNote');
+        const imageNoteText = document.getElementById('imageNoteText');
+        textNoteInput.addEventListener('input', () => autoResizeTextarea(textNoteInput));
+        imageNoteText.addEventListener('input', () => autoResizeTextarea(imageNoteText));
+
+        // Función para mostrar cada nota en pantalla usando la estructura de GridStack.
+        function mostrarNotaEnPantalla(doc) {
+            const notaData = doc.data();
+            const gridItem = document.createElement('div');
+            gridItem.classList.add('grid-stack-item');
+            gridItem.setAttribute('data-note-id', doc.id);
+
+            // Se crea el contenedor interno que GridStack utiliza para aplicar el drag.
+            const content = document.createElement('div');
+            content.classList.add('grid-stack-item-content');
+
+            let card;
+            if (notaData.url) {
+                card = document.createElement('div');
+                card.classList.add('card-wrapper');
+
+                const imageContainer = document.createElement('div');
+                imageContainer.classList.add('image-container');
+                const img = document.createElement('img');
+                img.src = transformDriveLink(notaData.url);
+                img.alt = 'Imagen de la nota';
+                imageContainer.appendChild(img);
+                card.appendChild(imageContainer);
+
+                const noteContent = document.createElement('div');
+                noteContent.classList.add('note-content');
+                noteContent.textContent = notaData.texto ? notaData.texto : '';
+                card.appendChild(noteContent);
+            } else if (notaData.nota) {
+                card = document.createElement('div');
+                card.classList.add('text-card');
+                const noteContent = document.createElement('div');
+                noteContent.classList.add('note-content');
+                noteContent.textContent = notaData.nota;
+                card.appendChild(noteContent);
+            }
+
+            // Barra de menú (editar y eliminar).
+            const menuBar = document.createElement('div');
+            menuBar.classList.add('menu-bar');
+
+            const editButton = document.createElement('button');
+            editButton.classList.add('menu-icon');
+            editButton.innerHTML = '✎';
+            editButton.onclick = function() {
+                let currentText = notaData.texto || notaData.nota || '';
+                const editInput = document.createElement('input');
+                editInput.type = 'text';
+                editInput.value = currentText;
+                const noteContainer = card.querySelector('.note-content');
+                if (noteContainer) {
+                    noteContainer.innerHTML = '';
+                    noteContainer
