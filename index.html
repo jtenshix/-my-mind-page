@@ -20,19 +20,23 @@
       background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
       font-family: 'Arial', sans-serif;
     }
+    /* Se agrega padding de 2cm al contenedor para evitar que las notas queden pegadas a la pantalla */
     .container {
       height: 100%;
       width: 100%;
+      padding: 2cm;
+      box-sizing: border-box;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       position: relative;
     }
+    /* Se ajusta el área de notas para respetar el padding */
     #notaDisplay {
-      margin-top: 20px;
+      margin: 0;
       width: 100%;
-      height: calc(100% - 40px);
+      height: 100%;
     }
     .grid-stack-placeholder {
       display: none !important;
@@ -351,7 +355,6 @@
     // Función para transformar URLs en enlaces clickeables
     function linkify(text) {
       if (!text) return "";
-      // Reemplaza URL's con etiquetas <a> que abren en nueva pestaña
       const replacedText = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
       return replacedText.replace(/\n/g, '<br>');
     }
@@ -369,9 +372,9 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Inicialización de GridStack
+    // Inicialización de GridStack con margen de aproximadamente 2 cm (75px)
     const grid = GridStack.init({
-      margin: 5,
+      margin: 75,
       cellHeight: 'auto',
       disableResize: true,
       float: true,
@@ -417,7 +420,6 @@
 
         noteContent = document.createElement('div');
         noteContent.classList.add('note-content');
-        // Uso de linkify para convertir links en la descripción
         noteContent.innerHTML = notaData.texto ? linkify(notaData.texto) : '';
         card.appendChild(noteContent);
       } else if (notaData.nota) {
@@ -430,7 +432,7 @@
         card.appendChild(noteContent);
       }
 
-      // Hacer que los enlaces sean clickeables (por si acaso, aunque linkify ya lo hace)
+      // Asegurarse de que los enlaces se abran en nueva pestaña
       const links = noteContent.getElementsByTagName('a');
       for (let link of links) {
         link.setAttribute('target', '_blank');
@@ -495,6 +497,7 @@
       content.appendChild(card);
       gridItem.appendChild(content);
 
+      // Posición en GridStack
       const pos = {
         x: notaData.x || 0,
         y: typeof notaData.y === 'number' ? notaData.y : 0,
