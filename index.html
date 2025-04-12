@@ -69,13 +69,17 @@
     .note-content {
       background-color: #fff;
       padding: 10px;
-      text-align: center;
+      text-align: left;
       font-size: 16px;
       color: #333;
       min-height: 50px;
       box-sizing: border-box;
-      overflow-y: auto;
-      max-height: calc(100vh - 300px); /* Ajusta según sea necesario */
+      word-wrap: break-word;
+      overflow: hidden;
+    }
+    .note-content a {
+      color: #0077a3;
+      text-decoration: underline;
     }
     .menu-bar {
       background-color: #0288D1;
@@ -399,7 +403,7 @@
 
         const noteContent = document.createElement('div');
         noteContent.classList.add('note-content');
-        noteContent.textContent = notaData.texto ? notaData.texto : '';
+        noteContent.innerHTML = notaData.texto ? notaData.texto.replace(/\n/g, '<br>') : '';
         card.appendChild(noteContent);
       } else if(notaData.nota) {
         card = document.createElement('div');
@@ -407,8 +411,14 @@
 
         const noteContent = document.createElement('div');
         noteContent.classList.add('note-content');
-        noteContent.textContent = notaData.nota;
+        noteContent.innerHTML = notaData.nota.replace(/\n/g, '<br>');
         card.appendChild(noteContent);
+      }
+
+      // Hacer que los enlaces sean clickeables
+      const links = noteContent.getElementsByTagName('a');
+      for (let link of links) {
+        link.setAttribute('target', '_blank');
       }
 
       const menuBar = document.createElement('div');
@@ -439,7 +449,7 @@
             db.collection('notas').doc(doc.id).update(notaData.url ? { texto: newText } : { nota: newText })
               .then(() => {
                 const noteContainer = card.querySelector('.note-content');
-                noteContainer.textContent = newText;
+                noteContainer.innerHTML = newText.replace(/\n/g, '<br>');
                 menuBar.replaceChild(editButton, saveEditButton);
               })
               .catch((error) => {
