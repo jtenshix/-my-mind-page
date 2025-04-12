@@ -20,7 +20,7 @@
       background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
       font-family: 'Arial', sans-serif;
     }
-    /* Se agrega padding de 2cm al contenedor para evitar que las notas queden pegadas a la pantalla */
+    /* Contenedor principal con padding para separar las notas de los bordes */
     .container {
       height: 100%;
       width: 100%;
@@ -32,7 +32,7 @@
       justify-content: center;
       position: relative;
     }
-    /* Se ajusta el área de notas para respetar el padding */
+    /* Área de notas ocupa el total del espacio disponible dentro del contenedor */
     #notaDisplay {
       margin: 0;
       width: 100%;
@@ -113,6 +113,7 @@
       min-height: 120px;
       padding: 10px;
     }
+    /* Botón principal para agregar nota o imagen */
     #addNoteButton {
       position: absolute;
       bottom: 20px;
@@ -130,12 +131,14 @@
       cursor: pointer;
       box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
       transition: background-color 0.3s ease, transform 0.3s ease;
-      z-index: 3;
+      z-index: 4;
     }
     #addNoteButton:hover {
       background-color: #005577;
       transform: scale(1.05);
     }
+    /* Menú emergente que aparece al presionar el botón +
+       Ahora se muestra en horizontal (flex-direction: row) */
     #addNoteOptions {
       position: absolute;
       top: 50%;
@@ -145,13 +148,14 @@
       border-radius: 10px;
       box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
       display: none;
-      flex-direction: column;
-      z-index: 3;
-      width: 80%;
-      max-width: 600px;
-      padding: 20px;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
       gap: 20px;
+      padding: 20px;
+      z-index: 4;
     }
+    /* Estilos para las "tarjetas" dentro del menú */
     #addNoteOptions .card {
       background-color: #1e1e1e;
       border: 2px solid #0077a3;
@@ -160,6 +164,7 @@
       text-align: center;
       cursor: pointer;
       transition: transform 0.3s ease;
+      width: 200px;
     }
     #addNoteOptions .card:hover {
       transform: scale(1.05);
@@ -172,6 +177,7 @@
       color: #fff;
       font-size: 14px;
     }
+    /* Submenú para ingresar el link o la nota, se mantiene el look de carta */
     #inputArea {
       position: absolute;
       top: 50%;
@@ -185,7 +191,7 @@
       gap: 10px;
       width: 80%;
       max-width: 500px;
-      z-index: 3;
+      z-index: 4;
       display: none;
     }
     #inputArea textarea,
@@ -230,7 +236,7 @@
       color: #333;
       font-size: 20px;
       cursor: pointer;
-      z-index: 3;
+      z-index: 4;
     }
     .calendar-widget {
       position: absolute;
@@ -241,7 +247,7 @@
       box-shadow: none;
       padding: 10px;
       display: none;
-      z-index: 3;
+      z-index: 4;
       width: 250px;
       min-height: 180px;
     }
@@ -286,6 +292,7 @@
     .calendar-date:hover {
       background-color: #e0e0e0;
     }
+    /* Fondo de desenfoque que cubre toda la pantalla para cerrar menús al tocar fuera */
     .blur-background {
       position: fixed;
       top: 0;
@@ -295,7 +302,7 @@
       background: rgba(0, 0, 0, 0.5);
       backdrop-filter: blur(5px);
       display: none;
-      z-index: 2;
+      z-index: 3;
     }
   </style>
 </head>
@@ -303,16 +310,18 @@
   <div class="container">
     <div id="notaDisplay" class="grid-stack"></div>
     <button id="addNoteButton">+</button>
+    <!-- Menú emergente: opciones como tarjetas en horizontal -->
     <div id="addNoteOptions">
       <div class="card" id="addImageLinkOption">
-        <h2>Guardar link de imagen</h2>
-        <p>Agrega una nota con una imagen.</p>
+        <h2>Imagen</h2>
+        <p>Guardar link de imagen.</p>
       </div>
       <div class="card" id="addTextNoteOption">
-        <h2>Subir nota</h2>
-        <p>Agrega una nota de texto.</p>
+        <h2>Nota</h2>
+        <p>Subir nota de texto.</p>
       </div>
     </div>
+    <!-- Submenú para ingresar datos de imagen o nota -->
     <div id="inputArea">
       <div id="imageLinkInputArea">
         <div class="input-group">
@@ -332,6 +341,7 @@
     </div>
     <div id="calendarIcon" class="calendar-icon">☰</div>
     <div id="calendarWidget" class="calendar-widget"></div>
+    <!-- Capa para detectar clics fuera y cerrar menús -->
     <div class="blur-background"></div>
   </div>
 
@@ -537,31 +547,48 @@
     const blurBackground = document.querySelector('.blur-background');
     let addingNewNote = false;
 
-    addNoteButton.onclick = function () {
-      addingNewNote = !addingNewNote;
-      addNoteOptions.style.display = addingNewNote ? 'flex' : 'none';
-      blurBackground.style.display = addingNewNote ? 'block' : 'none';
+    // Función para ocultar todos los menús emergentes
+    function hideMenus() {
+      addNoteOptions.style.display = 'none';
       inputArea.style.display = 'none';
-      imageLinkInputArea.style.display = 'none';
-      textNoteInputArea.style.display = 'none';
+      blurBackground.style.display = 'none';
+      addingNewNote = false;
+    }
+
+    addNoteButton.onclick = function (event) {
+      event.stopPropagation();
+      addingNewNote = !addingNewNote;
+      if (addingNewNote) {
+        addNoteOptions.style.display = 'flex';
+        blurBackground.style.display = 'block';
+      } else {
+        hideMenus();
+      }
     };
 
-    addImageLinkOption.onclick = function () {
+    addImageLinkOption.onclick = function (event) {
+      event.stopPropagation();
       addNoteOptions.style.display = 'none';
-      blurBackground.style.display = 'none';
       inputArea.style.display = 'flex';
-      imageLinkInputArea.style.display = 'flex';
+      imageLinkInputArea.style.display = 'block';
       textNoteInputArea.style.display = 'none';
+      blurBackground.style.display = 'block';
       addingNewNote = false;
     };
 
-    addTextNoteOption.onclick = function () {
+    addTextNoteOption.onclick = function (event) {
+      event.stopPropagation();
       addNoteOptions.style.display = 'none';
-      blurBackground.style.display = 'none';
       inputArea.style.display = 'flex';
       imageLinkInputArea.style.display = 'none';
-      textNoteInputArea.style.display = 'flex';
+      textNoteInputArea.style.display = 'block';
+      blurBackground.style.display = 'block';
       addingNewNote = false;
+    };
+
+    // Cerrar los menús al hacer clic fuera (en la capa de blur)
+    blurBackground.onclick = function () {
+      hideMenus();
     };
 
     function guardarLinkDeImagen() {
@@ -576,7 +603,7 @@
           .then(() => {
             imageLinkInput.value = '';
             imageNoteText.value = '';
-            inputArea.style.display = 'none';
+            hideMenus();
           })
           .catch((error) => {
             console.error('Error al guardar el link de imagen: ', error);
@@ -592,7 +619,7 @@
         })
           .then(() => {
             textNoteInput.value = '';
-            inputArea.style.display = 'none';
+            hideMenus();
           })
           .catch((error) => {
             console.error('Error al guardar la nota de texto: ', error);
@@ -740,6 +767,13 @@
     });
     calendarWidget.addEventListener('mouseout', hideCalendar);
 
+    // Evitar que al hacer clic en algún elemento interno de los menús se cierre el blur
+    document.getElementById('addNoteOptions').addEventListener('click', function(event) {
+      event.stopPropagation();
+    });
+    document.getElementById('inputArea').addEventListener('click', function(event) {
+      event.stopPropagation();
+    });
   </script>
 </body>
 </html>
