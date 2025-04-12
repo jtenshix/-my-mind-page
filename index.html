@@ -17,11 +17,12 @@
       padding: 0;
       height: 100vh;
       overflow: hidden;
+      background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
+      font-family: 'Arial', sans-serif;
     }
     .container {
       height: 100%;
       width: 100%;
-      background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -40,7 +41,8 @@
       transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     }
     .card-wrapper {
-      background-color: #fff;
+      background-color: #1e1e1e;
+      border: 2px solid #0077a3;
       border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
@@ -65,11 +67,11 @@
       display: block;
     }
     .note-content {
-      background-color: #fff;
+      background-color: #1e1e1e;
       padding: 10px;
       text-align: center;
       font-size: 16px;
-      color: #333;
+      color: #fff;
       min-height: 50px;
       box-sizing: border-box;
     }
@@ -88,7 +90,7 @@
       cursor: pointer;
     }
     .text-card {
-      background-color: #fff;
+      background-color: #1e1e1e;
       border: 2px solid #0077a3;
       border-radius: 8px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
@@ -162,9 +164,9 @@
     }
     #inputArea {
       position: absolute;
-      bottom: 180px;
+      top: 50%;
       left: 50%;
-      transform: translateX(-50%);
+      transform: translate(-50%, -50%);
       background-color: rgba(255,255,255,0.95);
       padding: 20px;
       border-radius: 8px;
@@ -185,6 +187,8 @@
       width: 100%;
       box-sizing: border-box;
       line-height: 1.5;
+      background-color: #1e1e1e;
+      color: #fff;
     }
     #inputArea button {
       padding: 10px 15px;
@@ -193,6 +197,10 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    #inputArea button:hover {
+      background-color: #005577;
     }
     .input-group {
       display: flex;
