@@ -32,8 +32,6 @@
     /* Contenedor de notas (GridStack) */
     #notaDisplay {
       margin-top: 20px;
-      width: 100%;
-      height: 80%;
     }
     /* Ocultar ghost element durante el drag */
     .grid-stack-placeholder {
@@ -46,7 +44,7 @@
     /* ---------------------- */
     /* Estilo de tarjeta tipo Polaroid */
     /* ---------------------- */
-    .card-wrapper, .text-card {
+    .card-wrapper {
       background-color: #fff;
       border-radius: 8px;
       overflow: hidden;
@@ -95,7 +93,14 @@
       cursor: pointer;
     }
     .text-card {
+      background-color: #fff;
       border: 2px solid #0077a3;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      width: 240px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
     }
     .text-card .note-content {
       min-height: 120px;
@@ -199,7 +204,7 @@
       display: none;
       z-index: 3;
       width: 250px;
-      min-height: 180px;
+      min-height: 180px; /* Altura fija para 6 filas */
     }
     .calendar-header {
       display: flex;
@@ -311,20 +316,20 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     
-    // Inicializamos GridStack con configuración para permitir movimiento libre
+    // Inicializamos GridStack con una cuadrícula de 3 columnas para representar los 3 lanes.
     const grid = GridStack.init({
-      float: true,
-      disableResize: true,
+      margin: 2,
       cellHeight: 'auto',
-      margin: 10,
-      column: 3,
+      disableResize: true,
+      float: true,
+      animate: true,
+      column: 3, // 3 lanes: izquierda (0), centro (1) y derecha (2).
       dragOptions: {
         inertia: true
-      },
-      animate: true
+      }
     });
     
-    // Ajuste automático de textareas
+    // Ajuste automático de textareas en la interfaz para agregar notas.
     function autoResizeTextarea(el) {
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
@@ -334,18 +339,15 @@
     textNoteInput.addEventListener('input', () => autoResizeTextarea(textNoteInput));
     imageNoteText.addEventListener('input', () => autoResizeTextarea(imageNoteText));
     
-    // Función para mostrar cada nota en pantalla en formato Polaroid
+    // Función para mostrar cada nota en pantalla en formato Polaroid.
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
-      // Estructura recomendada por GridStack:
       const gridItem = document.createElement('div');
       gridItem.classList.add('grid-stack-item');
       gridItem.setAttribute('data-note-id', doc.id);
-
-      // Contenedor interno que envuelve el contenido de la nota
-      const contentWrapper = document.createElement('div');
-      contentWrapper.classList.add('grid-stack-item-content');
-
+      
+      const content = document.createElement('div');
+      
       let card;
       if(notaData.url) {
         card = document.createElement('div');
@@ -366,13 +368,14 @@
       } else if(notaData.nota) {
         card = document.createElement('div');
         card.classList.add('text-card');
+        
         const noteContent = document.createElement('div');
         noteContent.classList.add('note-content');
         noteContent.textContent = notaData.nota;
         card.appendChild(noteContent);
       }
       
-      // Barra de menú (editar y eliminar)
+      // Barra de menú (editar y eliminar).
       const menuBar = document.createElement('div');
       menuBar.classList.add('menu-bar');
       
@@ -424,13 +427,12 @@
       
       menuBar.appendChild(editButton);
       menuBar.appendChild(deleteButton);
+      
       card.appendChild(menuBar);
+      content.appendChild(card);
+      gridItem.appendChild(content);
       
-      // Se agrega el card al contenedor interno y luego al grid item
-      contentWrapper.appendChild(card);
-      gridItem.appendChild(contentWrapper);
-      
-      // Para la posición: si no existe, asignamos la lane del centro (x = 1)
+      // Para la posición: si no existe, asignamos la lane del centro (x = 1).
       const pos = {
         x: (typeof notaData.x === 'number') ? notaData.x : 1,
         y: (typeof notaData.y === 'number') ? notaData.y : 0,
@@ -669,6 +671,7 @@
       calendarWidget.style.display = 'block';
     });
     calendarWidget.addEventListener('mouseout', hideCalendar);
+    
   </script>
 </body>
 </html>
