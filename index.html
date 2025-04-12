@@ -11,14 +11,13 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
   <style>
-    /* Forzar pantalla fija sin scroll y ocupar el 100% del viewport */
+    /* Estilos CSS (sin cambios significativos) */
     html, body {
       margin: 0;
       padding: 0;
       height: 100vh;
       overflow: hidden;
     }
-    /* Contenedor principal general: centrado y ocupando el 100% del viewport */
     .container {
       height: 100%;
       width: 100%;
@@ -29,21 +28,17 @@
       justify-content: center;
       position: relative;
     }
-    /* Contenedor principal de notas (GridStack) */
     #notaDisplay {
       margin-top: 20px;
+      width: 100%;
+      height: calc(100% - 40px); /* Ajusta el tamaño del contenedor */
     }
-    /* Ocultar ghost element del drag */
     .grid-stack-placeholder {
       display: none !important;
     }
-    /* Transición personalizada para el movimiento de cada widget */
     .grid-stack-item {
       transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     }
-    /* ---------------------- */
-    /* Nuevo estilo de tarjeta (Polaroid) */
-    /* ---------------------- */
     .card-wrapper {
       background-color: #fff;
       border-radius: 8px;
@@ -54,11 +49,9 @@
       flex-direction: column;
       position: relative;
     }
-    /* Contenedor superior: imagen o área vacía para nota de texto */
     .card-content {
       flex-grow: 1;
     }
-    /* Si hay imagen, se muestra en recuadro fijo */
     .image-container {
       width: 240px;
       height: 240px;
@@ -71,7 +64,6 @@
       object-fit: cover;
       display: block;
     }
-    /* Área para la nota o descripción (parte blanca típica de Polaroid) */
     .note-content {
       background-color: #fff;
       padding: 10px;
@@ -81,7 +73,6 @@
       min-height: 50px;
       box-sizing: border-box;
     }
-    /* La barra de menú integrada, con tono oceánico */
     .menu-bar {
       background-color: #0288D1;
       display: flex;
@@ -96,7 +87,6 @@
       color: #fff;
       cursor: pointer;
     }
-    /* Estilo para nota de solo texto (sin imagen) */
     .text-card {
       background-color: #fff;
       border: 2px solid #0077a3;
@@ -111,9 +101,6 @@
       min-height: 120px;
       padding: 10px;
     }
-    /* ---------------------- */
-    /* Interfaz para agregar nota (se conservan las funciones) */
-    /* ---------------------- */
     #addNoteButton {
       position: absolute;
       bottom: 20px;
@@ -178,9 +165,6 @@
       flex-direction: column;
       gap: 5px;
     }
-    /* ---------------------- */
-    /* Estilos para el Calendario - Diseño minimalista */
-    /* ---------------------- */
     .calendar-icon {
       position: absolute;
       bottom: 20px;
@@ -209,7 +193,7 @@
       display: none;
       z-index: 3;
       width: 250px;
-      min-height: 180px; /* Fijamos altura para 6 filas */
+      min-height: 180px;
     }
     .calendar-header {
       display: flex;
@@ -256,13 +240,8 @@
 </head>
 <body>
   <div class="container">
-    <!-- Contenedor de notas -->
     <div id="notaDisplay" class="grid-stack"></div>
-    
-    <!-- Botón para agregar nota -->
     <button id="addNoteButton">+</button>
-    
-    <!-- Opciones para agregar nueva nota -->
     <div id="addNoteOptions">
       <button id="addImageLinkOption">Guardar link de imagen</button>
       <button id="addTextNoteOption">Subir nota</button>
@@ -284,15 +263,11 @@
         <button id="saveTextNote">Guardar Nota</button>
       </div>
     </div>
-    
-    <!-- Ícono del Calendario (esquina inferior izquierda) -->
     <div id="calendarIcon" class="calendar-icon">☰</div>
-    <!-- Contenedor del Calendario desplegable -->
     <div id="calendarWidget" class="calendar-widget"></div>
   </div>
-  
+
   <script>
-    // Función para transformar enlaces de Google Drive en enlaces embebibles
     function transformDriveLink(url) {
       if (!url.includes("drive.google.com")) return url;
       let fileId = null;
@@ -307,8 +282,7 @@
       if (fileId) return "https://drive.google.com/uc?export=view&id=" + fileId;
       return url;
     }
-    
-    // Configuración de Firebase
+
     const firebaseConfig = {
       apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
       authDomain: "oasis-b036d.firebaseapp.com",
@@ -320,17 +294,19 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    
-    // Inicializar GridStack con animación habilitada
+
     const grid = GridStack.init({
       margin: 5,
       cellHeight: 'auto',
       disableResize: true,
       float: true,
-      animate: true
+      animate: true,
+      alwaysShowResizeHandle: true, // Asegura que el manejador de redimensionamiento siempre esté visible
+      draggable: {
+        handle: '.menu-bar', // Permite arrastrar solo desde la barra de menú
+      }
     });
-    
-    // Ajuste automático de textareas en la interfaz para agregar nota
+
     function autoResizeTextarea(el) {
       el.style.height = 'auto';
       el.style.height = el.scrollHeight + 'px';
@@ -339,22 +315,20 @@
     const imageNoteText = document.getElementById('imageNoteText');
     textNoteInput.addEventListener('input', () => autoResizeTextarea(textNoteInput));
     imageNoteText.addEventListener('input', () => autoResizeTextarea(imageNoteText));
-    
-    // Función para mostrar cada nota en pantalla en formato Polaroid
+
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       const gridItem = document.createElement('div');
       gridItem.classList.add('grid-stack-item');
       gridItem.setAttribute('data-note-id', doc.id);
-      
+
       const content = document.createElement('div');
-      
+
       let card;
       if(notaData.url) {
-        // Nota con imagen: estructura Polaroid
         card = document.createElement('div');
         card.classList.add('card-wrapper');
-        
+
         const imageContainer = document.createElement('div');
         imageContainer.classList.add('image-container');
         const img = document.createElement('img');
@@ -362,26 +336,24 @@
         img.alt = 'Imagen de la nota';
         imageContainer.appendChild(img);
         card.appendChild(imageContainer);
-        
+
         const noteContent = document.createElement('div');
         noteContent.classList.add('note-content');
         noteContent.textContent = notaData.texto ? notaData.texto : '';
         card.appendChild(noteContent);
       } else if(notaData.nota) {
-        // Nota de solo texto
         card = document.createElement('div');
         card.classList.add('text-card');
-        
+
         const noteContent = document.createElement('div');
         noteContent.classList.add('note-content');
         noteContent.textContent = notaData.nota;
         card.appendChild(noteContent);
       }
-      
-      // Barra de menú integrada con íconos (editar y eliminar)
+
       const menuBar = document.createElement('div');
       menuBar.classList.add('menu-bar');
-      
+
       const editButton = document.createElement('button');
       editButton.classList.add('menu-icon');
       editButton.innerHTML = '✎';
@@ -414,7 +386,7 @@
         };
         menuBar.replaceChild(saveEditButton, editButton);
       };
-      
+
       const deleteButton = document.createElement('button');
       deleteButton.classList.add('menu-icon');
       deleteButton.innerHTML = '✖';
@@ -427,14 +399,14 @@
             console.error("Error al eliminar la nota: ", error);
           });
       };
-      
+
       menuBar.appendChild(editButton);
       menuBar.appendChild(deleteButton);
-      
+
       card.appendChild(menuBar);
       content.appendChild(card);
       gridItem.appendChild(content);
-      
+
       const pos = {
         x: notaData.x || 0,
         y: typeof notaData.y === 'number' ? notaData.y : 0,
@@ -444,13 +416,11 @@
       };
       grid.addWidget(gridItem, pos);
     }
-    
-    // Función para limpiar las notas mostradas
+
     function limpiarNotasDisplay() {
       grid.removeAll();
     }
-    
-    // Escucha los cambios en la colección "notas" para actualizar la vista en tiempo real
+
     db.collection('notas')
       .orderBy('__name__')
       .onSnapshot((snapshot) => {
@@ -459,8 +429,7 @@
           mostrarNotaEnPantalla(doc);
         });
       });
-    
-    // Interfaz para agregar nuevas notas
+
     const addNoteButton = document.getElementById('addNoteButton');
     const addNoteOptions = document.getElementById('addNoteOptions');
     const addImageLinkOption = document.getElementById('addImageLinkOption');
@@ -472,7 +441,7 @@
     const textNoteInputArea = document.getElementById('textNoteInputArea');
     const saveTextNoteButton = document.getElementById('saveTextNote');
     let addingNewNote = false;
-    
+
     addNoteButton.onclick = function() {
       addingNewNote = !addingNewNote;
       addNoteOptions.style.display = addingNewNote ? 'flex' : 'none';
@@ -494,7 +463,7 @@
       textNoteInputArea.style.display = 'flex';
       addingNewNote = false;
     };
-    
+
     function guardarLinkDeImagen() {
       let link = imageLinkInput.value;
       const texto = imageNoteText.value;
@@ -514,7 +483,7 @@
         });
       }
     }
-    
+
     function guardarNotaTexto() {
       const nota = textNoteInput.value;
       if(nota.trim() !== '') {
@@ -530,10 +499,10 @@
         });
       }
     }
-    
+
     saveImageLinkButton.onclick = guardarLinkDeImagen;
     saveTextNoteButton.onclick = guardarNotaTexto;
-    
+
     grid.on('dragstop', function(event, el) {
       setTimeout(() => {
         const noteId = el.getAttribute('data-note-id');
@@ -548,57 +517,45 @@
         }
       }, 100);
     });
-    
-    /* -------------------------------------------------- */
-    /* Funcionalidad del Calendario (desplegable minimalista y fijo) */
-    /* -------------------------------------------------- */
-    
-    // Variables globales para el estado del calendario
+
     let currentCalendarMonth, currentCalendarYear;
-    
-    // Obtiene la fecha actual para Chile usando la zona horaria
+
     function getChileDate() {
       return new Date(new Date().toLocaleString("en-US", {timeZone: "America/Santiago"}));
     }
-    
-    // Función para inicializar el mes del calendario: si la fecha actual en Chile es anterior a diciembre 2024, se fija en diciembre 2024
+
     function initCalendarDate() {
       let today = getChileDate();
       let year = today.getFullYear();
       let month = today.getMonth();
-      // Diciembre es el mes 11 (0-indexado)
       if (year < 2024 || (year === 2024 && month < 11)) {
         return { month: 11, year: 2024 };
       }
       return { month, year };
     }
-    
-    // Función que devuelve el nombre del mes en español
+
     function getMonthName(monthIndex) {
       const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
       return months[monthIndex];
     }
-    
-    // Función para generar el calendario con 6 filas siempre (42 celdas)
+
     function generateCalendar(month, year) {
       const calendarDiv = document.getElementById('calendarWidget');
-      calendarDiv.innerHTML = ''; // Limpiar contenido previo
-      
-      // Encabezado del calendario con botones de navegación
+      calendarDiv.innerHTML = '';
+
       const header = document.createElement('div');
       header.className = 'calendar-header';
-      
+
       const prevBtn = document.createElement('button');
       prevBtn.textContent = '<';
       prevBtn.onclick = function() {
         let newMonth = month - 1;
         let newYear = year;
         if(newMonth < 0) { newMonth = 11; newYear--; }
-        // Si se intenta ir a antes de diciembre 2024, no se actualiza
         if(newYear < 2024 || (newYear === 2024 && newMonth < 11)) return;
         generateCalendar(newMonth, newYear);
       };
-      
+
       const nextBtn = document.createElement('button');
       nextBtn.textContent = '>';
       nextBtn.onclick = function() {
@@ -607,16 +564,15 @@
         if(newMonth > 11) { newMonth = 0; newYear++; }
         generateCalendar(newMonth, newYear);
       };
-      
+
       const title = document.createElement('span');
       title.textContent = getMonthName(month) + ' ' + year;
-      
+
       header.appendChild(prevBtn);
       header.appendChild(title);
       header.appendChild(nextBtn);
       calendarDiv.appendChild(header);
-      
-      // Días de la semana (encabezado)
+
       const daysHeader = document.createElement('div');
       daysHeader.className = 'calendar-days-header';
       const daysOfWeek = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -627,29 +583,24 @@
         daysHeader.appendChild(dayElem);
       });
       calendarDiv.appendChild(daysHeader);
-      
-      // Crear la cuadrícula de fechas con 42 celdas (6 filas x 7 días)
+
       const datesGrid = document.createElement('div');
       datesGrid.className = 'calendar-dates-grid';
-      
-      // Primer día de la semana del primer día del mes
+
       const firstDay = new Date(year, month, 1).getDay();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
-      
-      // Agregar celdas vacías antes del primer día
+
       for (let i = 0; i < firstDay; i++) {
         const emptyCell = document.createElement('div');
         emptyCell.className = 'calendar-date empty';
         datesGrid.appendChild(emptyCell);
       }
-      // Agregar números de cada día
       for (let date = 1; date <= daysInMonth; date++) {
         const dateCell = document.createElement('div');
         dateCell.className = 'calendar-date';
         dateCell.textContent = date;
         datesGrid.appendChild(dateCell);
       }
-      // Calcular cuántas celdas adicionales se requieren para llegar a 42
       const totalCells = firstDay + daysInMonth;
       const cellsToAdd = 42 - totalCells;
       for (let i = 0; i < cellsToAdd; i++) {
@@ -658,28 +609,25 @@
         datesGrid.appendChild(emptyCell);
       }
       calendarDiv.appendChild(datesGrid);
-      
-      // Actualizar el estado actual del calendario
+
       currentCalendarMonth = month;
       currentCalendarYear = year;
     }
-    
-    // Mostrar/ocultar el calendario al interactuar con el ícono
+
     const calendarIcon = document.getElementById('calendarIcon');
     const calendarWidget = document.getElementById('calendarWidget');
     let calendarTimeout;
-    
+
     function showCalendar() {
-      // Inicializa la fecha según Chile o establece diciembre 2024 si es menor
       const { month, year } = initCalendarDate();
       generateCalendar(month, year);
       calendarWidget.style.display = 'block';
     }
-    
+
     function hideCalendar() {
       calendarTimeout = setTimeout(() => { calendarWidget.style.display = 'none'; }, 200);
     }
-    
+
     calendarIcon.addEventListener('mouseover', () => {
       clearTimeout(calendarTimeout);
       showCalendar();
@@ -690,7 +638,7 @@
       calendarWidget.style.display = 'block';
     });
     calendarWidget.addEventListener('mouseout', hideCalendar);
-    
+
   </script>
 </body>
 </html>
