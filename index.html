@@ -477,7 +477,7 @@
       const content = document.createElement('div'); content.classList.add('grid-stack-item-content');
       let card; let noteContentElement;
 
-      if (notaData.url && !notaData.url.includes("drive.google.com")) { // Tarjeta Imagen
+      if (notaData.url) { // Tarjeta Imagen
             card = document.createElement('div'); card.classList.add('card-wrapper');
             const imageContainer = document.createElement('div'); imageContainer.classList.add('image-container');
             const img = document.createElement('img');
@@ -607,7 +607,7 @@
 
     function guardarLinkDeImagen() {
         if (!imageLinkInputElem) return; let link = imageLinkInputElem.value.trim(); const texto = imageNoteTextElem ? imageNoteTextElem.value.trim() : '';
-        if (link && !link.includes("drive.google.com")) { if(saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = true;
+        if (link) { if(saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = true;
             db.collection('notas').add({ url: link, texto: texto || null, createdAt: firebase.firestore.FieldValue.serverTimestamp(), tipo: 'imagen' })
               .then(() => { hideMenus(); }).catch((error) => { console.error('Error al guardar link:', error); alert("Error al guardar imagen."); })
               .finally(() => { if(saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = false; });
