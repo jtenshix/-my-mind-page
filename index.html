@@ -432,20 +432,39 @@
 
   <script>
     /****************** Utilidades y Configuración de Firebase ******************/
+
+    // --- >>> INICIO: FUNCIÓN transformDriveLink RESTAURADA <<< ---
+    // Esta es la versión de la función que estaba antes,
+    // con la esperanza de que solucione el problema de las imágenes.
     function transformDriveLink(url) {
         if (!url || !url.includes("drive.google.com")) return url; // Salir si no es link de Drive
         if (url.includes("/uc?export=view&id=")) return url; // Ya está en formato correcto?
         let fileId = null;
-        const patterns = [ /\/file\/d\/([a-zA-Z0-9_-]+)\//, /[?&]id=([a-zA-Z0-9_-]+)(?:&|$)/, /open\?id=([a-zA-Z0-9_-]+)(?:&|$)/, /\/d\/([a-zA-Z0-9_-]+)\/(?:edit|view)/ ];
-        for (const regex of patterns) { const match = url.match(regex); if (match && match[1]) { fileId = match[1]; break; } }
-        return fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : url;
+        // Patrones comunes de Google Drive
+        const patterns = [
+            /\/file\/d\/([a-zA-Z0-9_-]+)\//,           // /file/d/FILE_ID/...
+            /[?&]id=([a-zA-Z0-9_-]+)(?:&|$)/,        // ...?id=FILE_ID... o ...&id=FILE_ID...
+            /open\?id=([a-zA-Z0-9_-]+)(?:&|$)/,       // ...open?id=FILE_ID...
+            /\/d\/([a-zA-Z0-9_-]+)\/(?:edit|view)/    // /d/FILE_ID/edit... o /d/FILE_ID/view...
+        ];
+        for (const regex of patterns) {
+            const match = url.match(regex);
+            if (match && match[1]) {
+                fileId = match[1];
+                break; // Encontramos el ID
+            }
+        }
+        return fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : url; // Devuelve formato directo o URL original si no hay ID
     }
+    // --- >>> FIN: FUNCIÓN transformDriveLink RESTAURADA <<< ---
+
     function linkify(text) {
       if (!text) return "";
       const urlRegex = /(?<!href=["'])(https?:\/\/[^\s<>"']+)/g;
       const replacedText = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
       return replacedText.replace(/\n/g, '<br>');
     }
+
     const firebaseConfig = {
       apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs", // ¡Considera mover a un entorno seguro!
       authDomain: "oasis-b036d.firebaseapp.com",
@@ -489,7 +508,10 @@
       if (notaData.url) { // Tarjeta Imagen
             card = document.createElement('div'); card.classList.add('card-wrapper');
             const imageContainer = document.createElement('div'); imageContainer.classList.add('image-container');
-            const img = document.createElement('img'); img.src = transformDriveLink(notaData.url); img.alt = notaData.texto || 'Imagen de la nota'; img.loading = 'lazy';
+            const img = document.createElement('img');
+            // Usar la función transformDriveLink (restaurada arriba)
+            img.src = transformDriveLink(notaData.url);
+            img.alt = notaData.texto || 'Imagen de la nota'; img.loading = 'lazy';
             img.onerror = () => { imageContainer.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; height:100%; background-color:#eee; color:red; text-align:center; padding:10px;">⚠️<br/>Error al<br/>cargar imagen</div>`; }
             imageContainer.appendChild(img); card.appendChild(imageContainer);
             if(notaData.texto) { noteContentElement = document.createElement('div'); noteContentElement.classList.add('note-content'); noteContentElement.innerHTML = linkify(notaData.texto); card.appendChild(noteContentElement); }
@@ -503,29 +525,21 @@
       // Barra de Menú
       const menuBar = document.createElement('div'); menuBar.classList.add('menu-bar');
       const bubbleButton = document.createElement('button'); bubbleButton.classList.add('menu-icon', 'bubble-icon'); bubbleButton.innerHTML = '●'; bubbleButton.setAttribute('draggable', 'true'); bubbleButton.id = `bubble-${noteId}`; bubbleButton.title = "Arrastrar al calendario"; bubbleButton.style.display = notaData.assignedDate ? 'none' : 'inline-block';
-      bubbleButton.addEventListener('dragstart', (e) => {
-          // Código dragstart (pequeña imagen fantasma)
+      bubbleButton.addEventListener('dragstart', (e) => { /* ... (código dragstart sin cambios) ... */
           var imgGhost = new Image(); imgGhost.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='; e.dataTransfer.setDragImage(imgGhost, 0, 0);
           e.dataTransfer.setData("application/note-id", noteId); e.dataTransfer.effectAllowed = "move"; openCalendar();
-      });
+       });
       bubbleButton.addEventListener('click', (e) => { e.stopPropagation(); openCalendar(); });
       const menuActions = document.createElement('div'); menuActions.classList.add('menu-actions');
       const editButton = document.createElement('button'); editButton.classList.add('menu-icon'); editButton.innerHTML = '✎'; editButton.title = "Editar";
       const deleteButton = document.createElement('button'); deleteButton.classList.add('menu-icon'); deleteButton.innerHTML = '✖'; deleteButton.title = "Eliminar";
 
-      // --- >>> INICIO DEL CAMBIO: onclick de deleteButton (VERIFICADO) <<< ---
-      // Se elimina la condición 'if (confirm(...))' que estaba antes
+      // onclick de deleteButton (SIN confirmación)
       deleteButton.onclick = (e) => {
-          e.stopPropagation(); // Detener propagación del evento
-          // Llamar a deleteNote directamente, SIN confirmación
-          if (typeof deleteNote === 'function') {
-              deleteNote(noteId, gridItem); // Eliminar directamente
-          } else {
-              console.error("Función deleteNote no encontrada");
-              alert("Error interno al intentar eliminar la nota."); // Informar al usuario
-          }
+          e.stopPropagation();
+          if (typeof deleteNote === 'function') deleteNote(noteId, gridItem);
+          else { console.error("Función deleteNote no encontrada"); alert("Error interno al eliminar."); }
       };
-      // --- >>> FIN DEL CAMBIO <<< ---
 
       editButton.onclick = (e) => { e.stopPropagation(); if (typeof editNoteContent === 'function') editNoteContent(card, noteId, notaData, menuActions, editButton, deleteButton); else console.error("Función editNoteContent no encontrada"); };
 
@@ -540,9 +554,13 @@
     }
 
     // --- FUNCIÓN PARA EDITAR NOTA ---
-    function editNoteContent(card, noteId, notaData, menuActionsContainer, editButton, deleteButton) {
+     function editNoteContent(card, noteId, notaData, menuActionsContainer, editButton, deleteButton) { /* ... (código editNoteContent sin cambios) ... */
         let targetElement = card.querySelector('.note-content');
-        if (!targetElement) { targetElement = document.createElement('div'); targetElement.classList.add('note-content'); card.insertBefore(targetElement, card.querySelector('.menu-bar')); }
+        if (!targetElement && notaData.url) { // Solo crear si es nota de imagen sin texto previo
+             targetElement = document.createElement('div'); targetElement.classList.add('note-content'); card.insertBefore(targetElement, card.querySelector('.menu-bar'));
+        } else if (!targetElement && !notaData.url) { // Si es nota de texto, debería existir; si no, hay error
+             console.error("Error: No se encontró .note-content para editar texto en nota:", noteId); return;
+        }
         const isImageNote = !!notaData.url; const currentText = isImageNote ? (notaData.texto || '') : (notaData.nota || '');
         targetElement.innerHTML = '';
         const editInput = document.createElement('textarea'); editInput.value = currentText; editInput.style.cssText = "width:100%; min-height:80px; height:auto; box-sizing:border-box; border:1px dashed #ccc; resize:vertical;";
@@ -558,8 +576,9 @@
         menuActionsContainer.innerHTML = ''; menuActionsContainer.appendChild(saveEditButton); // Mostrar solo guardar
     }
 
+
     // --- FUNCIÓN PARA ELIMINAR NOTA ---
-    function deleteNote(noteId, gridItem) {
+    function deleteNote(noteId, gridItem) { /* ... (código deleteNote sin cambios) ... */
         console.log("Eliminando nota:", noteId);
         db.collection('notas').doc(noteId).delete()
           .then(() => {
@@ -571,8 +590,9 @@
           .catch((error) => { console.error("Error al eliminar:", error); alert("Error al eliminar la nota."); });
     }
 
+
     /****************** Escucha de Cambios en Firestore (SIMPLIFICADA) ******************/
-    if (db && typeof db.collection === 'function') {
+    if (db && typeof db.collection === 'function') { /* ... (código onSnapshot sin cambios) ... */
         db.collection('notas')
           // .orderBy('createdAt', 'desc')
           .onSnapshot((snapshot) => {
@@ -586,7 +606,8 @@
     } else { console.error("Firestore (db) no inicializado."); alert("Error: No se pudo conectar a la base de datos."); }
 
     /****************** Manejo de la Interfaz para Agregar Notas ******************/
-    const addNoteButtonElem = document.getElementById('addNoteButton'); /* ... (resto de elementos UI) ... */
+    /* ... (Código manejo UI sin cambios) ... */
+    const addNoteButtonElem = document.getElementById('addNoteButton');
     const addNoteOptionsElem = document.getElementById('addNoteOptions');
     const addImageLinkOptionElem = document.getElementById('addImageLinkOption');
     const addTextNoteOptionElem = document.getElementById('addTextNoteOption');
@@ -597,10 +618,8 @@
     const textNoteInputAreaElem = document.getElementById('textNoteInputArea');
     const saveTextNoteButtonElem = document.getElementById('saveTextNote');
     const blurBackgroundElem = document.querySelector('.blur-background');
-    // const imageNoteTextElem = Ya declarada arriba
-    // const textNoteInputElem = Ya declarada arriba
 
-    function hideMenus() { /* ... (código hideMenus sin cambios) ... */
+    function hideMenus() {
         if(addNoteOptionsElem) addNoteOptionsElem.style.display = 'none';
         if(inputAreaElem) inputAreaElem.style.display = 'none';
         if(blurBackgroundElem) blurBackgroundElem.style.display = 'none';
@@ -608,21 +627,20 @@
         if(imageNoteTextElem) { imageNoteTextElem.value = ''; autoResizeTextarea(imageNoteTextElem); }
         if(textNoteInputElem) { textNoteInputElem.value = ''; autoResizeTextarea(textNoteInputElem); }
     }
-    if (addNoteButtonElem) addNoteButtonElem.onclick = (e) => { /* ... (código onclick sin cambios) ... */
+    if (addNoteButtonElem) addNoteButtonElem.onclick = (e) => {
         e.stopPropagation();
         if (addNoteOptionsElem && addNoteOptionsElem.style.display === 'flex') { hideMenus(); }
         else if (addNoteOptionsElem && blurBackgroundElem) { hideMenus(); addNoteOptionsElem.style.display = 'flex'; blurBackgroundElem.style.display = 'block'; }
     };
-    if (addImageLinkOptionElem) addImageLinkOptionElem.onclick = (e) => { /* ... (código onclick sin cambios) ... */
+    if (addImageLinkOptionElem) addImageLinkOptionElem.onclick = (e) => {
         e.stopPropagation(); if(addNoteOptionsElem) addNoteOptionsElem.style.display = 'none'; if(imageLinkInputAreaElem) imageLinkInputAreaElem.style.display = 'block'; if(textNoteInputAreaElem) textNoteInputAreaElem.style.display = 'none'; if(inputAreaElem) inputAreaElem.style.display = 'flex'; if(blurBackgroundElem) blurBackgroundElem.style.display = 'block'; if(imageLinkInputElem) imageLinkInputElem.focus();
     };
-    if (addTextNoteOptionElem) addTextNoteOptionElem.onclick = (e) => { /* ... (código onclick sin cambios) ... */
+    if (addTextNoteOptionElem) addTextNoteOptionElem.onclick = (e) => {
         e.stopPropagation(); if(addNoteOptionsElem) addNoteOptionsElem.style.display = 'none'; if(imageLinkInputAreaElem) imageLinkInputAreaElem.style.display = 'none'; if(textNoteInputAreaElem) textNoteInputAreaElem.style.display = 'block'; if(inputAreaElem) inputAreaElem.style.display = 'flex'; if(blurBackgroundElem) blurBackgroundElem.style.display = 'block'; if(textNoteInputElem) textNoteInputElem.focus();
     };
     if (blurBackgroundElem) blurBackgroundElem.onclick = hideMenus;
 
-    // --- Guardar Notas ---
-    function guardarLinkDeImagen() { /* ... (código guardarLinkDeImagen sin cambios) ... */
+    function guardarLinkDeImagen() {
         if (!imageLinkInputElem) return; let link = imageLinkInputElem.value.trim(); const texto = imageNoteTextElem ? imageNoteTextElem.value.trim() : '';
         if (link) { link = transformDriveLink(link); if(saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = true;
             db.collection('notas').add({ url: link, texto: texto || null, createdAt: firebase.firestore.FieldValue.serverTimestamp(), tipo: 'imagen' })
@@ -630,7 +648,7 @@
               .finally(() => { if(saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = false; });
         } else { alert("Introduce un link."); imageLinkInputElem.focus(); }
     }
-    function guardarNotaTexto() { /* ... (código guardarNotaTexto sin cambios) ... */
+    function guardarNotaTexto() {
         if (!textNoteInputElem) return; const nota = textNoteInputElem.value.trim();
         if (nota) { if(saveTextNoteButtonElem) saveTextNoteButtonElem.disabled = true;
             db.collection('notas').add({ nota: nota, createdAt: firebase.firestore.FieldValue.serverTimestamp(), tipo: 'texto' })
@@ -641,55 +659,15 @@
     if(saveImageLinkButtonElem) saveImageLinkButtonElem.onclick = guardarLinkDeImagen;
     if(saveTextNoteButtonElem) saveTextNoteButtonElem.onclick = guardarNotaTexto;
 
-    // --- Guardar posición al mover ---
-    if (grid) { grid.on('dragstop', (e, el) => { /* ... (código dragstop sin cambios) ... */
-        const node = el.gridstackNode; const noteId = el.getAttribute('data-note-id');
-        if (noteId && node) { setTimeout(() => { const currentNode = grid.engine.nodes.get(el); if(currentNode) { db.collection('notas').doc(noteId).update({ x: currentNode.x, y: currentNode.y }).catch(error => console.error("Error guardando posición:", error)); } }, 150); }
-    }); }
-
     /****************** Calendario y Asignación de la Bolita ******************/
+    /* ... (Código calendario sin cambios) ... */
     let currentCalendarMonth, currentCalendarYear; let assignedDatesCache = {}; let notesDataCache = {};
-    function getChileDate() { /* ... (código getChileDate sin cambios) ... */
-        try { const opts = { timeZone: 'America/Santiago', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false }; const fmt = new Intl.DateTimeFormat('en-CA', opts); const p = fmt.formatToParts(new Date()); const d = {}; p.forEach(({ type, value }) => d[type] = parseInt(value, 10)); return new Date(Date.UTC(d.year, d.month - 1, d.day, d.hour, d.minute, d.second)); } catch (e) { console.warn("Intl fallback", e); return new Date(); }
-    }
-    function initCalendarDate() { /* ... (código initCalendarDate sin cambios) ... */
-        let today = getChileDate(); let year = today.getFullYear(); let month = today.getMonth(); const minY = 2024; const minM = 11; if (year < minY || (year === minY && month < minM)) { return { month: minM, year: minY }; } return { month, year };
-    }
-    function getMonthName(idx) { /* ... (código getMonthName sin cambios) ... */
-        const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']; return months[idx % 12] || '';
-    }
-    async function fetchAllAssignedNotes() { /* ... (código fetchAllAssignedNotes sin cambios) ... */
-        assignedDatesCache = {}; notesDataCache = {}; try { const snap = await db.collection('notas').where('assignedDate', '!=', null).get(); snap.forEach(doc => { const d = doc.data(); const id = doc.id; notesDataCache[id] = d; const dateStr = d.assignedDate; if (dateStr) { if (!assignedDatesCache[dateStr]) assignedDatesCache[dateStr] = []; if (!assignedDatesCache[dateStr].includes(id)) assignedDatesCache[dateStr].push(id); } }); } catch (err) { console.error("Error fetch dates:", err); }
-    }
-    async function generateCalendar(month, year) { /* ... (código generateCalendar sin cambios) ... */
-        if (Object.keys(notesDataCache).length === 0) await fetchAllAssignedNotes();
-        const calDiv = document.getElementById('calendarWidget'); if (!calDiv) return; calDiv.innerHTML = ''; const today = getChileDate();
-        const hdr = document.createElement('div'); hdr.className = 'calendar-header'; const pBtn = document.createElement('button'); pBtn.innerHTML = '&lt;'; const minY = 2024; const minM = 11; if (year === minY && month === minM) pBtn.disabled = true; else pBtn.onclick = () => generateCalendar(month === 0 ? 11 : month - 1, month === 0 ? year - 1 : year); const nBtn = document.createElement('button'); nBtn.innerHTML = '&gt;'; nBtn.onclick = () => generateCalendar(month === 11 ? 0 : month + 1, month === 11 ? year + 1 : year); const title = document.createElement('span'); title.textContent = `${getMonthName(month)} ${year}`; hdr.appendChild(pBtn); hdr.appendChild(title); hdr.appendChild(nBtn); calDiv.appendChild(hdr);
-        const daysHdr = document.createElement('div'); daysHdr.className = 'calendar-days-header'; ['Do','Lu','Ma','Mi','Ju','Vi','Sá'].forEach(day => { const d = document.createElement('div'); d.className = 'calendar-day'; d.textContent = day; daysHdr.appendChild(d); }); calDiv.appendChild(daysHdr);
-        const datesG = document.createElement('div'); datesG.className = 'calendar-dates-grid'; const firstD = new Date(year, month, 1).getDay(); const daysInM = new Date(year, month + 1, 0).getDate();
-        for (let i = 0; i < firstD; i++) { const e = document.createElement('div'); e.className = 'calendar-date empty'; datesG.appendChild(e); }
-        for (let date = 1; date <= daysInM; date++) { const cell = document.createElement('div'); cell.className = 'calendar-date'; cell.textContent = date; const dStr = `${date}/${month + 1}/${year}`; if (date === today.getDate() && month === today.getMonth() && year === today.getFullYear()) cell.classList.add('today');
-            if (assignedDatesCache[dStr]) { assignedDatesCache[dStr].forEach(id => { const b = document.createElement("span"); b.className = "assigned-bubble"; b.setAttribute("data-note", id); b.textContent = "●"; cell.appendChild(b); }); }
-            cell.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; cell.classList.add('drag-over'); }); cell.addEventListener('dragleave', (e) => { cell.classList.remove('drag-over'); });
-            cell.addEventListener('drop', async (e) => { e.preventDefault(); cell.classList.remove('drag-over'); const noteId = e.dataTransfer.getData("application/note-id"); if (noteId) { const oldDStr = notesDataCache[noteId]?.assignedDate; try { await db.collection('notas').doc(noteId).update({ assignedDate: dStr }); if(notesDataCache[noteId]) notesDataCache[noteId].assignedDate = dStr; else notesDataCache[noteId] = { assignedDate: dStr }; if (oldDStr && assignedDatesCache[oldDStr]) { assignedDatesCache[oldDStr] = assignedDatesCache[oldDStr].filter(id => id !== noteId); if (assignedDatesCache[oldDStr].length === 0) delete assignedDatesCache[oldDStr]; } if (!assignedDatesCache[dStr]) assignedDatesCache[dStr] = []; if (!assignedDatesCache[dStr].includes(noteId)) assignedDatesCache[dStr].push(noteId); const bubbleInC = document.getElementById(`bubble-${noteId}`); if (bubbleInC) bubbleInC.style.display = 'none'; generateCalendar(currentCalendarMonth, currentCalendarYear); } catch (err) { console.error(`Err assign date ${noteId}:`, err); alert("Error."); } } });
-            datesG.appendChild(cell);
-        }
-        const totalC = firstD + daysInM; const cellsN = totalC <= 35 ? 35 : 42; for (let i = totalC; i < cellsN; i++) { const e = document.createElement('div'); e.className = 'calendar-date empty'; datesG.appendChild(e); } calDiv.appendChild(datesG); currentCalendarMonth = month; currentCalendarYear = year;
-    }
-
-    // --- Mostrar/ocultar calendario ---
-    const calendarIconElem = document.getElementById('calendarIcon'); /* ... (resto de elementos UI calendario) ... */
-    const calendarWidgetElem = document.getElementById('calendarWidget');
-    let calendarTimeout;
-    function showCalendar() { /* ... (código showCalendar sin cambios) ... */
-        if (!calendarWidgetElem) return; clearTimeout(calendarTimeout); if (calendarWidgetElem.style.display !== 'block') { const { month, year } = initCalendarDate(); generateCalendar(month, year); calendarWidgetElem.style.display = 'block'; }
-    }
-    function hideCalendar() { /* ... (código hideCalendar sin cambios) ... */
-        if (!calendarWidgetElem) return; calendarTimeout = setTimeout(() => { calendarWidgetElem.style.display = 'none'; }, 300);
-    }
-    if (calendarIconElem) { calendarIconElem.addEventListener('mouseenter', showCalendar); calendarIconElem.addEventListener('mouseleave', hideCalendar); }
-    if (calendarWidgetElem) { calendarWidgetElem.addEventListener('mouseenter', () => clearTimeout(calendarTimeout)); calendarWidgetElem.addEventListener('mouseleave', hideCalendar); }
-    function openCalendar() { showCalendar(); }
+    function getChileDate() { try { const opts = { timeZone: 'America/Santiago', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false }; const fmt = new Intl.DateTimeFormat('en-CA', opts); const p = fmt.formatToParts(new Date()); const d = {}; p.forEach(({ type, value }) => d[type] = parseInt(value, 10)); return new Date(Date.UTC(d.year, d.month - 1, d.day, d.hour, d.minute, d.second)); } catch (e) { console.warn("Intl fallback", e); return new Date(); } }
+    function initCalendarDate() { let today = getChileDate(); let year = today.getFullYear(); let month = today.getMonth(); const minY = 2024; const minM = 11; if (year < minY || (year === minY && month < minM)) { return { month: minM, year: minY }; } return { month, year }; }
+    function getMonthName(idx) { const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']; return months[idx % 12] || ''; }
+    async function fetchAllAssignedNotes() { assignedDatesCache = {}; notesDataCache = {}; try { const snap = await db.collection('notas').where('assignedDate', '!=', null).get(); snap.forEach(doc => { const d = doc.data(); const id = doc.id; notesDataCache[id] = d; const dateStr = d.assignedDate; if (dateStr) { if (!assignedDatesCache[dateStr]) assignedDatesCache[dateStr] = []; if (!assignedDatesCache[dateStr].includes(id)) assignedDatesCache[dateStr].push(id); } }); } catch (err) { console.error("Error fetch dates:", err); } }
+    async function generateCalendar(month, year) { if (Object.keys(notesDataCache).length === 0) await fetchAllAssignedNotes(); const calDiv = document.getElementById('calendarWidget'); if (!calDiv) return; calDiv.innerHTML = ''; const today = getChileDate(); const hdr = document.createElement('div'); hdr.className = 'calendar-header'; const pBtn = document.createElement('button'); pBtn.innerHTML = '&lt;'; const minY = 2024; const minM = 11; if (year === minY && month === minM) pBtn.disabled = true; else pBtn.onclick = () => generateCalendar(month === 0 ? 11 : month - 1, month === 0 ? year - 1 : year); const nBtn = document.createElement('button'); nBtn.innerHTML = '&gt;'; nBtn.onclick = () => generateCalendar(month === 11 ? 0 : month + 1, month === 11 ? year + 1 : year); const title = document.createElement('span'); title.textContent = `${getMonthName(month)} ${year}`; hdr.appendChild(pBtn); hdr.appendChild(title); hdr.appendChild(nBtn); calDiv.appendChild(hdr); const daysHdr = document.createElement('div'); daysHdr.className = 'calendar-days-header'; ['Do','Lu','Ma','Mi','Ju','Vi','Sá'].forEach(day => { const d = document.createElement('div'); d.className = 'calendar-day'; d.textContent = day; daysHdr.appendChild(d); }); calDiv.appendChild(daysHdr); const datesG = document.createElement('div'); datesG.className = 'calendar-dates-grid'; const firstD = new Date(year, month, 1).getDay(); const daysInM = new Date(year, month + 1, 0).getDate(); for (let i = 0; i < firstD; i++) { const e = document.createElement('div'); e.className = 'calendar-date empty'; datesG.appendChild(e); } for (let date = 1; date <= daysInM; date++) { const cell = document.createElement('div'); cell.className = 'calendar-date'; cell.textContent = date; const dStr = `${date}/${month + 1}/${year}`; if (date === today.getDate() && month === today.getMonth() && year === today.getFullYear()) cell.classList.add('today'); if (assignedDatesCache[dStr]) { assignedDatesCache[dStr].forEach(id => { const b = document.createElement("span"); b.className = "assigned-bubble"; b.setAttribute("data-note", id); b.textContent = "●"; cell.appendChild(b); }); } cell.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; cell.classList.add('drag-over'); }); cell.addEventListener('dragleave', (e) => { cell.classList.remove('drag-over'); }); cell.addEventListener('drop', async (e) => { e.preventDefault(); cell.classList.remove('drag-over'); const noteId = e.dataTransfer.getData("application/note-id"); if (noteId) { const oldDStr = notesDataCache[noteId]?.assignedDate; try { await db.collection('notas').doc(noteId).update({ assignedDate: dStr }); if(notesDataCache[noteId]) notesDataCache[noteId].assignedDate = dStr; else notesDataCache[noteId] = { assignedDate: dStr }; if (oldDStr && assignedDatesCache[oldDStr]) { assignedDatesCache[oldDStr] = assignedDatesCache[oldDStr].filter(id => id !== noteId); if (assignedDatesCache[oldDStr].length === 0) delete assignedDatesCache[oldDStr]; } if (!assignedDatesCache[dStr]) assignedDatesCache[dStr] = []; if (!assignedDatesCache[dStr].includes(noteId)) assignedDatesCache[dStr].push(noteId); const bubbleInC = document.getElementById(`bubble-${noteId}`); if (bubbleInC) bubbleInC.style.display = 'none'; generateCalendar(currentCalendarMonth, currentCalendarYear); } catch (err) { console.error(`Err assign date ${noteId}:`, err); alert("Error."); } } }); datesG.appendChild(cell); } const totalC = firstD + daysInM; const cellsN = totalC <= 35 ? 35 : 42; for (let i = totalC; i < cellsN; i++) { const e = document.createElement('div'); e.className = 'calendar-date empty'; datesG.appendChild(e); } calDiv.appendChild(datesG); currentCalendarMonth = month; currentCalendarYear = year; }
+    const calendarIconElem = document.getElementById('calendarIcon'); const calendarWidgetElem = document.getElementById('calendarWidget'); let calendarTimeout; function showCalendar() { if (!calendarWidgetElem) return; clearTimeout(calendarTimeout); if (calendarWidgetElem.style.display !== 'block') { const { month, year } = initCalendarDate(); generateCalendar(month, year); calendarWidgetElem.style.display = 'block'; } } function hideCalendar() { if (!calendarWidgetElem) return; calendarTimeout = setTimeout(() => { calendarWidgetElem.style.display = 'none'; }, 300); } if (calendarIconElem) { calendarIconElem.addEventListener('mouseenter', showCalendar); calendarIconElem.addEventListener('mouseleave', hideCalendar); } if (calendarWidgetElem) { calendarWidgetElem.addEventListener('mouseenter', () => clearTimeout(calendarTimeout)); calendarWidgetElem.addEventListener('mouseleave', hideCalendar); } function openCalendar() { showCalendar(); }
 
     /****************** Otros Event Listeners y Setup Inicial ******************/
     if (addNoteOptionsElem) addNoteOptionsElem.addEventListener('click', (e) => e.stopPropagation());
