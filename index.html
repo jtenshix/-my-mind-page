@@ -39,8 +39,8 @@
     .grid-stack-item {
         transition: transform 0.4s cubic-bezier(0.25,1,0.5,1);
         /* === Margen inferior para espaciado vertical mínimo === */
-        /* Ajustado a 75px (aprox 2cm) según solicitado */
-        margin-bottom: 75px !important;
+        /* Ajustado a 150px (aprox 2cm + 2cm = 4cm) según solicitado */
+        margin-bottom: 150px !important;
         /* Importante: Asegurar que el item tenga overflow visible por si el contenido crece */
         overflow: visible !important;
     }
@@ -745,7 +745,7 @@
           .then(() => {
                console.log(`Nota ${noteId} eliminada de Firestore.`);
                // Opcional: eliminar inmediatamente del DOM para feedback rápido
-               // aunque onSnapshot lo hará eventualmente.
+               // aunque onSnapshot lo hará eventually.
                if (gridItem && grid && grid.engine.nodes.get(gridItem)) {
                    grid.removeWidget(gridItem);
                }
@@ -1052,11 +1052,11 @@
                     const oldDateStr = notesDataCache[noteId]?.assignedDate;
                     try {
                         await db.collection('notas').doc(noteId).update({ assignedDate: dateStr });
-                        // Actualizar Caches
+                        // --- Actualizar Caches ---
                         if(notesDataCache[noteId]) notesDataCache[noteId].assignedDate = dateStr; else notesDataCache[noteId] = { assignedDate: dateStr };
                         if (oldDateStr && assignedDatesCache[oldDateStr]) { assignedDatesCache[oldDateStr] = assignedDatesCache[oldDateStr].filter(id => id !== noteId); if (assignedDatesCache[oldDateStr].length === 0) delete assignedDatesCache[oldDateStr]; }
                         if (!assignedDatesCache[dateStr]) assignedDatesCache[dateStr] = []; if (!assignedDatesCache[dateStr].includes(noteId)) assignedDatesCache[dateStr].push(noteId);
-                        // Actualizar UI
+                        // --- Actualizar UI ---
                         const bubbleInCard = document.getElementById(`bubble-${noteId}`); if (bubbleInCard) bubbleInCard.style.display = 'none';
                         generateCalendar(currentCalendarMonth, currentCalendarYear); // Regenerar
                     } catch (error) { console.error(`Error al asignar fecha a nota ${noteId}:`, error); alert("Error al asignar la fecha."); }
