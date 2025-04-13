@@ -1,567 +1,1469 @@
 <!DOCTYPE html>
+
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <!-- Meta viewport para optimizar visualización en móviles -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Notas Oceánicas - Polaroid</title>
-    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
-    <style>
-      /* ===================== Estilos Globales ===================== */
-      html, body {
-        margin: 0;
-        padding: 0;
-        height: 100vh;
-        overflow: hidden; /* Evita scroll en el body */
-        background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
-        font-family: Arial, sans-serif;
-      }
-      .container {
-        height: 100%;
-        width: 100%;
-        padding: 2cm;
-        box-sizing: border-box;
-        display: flex; /* Usar flexbox */
-        flex-direction: column; /* Alinear contenido verticalmente */
-        position: relative;
-        overflow: hidden; /* Ocultar overflow del contenedor principal */
-      }
-      #notaDisplay {
-        flex-grow: 1; /* Permitir que el área de notas crezca */
-        width: 100%;
-        overflow-y: auto; /* Permitir scroll DENTRO del área de notas */
-        overflow-x: hidden;
-        position: relative; /* Necesario para algunos cálculos de GridStack */
-      }
-      .grid-stack-placeholder { display: none !important; }
-      .grid-stack-item {
-        transition: transform 0.4s cubic-bezier(0.25,1,0.5,1);
-        /* === Margen inferior para espaciado vertical mínimo === */
-        /* Ajustado a 150px (aprox 4cm) según solicitado previamente */
-        margin-bottom: 150px !important;
-        /* Importante: Asegurar que el item tenga overflow visible por si el contenido crece */
-        overflow: visible !important;
-      }
-      /* Contenedor interno de Gridstack */
-      .grid-stack-item-content {
-        overflow: visible !important; /* Permitir que el contenido se desborde si es necesario */
-        height: 100%; /* Ocupar toda la altura del item */
-        display: flex; /* Usar flex para la tarjeta interna */
-        flex-direction: column;
-      }
-      /* Ajuste para que el contenedor GridStack no interfiera con el margen inferior del último item */
-      .grid-stack {
-        padding-bottom: 1px; /* Pequeño padding para asegurar espacio visual al final */
-      }
-      /* ===================== Tarjetas de Nota ===================== */
-      .card-wrapper, .text-card {
-        background-color: #fff;
-        border: 2px solid #0077a3;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        width: 240px; /* Ancho fijo de la tarjeta */
-        display: flex;
-        flex-direction: column;
-        position: relative;
-        height: 100%; /* Ocupar altura del contenedor .grid-stack-item-content */
-        box-sizing: border-box;
-      }
-      /* No se necesita .card-content si usamos flex en .card-wrapper/.text-card */
-      .image-container {
-        width: 100%; /* Ajustar al ancho de la tarjeta */
-        height: 240px; /* Altura fija para la imagen */
-        overflow: hidden;
-        position: relative;
-        flex-shrink: 0; /* Evitar que se encoja */
-      }
-      .image-container img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-      }
-      .note-content {
-        background-color: #fff; /* Redundante si la tarjeta es blanca */
-        padding: 10px;
-        text-align: left;
-        font-size: 16px;
-        color: #333;
-        min-height: 50px;
-        box-sizing: border-box;
-        word-wrap: break-word;
-        overflow: hidden; /* Ocultar overflow del texto */
-        flex-grow: 1; /* Permitir que crezca para llenar espacio */
-        /* Considerar añadir overflow-y: auto si el texto es muy largo */
-        /* max-height: 300px; */ /* Opcional: limitar altura máxima */
-      }
-      .note-content a { color: #0077a3; text-decoration: underline; }
-      /* ===================== Área de Controles de la Nota ===================== */
-      .menu-bar {
-        background-color: #0288D1;
-        padding: 5px 8px; /* Ajustar padding */
-        display: flex;
-        justify-content: space-between; /* Distribuir elementos */
-        align-items: center;
-        flex-shrink: 0;
-        border-top: 1px solid #0077a3; /* Línea separadora opcional */
-        border-bottom-left-radius: 6px; /* Redondear esquinas inferiores */
-        border-bottom-right-radius: 6px;
-      }
-      .menu-icon {
-        background: none;
-        border: none;
-        font-size: 20px;
-        color: #fff;
-        cursor: pointer;
-        padding: 2px 4px; /* Área de clic un poco mayor */
-      }
-      .bubble-icon {
-        color: #FFCD05;
-        font-size: 22px;
-        /* margin-right ya no es necesario con space-between */
-      }
-      /* Contenedor para botones de la derecha */
-      .menu-actions {
-        display: flex;
-        gap: 4px;
-      }
-      /* ===================== Botón Principal para Agregar Nota/Imagen ===================== */
-      #addNoteButton {
-        position: absolute;
-        bottom: 30px; /* Un poco más arriba */
-        right: 30px;
-        background-color: #006994;
-        color: #fff;
-        border: none;
-        border-radius: 50%;
-        width: 60px;
-        height: 60px;
-        font-size: 30px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3); /* Sombra más pronunciada */
-        transition: background-color 0.3s ease, transform 0.3s ease;
-        z-index: 1001;
-      }
-      #addNoteButton:hover {
-        background-color: #005577;
-        transform: scale(1.05);
-      }
-      /* ===================== Menú Emergente ===================== */
-      #addNoteOptions {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: rgba(0,0,0,0.85); /* Ligeramente más oscuro */
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.4);
-        display: none;
-        flex-direction: row;
-        justify-content: center;
-        align-items: center;
-        gap: 25px; /* Más espacio */
-        padding: 25px;
-        z-index: 1002;
-      }
-      #addNoteOptions .card {
-        background-color: #2c2c2c; /* Fondo de tarjeta más oscuro */
-        border: 1px solid #0077a3; /* Borde más sutil */
-        border-radius: 8px;
-        padding: 20px;
-        text-align: center;
-        cursor: pointer;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        width: 180px; /* Ligeramente más estrechas */
-      }
-      #addNoteOptions .card:hover {
-        transform: translateY(-5px) scale(1.03); /* Efecto hover */
-        box-shadow: 0 6px 12px rgba(0, 119, 163, 0.5);
-      }
-      #addNoteOptions .card h2 { color: #36a2eb; margin-bottom: 10px; } /* Color de título */
-      #addNoteOptions .card p { color: #ccc; font-size: 14px; } /* Color de texto */
-      /* ===================== Submenú para Ingresar Datos ===================== */
-      #inputArea {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: #ffffff; /* Fondo blanco */
-        padding: 25px 30px; /* Más padding */
-        border-radius: 8px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        display: none; /* Oculto por defecto */
-        flex-direction: column;
-        gap: 15px; /* Espacio entre elementos */
-        width: 90%; /* Más ancho en móviles */
-        max-width: 550px; /* Ancho máximo */
-        z-index: 1002;
-      }
-      #inputArea label {
-        font-weight: bold;
-        color: #333;
-        margin-bottom: 3px; /* Espacio debajo de la etiqueta */
-        font-size: 14px;
-      }
-      #inputArea textarea,
-      #inputArea input[type="text"] {
-        padding: 12px; /* Más padding interno */
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        resize: vertical;
-        width: 100%;
-        box-sizing: border-box;
-        line-height: 1.5;
-        font-size: 16px; /* Tamaño de fuente */
-      }
-      #inputArea textarea { min-height: 80px; }
-      #inputArea textarea#textNote { min-height: 120px; }
-      #inputArea button {
-        padding: 10px 20px; /* Más padding horizontal */
-        background-color: #006994;
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s ease, transform 0.1s ease;
-        align-self: flex-end;
-        margin-top: 10px;
-        font-size: 16px;
-        font-weight: bold;
-      }
-      #inputArea button:hover { background-color: #005577; }
-      #inputArea button:active { transform: scale(0.98); } /* Efecto al presionar */
-      .input-group { display: flex; flex-direction: column; gap: 5px; width: 100%; }
-      /* ===================== Calendario ===================== */
-      .calendar-icon {
-        position: absolute;
-        bottom: 30px; /* Alinear con botón Add */
-        left: 30px;
-        width: 45px; /* Ligeramente más grande */
-        height: 45px;
-        background-color: #fff;
-        border: 1px solid #ccc;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: #333;
-        font-size: 24px; /* Icono más grande */
-        cursor: pointer;
-        z-index: 1001;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      }
-      .calendar-widget {
-        position: absolute;
-        bottom: 85px; /* Ajustar posición sobre el icono */
-        left: 20px; /* Ajustar alineación */
-        background: #fff;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        padding: 15px; /* Más padding */
-        display: none;
-        z-index: 1001;
-        width: 320px; /* Ancho ajustado */
-        min-height: 300px; /* Altura ajustada */
-      }
-      .calendar-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-      }
-      .calendar-header button {
-        background: none;
-        border: none;
-        cursor: pointer;
-        font-size: 20px;
-        color: #0077a3;
-        padding: 5px 8px;
-        border-radius: 4px;
-        transition: background-color 0.2s ease;
-      }
-      .calendar-header button:hover:not(:disabled) { background-color: #e0f7fa; }
-      .calendar-header button:disabled { color: #ccc; cursor: default; }
-      .calendar-header span { font-weight: bold; color: #333; font-size: 18px; } /* Título más grande */
-      .calendar-days-header,
-      .calendar-dates-grid {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        text-align: center;
-        gap: 6px; /* Espacio entre celdas */
-      }
-      .calendar-days-header {
-        margin-bottom: 10px;
-        font-weight: bold;
-        color: #555;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #eee;
-        font-size: 13px; /* Tamaño de días */
-      }
-      .calendar-day { padding: 3px; }
-      .calendar-date {
-        padding: 0; /* Quitar padding para controlar tamaño con width/height */
-        border-radius: 50%;
-        color: #333;
-        border: 2px solid transparent; /* Borde para hover/today */
-        cursor: pointer;
-        position: relative;
-        width: 36px; /* Tamaño fijo */
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto;
-        line-height: 1;
-        font-size: 14px; /* Tamaño número */
-        transition: background-color 0.2s ease, border-color 0.2s ease;
-      }
-      .calendar-date.empty {
-        background: none;
-        cursor: default;
-        opacity: 0;
-      }
-      .calendar-date:not(.empty):hover {
-        background-color: #e0f7fa;
-        border-color: #b3e5fc;
-      }
-      .calendar-date.today {
-        border-color: #0077a3; /* Borde azul para hoy */
-        font-weight: bold;
-        color: #005577;
-      }
-      /* Drop target feedback */
-      .calendar-date.drag-over {
-        background-color: #a2dff7 !important; /* Color fuerte al arrastrar sobre */
-        border-color: #0077a3 !important;
-      }
-      /* Indicador de la bolita asignada en el calendario */
-      .assigned-bubble {
-        color: #FFCD05; /* Amarillo */
-        font-size: 11px; /* Tamaño ajustado */
-        position: absolute;
-        bottom: 3px; /* Posición */
-        left: 50%;
-        transform: translateX(-50%);
-        line-height: 1;
-        text-shadow: 0 0 1px rgba(0,0,0,0.5); /* Sombra para visibilidad */
-        pointer-events: none; /* No interferir con clics en la fecha */
-      }
-      /* Permitir múltiples bolitas (simple apilado vertical) */
-      .calendar-date .assigned-bubble + .assigned-bubble {
-        bottom: -2px; /* Ajustar posición si hay más de una */
-      }
-      /* ===================== Capa para Cerrar Menús (Blur) ===================== */
-      .blur-background {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.6); /* Más oscuro */
-        backdrop-filter: blur(6px);
-        -webkit-backdrop-filter: blur(6px);
-        display: none;
-        z-index: 1000;
-        cursor: pointer;
-      }
-      
-      /* ===================== Ajustes Responsive para Celulares ===================== */
-      @media (max-width: 600px) {
-        .container { padding: 1cm; }
-        #addNoteButton {
-          bottom: 15px;
-          right: 15px;
-          width: 50px;
-          height: 50px;
-          font-size: 24px;
-        }
-        .calendar-icon {
-          bottom: 15px;
-          left: 15px;
-          width: 40px;
-          height: 40px;
-          font-size: 20px;
-        }
-        .note-content { font-size: 14px; }
-        .menu-bar { padding: 3px 6px; }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div id="notaDisplay" class="grid-stack"></div>
-      <button id="addNoteButton" title="Añadir nueva nota o imagen">+</button>
-      <div id="addNoteOptions">
-        <div class="card" id="addImageLinkOption" title="Añadir una nota con imagen desde un enlace web">
-          <h2>️ Imagen</h2>
-          <p>Guardar link de imagen.</p>
-        </div>
-        <div class="card" id="addTextNoteOption" title="Añadir una nota de texto simple">
-          <h2> Nota</h2>
-          <p>Subir nota de texto.</p>
-        </div>
-      </div>
-      <div id="inputArea">
-        <div id="imageLinkInputArea" style="display: none;">
-          <div class="input-group">
-            <label for="imageLink">Link de la imagen:</label>
-            <input type="text" id="imageLink" placeholder="Pega aquí la URL de la imagen (ej: https://...)" />
-          </div>
-          <div class="input-group">
-            <label for="imageNoteText">Texto adicional (opcional):</label>
-            <textarea id="imageNoteText" placeholder="Escribe aquí una descripción o nota relacionada con la imagen..." rows="3"></textarea>
-          </div>
-          <button id="saveImageLink">Guardar Imagen</button>
-        </div>
-        <div id="textNoteInputArea" style="display: none;">
-          <div class="input-group">
-            <label for="textNote">Nota:</label>
-            <textarea id="textNote" placeholder="Escribe tu nota aquí..." rows="5"></textarea>
-          </div>
-          <button id="saveTextNote">Guardar Nota</button>
-        </div>
-      </div>
-      <div id="calendarIcon" class="calendar-icon" title="Mostrar/Ocultar Calendario"></div>
-      <div id="calendarWidget" class="calendar-widget"></div>
-      <div class="blur-background"></div>
-    </div>
-    <script>
-      /****************** Utilidades y Configuración de Firebase ******************/
-      function linkify(text) {
-        if (!text) return "";
-        const urlRegex = /(?<!href=["'])(https?:\/\/[^\s<>"']+)/g;
-        const replacedText = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
-        return replacedText.replace(/\n/g, '<br>');
-      }
-      const firebaseConfig = {
-        apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs", // ¡Considera mover a un entorno seguro!
-        authDomain: "oasis-b036d.firebaseapp.com",
-        projectId: "oasis-b036d",
-        storageBucket: "oasis-b036d.appspot.com",
-        messagingSenderId: "141546637821",
-        appId: "1:141546637821:web:0a861aeb13831774ed3194",
-        measurementId: "G-HB2P17H5YL"
-      }; // Reemplaza con tu configuración real
-      try { firebase.initializeApp(firebaseConfig); } catch (e) { console.error("Error inicializando Firebase:", e); }
-      const db = firebase.firestore();
 
-      /****************** Inicialización de GridStack ******************/
-      let grid;
-      try {
-        grid = GridStack.init({
-          margin: 75,
-          cellHeight: 'auto',
-          disableResize: true,
-          float: false,
-          animate: true,
-          alwaysShowResizeHandle: false,
-          draggable: { handle: '.menu-bar', scroll: true, appendTo: 'body' }
-        });
-      } catch (e) { console.error("Error inicializando GridStack:", e); alert("Error al iniciar el área de notas."); }
+<head>
 
-      /****************** Utilidades UI (Scroll, Resize Textarea) ******************/
-      const gridContainer = document.getElementById('notaDisplay');
-      if (gridContainer) gridContainer.addEventListener('wheel', (event) => {}, { passive: true });
-      function autoResizeTextarea(el) { if (!el) return; el.style.height = 'auto'; el.style.height = (el.scrollHeight + 2) + 'px'; }
-      const textNoteInputElem = document.getElementById('textNote');
-      const imageNoteTextElem = document.getElementById('imageNoteText');
-      if (textNoteInputElem) textNoteInputElem.addEventListener('input', () => autoResizeTextarea(textNoteInputElem));
-      if (imageNoteTextElem) imageNoteTextElem.addEventListener('input', () => autoResizeTextarea(imageNoteTextElem));
+  <meta charset="UTF-8" />
 
-      /****************** Renderización, Edición y Eliminación de Notas ******************/
-      const displayedNotes = new Map();
-      // --- FUNCIÓN PARA MOSTRAR NOTA ---
-      function mostrarNotaEnPantalla(doc) {
-        const notaData = doc.data();
-        const noteId = doc.id;
-        let gridItem = document.createElement('div');
-        gridItem.classList.add('grid-stack-item');
-        gridItem.setAttribute('data-note-id', noteId);
-        const content = document.createElement('div');
-        content.classList.add('grid-stack-item-content');
-        let card;
-        let noteContentElement;
-        if (notaData.url) { // Tarjeta Imagen
-          card = document.createElement('div');
-          card.classList.add('card-wrapper');
-          const imageContainer = document.createElement('div');
-          imageContainer.classList.add('image-container');
-          const img = document.createElement('img');
-          img.src = notaData.url;
-          img.alt = notaData.texto || 'Imagen de la nota';
-          img.loading = 'lazy';
-          img.onerror = () => {
-            imageContainer.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; height:100%; background-color:#eee; color:red; text-align:center; padding:10px;">⚠️<br/>Error al<br/>cargar imagen</div>`;
-          }
-          imageContainer.appendChild(img);
-          card.appendChild(imageContainer);
-          if(notaData.texto) {
-            noteContentElement = document.createElement('div');
-            noteContentElement.classList.add('note-content');
-            noteContentElement.innerHTML = linkify(notaData.texto);
-            card.appendChild(noteContentElement);
-          }
-        } else if (notaData.nota) { // Tarjeta Texto
-          card = document.createElement('div');
-          card.classList.add('text-card');
-          noteContentElement = document.createElement('div');
-          noteContentElement.classList.add('note-content');
-          noteContentElement.innerHTML = linkify(notaData.nota);
-          card.appendChild(noteContentElement);
-        } else { return null; } // Nota vacía
-        if (noteContentElement) {
-          Array.from(noteContentElement.getElementsByTagName('a')).forEach(link => {
-            link.setAttribute('target', '_blank');
-            link.setAttribute('rel', 'noopener noreferrer');
-          });
-        }
-        // Barra de Menú
-        const menuBar = document.createElement('div');
-        menuBar.classList.add('menu-bar');
-        // Aquí se crearán los botones del menú (editar, eliminar, etc.)
-        // Ejemplo: botón de eliminar
-        const deleteBtn = document.createElement('button');
-        deleteBtn.classList.add('menu-icon');
-        deleteBtn.title = "Eliminar esta nota";
-        deleteBtn.textContent = "🗑️";
-        deleteBtn.addEventListener('click', () => {
-          deleteNote(noteId);
-        });
-        // Se pueden agregar otros botones (por ejemplo, para editar)
-        const menuActions = document.createElement('div');
-        menuActions.classList.add('menu-actions');
-        menuActions.appendChild(deleteBtn);
-        menuBar.appendChild(menuActions);
-        card.appendChild(menuBar);
-        content.appendChild(card);
-        gridItem.appendChild(content);
-        // Se añade el item a GridStack
-        grid.addWidget(gridItem);
-        displayedNotes.set(noteId, gridItem);
-      }
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-      /****************** Función para Eliminar Nota sin mostrar error en la interfaz ******************/
-      function deleteNote(noteId) {
-        // Buscamos el elemento que representa la nota mediante su atributo data-note-id
-        const noteElement = document.querySelector('[data-note-id="' + noteId + '"]');
-        if (noteElement) {
-          noteElement.parentNode.removeChild(noteElement);
-        }
-        // Si usas Firestore, elimina la nota de la base de datos; en caso de error, lo registra en consola sin mostrar aviso al usuario:
-        db.collection("notes").doc(noteId).delete().catch(err => {
-          console.error("Error al eliminar la nota en Firestore:", err);
-        });
-      }
+  <title>Notas Oceánicas - Polaroid</title>
 
-      /****************** Resto del Código (lectura, edición, calendario, etc.) ******************/
-      // Aquí continúa el resto de funciones y lógica de tu aplicación, exactamente como estaba.
-    </script>
-  </body>
+  <!-- Firebase -->
+
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+
+  <!-- GridStack CSS & JS -->
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
+
+  <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
+
+  <style>
+
+    /* ===================== Estilos Globales ===================== */
+
+    html, body {
+
+      margin: 0;
+
+      padding: 0;
+
+      height: 100vh;
+
+      overflow: hidden;
+
+      background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
+
+      font-family: Arial, sans-serif;
+
+    }
+
+    /* Contenedor principal: se deja un padding de 2cm en todas direcciones */
+
+    .container {
+
+      height: 100%;
+
+      width: 100%;
+
+      padding: 2cm;
+
+      box-sizing: border-box;
+
+      display: flex;
+
+      flex-direction: column;
+
+      align-items: center;
+
+      justify-content: center;
+
+      position: relative;
+
+    }
+
+    /* Área de notas (GridStack) ocupa el total del contenedor */
+
+    #notaDisplay {
+
+      margin: 0;
+
+      width: 100%;
+
+      height: 100%;
+
+    }
+
+    .grid-stack-placeholder { display: none !important; }
+
+    .grid-stack-item { transition: transform 0.4s cubic-bezier(0.25,1,0.5,1); }
+
+
+
+    /* ===================== Tarjetas de Nota ===================== */
+
+    .card-wrapper, .text-card {
+
+      background-color: #fff;
+
+      border: 2px solid #0077a3;
+
+      border-radius: 8px;
+
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+
+      width: 240px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      position: relative;
+
+    }
+
+    .card-content { flex-grow: 1; }
+
+    .image-container {
+
+      width: 240px;
+
+      height: 240px;
+
+      overflow: hidden;
+
+      position: relative;
+
+    }
+
+    .image-container img {
+
+      width: 100%;
+
+      height: 100%;
+
+      object-fit: cover;
+
+      display: block;
+
+    }
+
+    .note-content {
+
+      background-color: #fff;
+
+      padding: 10px;
+
+      text-align: left;
+
+      font-size: 16px;
+
+      color: #333;
+
+      min-height: 50px;
+
+      box-sizing: border-box;
+
+      word-wrap: break-word;
+
+      overflow: hidden;
+
+    }
+
+    .note-content a { color: #0077a3; text-decoration: underline; }
+
+
+
+    /* ===================== Área de Controles de la Nota ===================== */
+
+    .menu-bar {
+
+      background-color: #0288D1;
+
+      padding: 5px;
+
+      display: flex;
+
+      justify-content: flex-end;
+
+      align-items: center;
+
+    }
+
+    .menu-icon {
+
+      background: none;
+
+      border: none;
+
+      font-size: 20px;
+
+      color: #fff;
+
+      cursor: pointer;
+
+      margin-left: 4px;
+
+    }
+
+    /* Botón de la bolita: se le asignará un id para identificarla (ej. "bubble-<doc.id>") */
+
+    .bubble-icon {
+
+      color: #FFCD05;
+
+      font-size: 22px;
+
+      margin-right: 8px;
+
+    }
+
+
+
+    /* ===================== Botón Principal para Agregar Nota/Imagen ===================== */
+
+    #addNoteButton {
+
+      position: absolute;
+
+      bottom: 20px;
+
+      right: 20px;
+
+      background-color: #006994;
+
+      color: #fff;
+
+      border: none;
+
+      border-radius: 50%;
+
+      width: 60px;
+
+      height: 60px;
+
+      font-size: 30px;
+
+      display: flex;
+
+      justify-content: center;
+
+      align-items: center;
+
+      cursor: pointer;
+
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+
+      transition: background-color 0.3s ease, transform 0.3s ease;
+
+      z-index: 4;
+
+    }
+
+    #addNoteButton:hover {
+
+      background-color: #005577;
+
+      transform: scale(1.05);
+
+    }
+
+
+
+    /* ===================== Menú Emergente ===================== */
+
+    #addNoteOptions {
+
+      position: absolute;
+
+      top: 50%;
+
+      left: 50%;
+
+      transform: translate(-50%, -50%);
+
+      background-color: rgba(0,0,0,0.8);
+
+      border-radius: 10px;
+
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+
+      display: none;
+
+      flex-direction: row;
+
+      justify-content: center;
+
+      align-items: center;
+
+      gap: 20px;
+
+      padding: 20px;
+
+      z-index: 4;
+
+    }
+
+    #addNoteOptions .card {
+
+      background-color: #1e1e1e;
+
+      border: 2px solid #0077a3;
+
+      border-radius: 8px;
+
+      padding: 20px;
+
+      text-align: center;
+
+      cursor: pointer;
+
+      transition: transform 0.3s ease;
+
+      width: 200px;
+
+    }
+
+    #addNoteOptions .card:hover { transform: scale(1.05); }
+
+    #addNoteOptions .card h2 { color: #0077a3; margin-bottom: 10px; }
+
+    #addNoteOptions .card p { color: #fff; font-size: 14px; }
+
+
+
+    /* ===================== Submenú para Ingresar Datos ===================== */
+
+    #inputArea {
+
+      position: absolute;
+
+      top: 50%;
+
+      left: 50%;
+
+      transform: translate(-50%, -50%);
+
+      background-color: rgba(255,255,255,0.95);
+
+      padding: 20px;
+
+      border-radius: 8px;
+
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+
+      flex-direction: column;
+
+      gap: 10px;
+
+      width: 80%;
+
+      max-width: 500px;
+
+      z-index: 4;
+
+      display: none;
+
+    }
+
+    #inputArea textarea,
+
+    #inputArea input[type="text"] {
+
+      padding: 10px;
+
+      border: 1px solid #ccc;
+
+      border-radius: 4px;
+
+      resize: none;
+
+      width: 100%;
+
+      box-sizing: border-box;
+
+      line-height: 1.5;
+
+    }
+
+    #inputArea button {
+
+      padding: 10px 15px;
+
+      background-color: #006994;
+
+      color: #fff;
+
+      border: none;
+
+      border-radius: 4px;
+
+      cursor: pointer;
+
+      transition: background-color 0.3s ease;
+
+    }
+
+    #inputArea button:hover { background-color: #005577; }
+
+    .input-group { display: flex; flex-direction: column; gap: 5px; }
+
+
+
+    /* ===================== Calendario ===================== */
+
+    .calendar-icon {
+
+      position: absolute;
+
+      bottom: 20px;
+
+      left: 20px;
+
+      width: 40px;
+
+      height: 40px;
+
+      background-color: #fff;
+
+      border: 1px solid #ccc;
+
+      border-radius: 50%;
+
+      display: flex;
+
+      justify-content: center;
+
+      align-items: center;
+
+      color: #333;
+
+      font-size: 20px;
+
+      cursor: pointer;
+
+      z-index: 4;
+
+    }
+
+    .calendar-widget {
+
+      position: absolute;
+
+      bottom: 70px;
+
+      left: 20px;
+
+      background: #fff;
+
+      border: 1px solid #ddd;
+
+      padding: 10px;
+
+      display: none;
+
+      z-index: 4;
+
+      width: 300px;      /* Calendario un poco más ancho */
+
+      min-height: 220px; /* Mayor altura mínima */
+
+    }
+
+    .calendar-header {
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      margin-bottom: 5px;
+
+    }
+
+    .calendar-header button {
+
+      background: none;
+
+      border: none;
+
+      cursor: pointer;
+
+      font-size: 16px;
+
+      color: #333;
+
+    }
+
+    .calendar-header span { font-weight: bold; color: #333; }
+
+    .calendar-days-header,
+
+    .calendar-dates-grid {
+
+      display: grid;
+
+      grid-template-columns: repeat(7, 1fr);
+
+      text-align: center;
+
+      font-size: 12px;
+
+      gap: 4px 0; /* Separación vertical de 4px */
+
+    }
+
+    .calendar-days-header { margin-bottom: 5px; font-weight: bold; color: #333; }
+
+    .calendar-day,
+
+    .calendar-date {
+
+      padding: 3px;
+
+      border-radius: 3px;
+
+      color: #333;
+
+      border: 1px solid transparent;
+
+    }
+
+    .calendar-date.empty { background: none; }
+
+    .calendar-date:hover { background-color: #e0e0e0; }
+
+    /* Indicador de la bolita asignada en el calendario */
+
+    .assigned-bubble {
+
+      color: #FFCD05;
+
+      font-size: 20px;
+
+      display: block;
+
+      margin: auto;
+
+      margin-top: 4px;
+
+    }
+
+
+
+    /* ===================== Capa para Cerrar Menús (Blur) ===================== */
+
+    .blur-background {
+
+      position: fixed;
+
+      top: 0;
+
+      left: 0;
+
+      width: 100%;
+
+      height: 100%;
+
+      background: rgba(0,0,0,0.5);
+
+      backdrop-filter: blur(5px);
+
+      display: none;
+
+      z-index: 3;
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <div class="container">
+
+    <!-- Área de Notas usando GridStack -->
+
+    <div id="notaDisplay" class="grid-stack"></div>
+
+    
+
+    <!-- Botón Principal para Agregar Nota/Imagen -->
+
+    <button id="addNoteButton">+</button>
+
+    
+
+    <!-- Menú Emergente: Seleccionar entre Imagen o Nota -->
+
+    <div id="addNoteOptions">
+
+      <div class="card" id="addImageLinkOption">
+
+        <h2>Imagen</h2>
+
+        <p>Guardar link de imagen.</p>
+
+      </div>
+
+      <div class="card" id="addTextNoteOption">
+
+        <h2>Nota</h2>
+
+        <p>Subir nota de texto.</p>
+
+      </div>
+
+    </div>
+
+    
+
+    <!-- Submenú para Ingresar Datos -->
+
+    <div id="inputArea">
+
+      <div id="imageLinkInputArea">
+
+        <div class="input-group">
+
+          <label for="imageLink">Link de la imagen:</label>
+
+          <input type="text" id="imageLink" placeholder="Ej: https://..." />
+
+        </div>
+
+        <div class="input-group">
+
+          <label for="imageNoteText">Texto de la imagen (opcional):</label>
+
+          <textarea id="imageNoteText" placeholder="Descripción o nota..."></textarea>
+
+        </div>
+
+        <button id="saveImageLink">Guardar Link</button>
+
+      </div>
+
+      <div id="textNoteInputArea">
+
+        <textarea id="textNote" placeholder="Escribe tu nota aquí..."></textarea>
+
+        <button id="saveTextNote">Guardar Nota</button>
+
+      </div>
+
+    </div>
+
+    
+
+    <!-- Calendario: Icono y Widget -->
+
+    <div id="calendarIcon" class="calendar-icon">☰</div>
+
+    <div id="calendarWidget" class="calendar-widget"></div>
+
+    
+
+    <!-- Capa para detectar clics fuera y cerrar menús -->
+
+    <div class="blur-background"></div>
+
+  </div>
+
+
+
+  <script>
+
+    /****************** Utilidades y Configuración de Firebase ******************/
+
+    function transformDriveLink(url) {
+
+      if (!url.includes("drive.google.com")) return url;
+
+      let fileId = null;
+
+      const regex1 = /\/file\/d\/([^\/]+)\//;
+
+      let match = url.match(regex1);
+
+      if (match && match[1]) fileId = match[1];
+
+      if (!fileId) {
+
+        const regex2 = /[?&]id=([^&]+)/;
+
+        match = url.match(regex2);
+
+        if (match && match[1]) fileId = match[1];
+
+      }
+
+      return fileId ? "https://drive.google.com/uc?export=view&id=" + fileId : url;
+
+    }
+
+    function linkify(text) {
+
+      if (!text) return "";
+
+      const replacedText = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+
+      return replacedText.replace(/\n/g, '<br>');
+
+    }
+
+    const firebaseConfig = {
+
+      apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
+
+      authDomain: "oasis-b036d.firebaseapp.com",
+
+      projectId: "oasis-b036d",
+
+      storageBucket: "oasis-b036d.appspot.com",
+
+      messagingSenderId: "141546637821",
+
+      appId: "1:141546637821:web:0a861aeb13831774ed3194",
+
+      measurementId: "G-HB2P17H5YL"
+
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    const db = firebase.firestore();
+
+
+
+    /****************** Inicialización de GridStack ******************/
+
+    const grid = GridStack.init({
+
+      margin: 75, // Aproximadamente 2cm en píxeles (ajustado para homogeneidad)
+
+      cellHeight: 'auto',
+
+      disableResize: true,
+
+      float: true,
+
+      animate: true,
+
+      alwaysShowResizeHandle: true,
+
+      draggable: { handle: '.menu-bar' }
+
+    });
+
+
+
+    function autoResizeTextarea(el) {
+
+      el.style.height = 'auto';
+
+      el.style.height = el.scrollHeight + 'px';
+
+    }
+
+    const textNoteInput = document.getElementById('textNote');
+
+    const imageNoteText = document.getElementById('imageNoteText');
+
+    textNoteInput.addEventListener('input', () => autoResizeTextarea(textNoteInput));
+
+    imageNoteText.addEventListener('input', () => autoResizeTextarea(imageNoteText));
+
+
+
+    /****************** Renderización de Notas ******************/
+
+    function mostrarNotaEnPantalla(doc) {
+
+      const notaData = doc.data();
+
+      const gridItem = document.createElement('div');
+
+      gridItem.classList.add('grid-stack-item');
+
+      gridItem.setAttribute('data-note-id', doc.id);
+
+      const content = document.createElement('div');
+
+      let card, noteContent = document.createElement('div');
+
+
+
+      if (notaData.url) {
+
+        card = document.createElement('div');
+
+        card.classList.add('card-wrapper');
+
+        const imageContainer = document.createElement('div');
+
+        imageContainer.classList.add('image-container');
+
+        const img = document.createElement('img');
+
+        img.src = transformDriveLink(notaData.url);
+
+        img.alt = 'Imagen de la nota';
+
+        imageContainer.appendChild(img);
+
+        card.appendChild(imageContainer);
+
+        noteContent = document.createElement('div');
+
+        noteContent.classList.add('note-content');
+
+        noteContent.innerHTML = notaData.texto ? linkify(notaData.texto) : '';
+
+        card.appendChild(noteContent);
+
+      } else if (notaData.nota) {
+
+        card = document.createElement('div');
+
+        card.classList.add('text-card');
+
+        noteContent = document.createElement('div');
+
+        noteContent.classList.add('note-content');
+
+        noteContent.innerHTML = linkify(notaData.nota);
+
+        card.appendChild(noteContent);
+
+      }
+
+      for (let link of noteContent.getElementsByTagName('a')) {
+
+        link.setAttribute('target', '_blank');
+
+      }
+
+      
+
+      /***** Área de Controles de la Nota *****/
+
+      const menuBar = document.createElement('div');
+
+      menuBar.classList.add('menu-bar');
+
+
+
+      // Botón de la bolita (draggable) – se le asigna id único basado en doc.id
+
+      const bubbleButton = document.createElement('button');
+
+      bubbleButton.classList.add('menu-icon', 'bubble-icon');
+
+      bubbleButton.innerHTML = '●';
+
+      bubbleButton.setAttribute('draggable', 'true');
+
+      bubbleButton.id = "bubble-" + doc.id;
+
+      bubbleButton.addEventListener('dragstart', function(e) {
+
+        var img = new Image();
+
+        img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PboX9AAAAABJRU5ErkJggg==';
+
+        e.dataTransfer.setDragImage(img, 0, 0);
+
+        // Se transfiere el id de la nota
+
+        e.dataTransfer.setData("application/note-id", doc.id);
+
+        openCalendar();
+
+      });
+
+      bubbleButton.addEventListener('click', function(e) {
+
+        openCalendar();
+
+      });
+
+      // Botón de editar
+
+      const editButton = document.createElement('button');
+
+      editButton.classList.add('menu-icon');
+
+      editButton.innerHTML = '✎';
+
+      editButton.onclick = function () {
+
+        let currentText = notaData.texto || notaData.nota || '';
+
+        const editInput = document.createElement('textarea');
+
+        editInput.value = currentText;
+
+        editInput.style.width = '100%';
+
+        editInput.style.height = '100px';
+
+        editInput.style.resize = 'none';
+
+        editInput.style.overflowY = 'auto';
+
+        const noteContainer = card.querySelector('.note-content');
+
+        if (noteContainer) {
+
+          noteContainer.innerHTML = '';
+
+          noteContainer.appendChild(editInput);
+
+        }
+
+        const saveEditButton = document.createElement('button');
+
+        saveEditButton.classList.add('menu-icon');
+
+        saveEditButton.innerHTML = '💾';
+
+        saveEditButton.onclick = function () {
+
+          const newText = editInput.value;
+
+          if (newText.trim() !== '') {
+
+            db.collection('notas').doc(doc.id)
+
+              .update(notaData.url ? { texto: newText } : { nota: newText })
+
+              .then(() => {
+
+                const noteContainer = card.querySelector('.note-content');
+
+                noteContainer.innerHTML = linkify(newText);
+
+                menuBar.replaceChild(editButton, saveEditButton);
+
+              })
+
+              .catch((error) => { console.error('Error al actualizar la nota: ', error); });
+
+          }
+
+        };
+
+        menuBar.replaceChild(saveEditButton, editButton);
+
+      };
+
+      // Botón de eliminar
+
+      const deleteButton = document.createElement('button');
+
+      deleteButton.classList.add('menu-icon');
+
+      deleteButton.innerHTML = '✖';
+
+      deleteButton.onclick = function () {
+
+        db.collection('notas').doc(doc.id).delete()
+
+          .then(() => {
+
+            grid.removeWidget(gridItem);
+
+            // Elimina el indicador de la bolita asignada en el calendario
+
+            document.querySelectorAll(".assigned-bubble[data-note='"+doc.id+"']").forEach(b => b.remove());
+
+          })
+
+          .catch((error) => { console.error("Error al eliminar la nota: ", error); });
+
+      };
+
+      // Contenedor para los botones de editar y eliminar (juntos)
+
+      const editDeleteContainer = document.createElement('div');
+
+      editDeleteContainer.style.display = 'flex';
+
+      editDeleteContainer.style.gap = '4px';
+
+      editDeleteContainer.appendChild(editButton);
+
+      editDeleteContainer.appendChild(deleteButton);
+
+      // Se agregan los controles: primero la bolita, luego el grupo edit/delete
+
+      menuBar.appendChild(bubbleButton);
+
+      menuBar.appendChild(editDeleteContainer);
+
+      
+
+      card.appendChild(menuBar);
+
+      content.appendChild(card);
+
+      gridItem.appendChild(content);
+
+
+
+      const pos = {
+
+        x: notaData.x || 0,
+
+        y: typeof notaData.y === 'number' ? notaData.y : 0,
+
+        w: notaData.w || 2,
+
+        h: notaData.h || 2,
+
+        autoPosition: (notaData.x === undefined || notaData.y === undefined)
+
+      };
+
+      grid.addWidget(gridItem, pos);
+
+    }
+
+    function limpiarNotasDisplay() { grid.removeAll(); }
+
+    db.collection('notas').orderBy('__name__')
+
+      .onSnapshot((snapshot) => {
+
+        limpiarNotasDisplay();
+
+        snapshot.forEach((doc) => { mostrarNotaEnPantalla(doc); });
+
+      });
+
+    
+
+    /****************** Manejo de la Interfaz para Agregar Notas ******************/
+
+    const addNoteButton = document.getElementById('addNoteButton');
+
+    const addNoteOptions = document.getElementById('addNoteOptions');
+
+    const addImageLinkOption = document.getElementById('addImageLinkOption');
+
+    const addTextNoteOption = document.getElementById('addTextNoteOption');
+
+    const inputArea = document.getElementById('inputArea');
+
+    const imageLinkInputArea = document.getElementById('imageLinkInputArea');
+
+    const imageLinkInput = document.getElementById('imageLink');
+
+    const saveImageLinkButton = document.getElementById('saveImageLink');
+
+    const textNoteInputArea = document.getElementById('textNoteInputArea');
+
+    const saveTextNoteButton = document.getElementById('saveTextNote');
+
+    const blurBackground = document.querySelector('.blur-background');
+
+    let addingNewNote = false;
+
+    
+
+    function hideMenus() {
+
+      addNoteOptions.style.display = 'none';
+
+      inputArea.style.display = 'none';
+
+      blurBackground.style.display = 'none';
+
+      addingNewNote = false;
+
+    }
+
+    addNoteButton.onclick = function (event) {
+
+      event.stopPropagation();
+
+      addingNewNote = !addingNewNote;
+
+      if (addingNewNote) {
+
+        addNoteOptions.style.display = 'flex';
+
+        blurBackground.style.display = 'block';
+
+      } else { hideMenus(); }
+
+    };
+
+    addImageLinkOption.onclick = function (event) {
+
+      event.stopPropagation();
+
+      addNoteOptions.style.display = 'none';
+
+      inputArea.style.display = 'flex';
+
+      imageLinkInputArea.style.display = 'block';
+
+      textNoteInputArea.style.display = 'none';
+
+      blurBackground.style.display = 'block';
+
+      addingNewNote = false;
+
+    };
+
+    addTextNoteOption.onclick = function (event) {
+
+      event.stopPropagation();
+
+      addNoteOptions.style.display = 'none';
+
+      inputArea.style.display = 'flex';
+
+      imageLinkInputArea.style.display = 'none';
+
+      textNoteInputArea.style.display = 'block';
+
+      blurBackground.style.display = 'block';
+
+      addingNewNote = false;
+
+    };
+
+    blurBackground.onclick = function () { hideMenus(); };
+
+    
+
+    function guardarLinkDeImagen() {
+
+      let link = imageLinkInput.value;
+
+      const texto = imageNoteText.value;
+
+      if (link.trim() !== '') {
+
+        link = transformDriveLink(link);
+
+        db.collection('notas').add({
+
+          url: link,
+
+          texto: texto.trim() !== '' ? texto : null
+
+        })
+
+          .then(() => { imageLinkInput.value = ''; imageNoteText.value = ''; hideMenus(); })
+
+          .catch((error) => { console.error('Error al guardar el link de imagen: ', error); });
+
+      }
+
+    }
+
+    function guardarNotaTexto() {
+
+      const nota = textNoteInput.value;
+
+      if (nota.trim() !== '') {
+
+        db.collection('notas').add({ nota: nota })
+
+          .then(() => { textNoteInput.value = ''; hideMenus(); })
+
+          .catch((error) => { console.error('Error al guardar la nota de texto: ', error); });
+
+      }
+
+    }
+
+    saveImageLinkButton.onclick = guardarLinkDeImagen;
+
+    saveTextNoteButton.onclick = guardarNotaTexto;
+
+    
+
+    grid.on('dragstop', function (event, el) {
+
+      setTimeout(() => {
+
+        const noteId = el.getAttribute('data-note-id');
+
+        const node = el.gridstackNode;
+
+        if (noteId && node) {
+
+          db.collection('notas').doc(noteId).update({
+
+            x: node.x, y: node.y, w: node.w, h: node.h
+
+          }).catch(error => console.error("Error guardando posición:", error));
+
+        }
+
+      }, 100);
+
+    });
+
+    
+
+    /****************** Calendario y Asignación de la Bolita ******************/
+
+    let currentCalendarMonth, currentCalendarYear;
+
+    function getChileDate() {
+
+      return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
+
+    }
+
+    function initCalendarDate() {
+
+      let today = getChileDate();
+
+      let year = today.getFullYear();
+
+      let month = today.getMonth();
+
+      if (year < 2024 || (year === 2024 && month < 11)) {
+
+        return { month: 11, year: 2024 };
+
+      }
+
+      return { month, year };
+
+    }
+
+    function getMonthName(monthIndex) {
+
+      const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+      return months[monthIndex];
+
+    }
+
+    function generateCalendar(month, year) {
+
+      const calendarDiv = document.getElementById('calendarWidget');
+
+      calendarDiv.innerHTML = '';
+
+      const header = document.createElement('div');
+
+      header.className = 'calendar-header';
+
+      const prevBtn = document.createElement('button');
+
+      prevBtn.textContent = '<';
+
+      prevBtn.onclick = function () {
+
+        let newMonth = month - 1, newYear = year;
+
+        if (newMonth < 0) { newMonth = 11; newYear--; }
+
+        if (newYear < 2024 || (newYear === 2024 && newMonth < 11)) return;
+
+        generateCalendar(newMonth, newYear);
+
+      };
+
+      const nextBtn = document.createElement('button');
+
+      nextBtn.textContent = '>';
+
+      nextBtn.onclick = function () {
+
+        let newMonth = month + 1, newYear = year;
+
+        if (newMonth > 11) { newMonth = 0; newYear++; }
+
+        generateCalendar(newMonth, newYear);
+
+      };
+
+      const title = document.createElement('span');
+
+      title.textContent = getMonthName(month) + ' ' + year;
+
+      header.appendChild(prevBtn);
+
+      header.appendChild(title);
+
+      header.appendChild(nextBtn);
+
+      calendarDiv.appendChild(header);
+
+      
+
+      const daysHeader = document.createElement('div');
+
+      daysHeader.className = 'calendar-days-header';
+
+      ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'].forEach(day => {
+
+        const dayElem = document.createElement('div');
+
+        dayElem.textContent = day;
+
+        dayElem.className = 'calendar-day';
+
+        daysHeader.appendChild(dayElem);
+
+      });
+
+      calendarDiv.appendChild(daysHeader);
+
+      
+
+      const datesGrid = document.createElement('div');
+
+      datesGrid.className = 'calendar-dates-grid';
+
+      const firstDay = new Date(year, month, 1).getDay();
+
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      
+
+      for (let i = 0; i < firstDay; i++) {
+
+        const emptyCell = document.createElement('div');
+
+        emptyCell.className = 'calendar-date empty';
+
+        datesGrid.appendChild(emptyCell);
+
+      }
+
+      for (let date = 1; date <= daysInMonth; date++) {
+
+        const dateCell = document.createElement('div');
+
+        dateCell.className = 'calendar-date';
+
+        dateCell.textContent = date;
+
+        dateCell.style.minHeight = '30px';
+
+        dateCell.style.paddingBottom = '8px';
+
+        dateCell.addEventListener('dragover', function(e){ e.preventDefault(); });
+
+        dateCell.addEventListener('drop', function(e) {
+
+          e.preventDefault();
+
+          const noteId = e.dataTransfer.getData("application/note-id");
+
+          if (noteId) {
+
+            const assignedDate = `${date}/${month+1}/${year}`;
+
+            db.collection('notas').doc(noteId)
+
+              .update({ assignedDate: assignedDate })
+
+              .then(() => console.log('Fecha asignada:', assignedDate))
+
+              .catch((error) => console.error('Error asignando fecha:', error));
+
+            // Agregar el indicador en la celda y marcar con atributo para saber a qué nota pertenece
+
+            if (!e.currentTarget.querySelector(".assigned-bubble")) {
+
+              const assigned = document.createElement("span");
+
+              assigned.classList.add("assigned-bubble");
+
+              // Almacenar el id de la nota en un atributo data
+
+              assigned.setAttribute("data-note", noteId);
+
+              assigned.textContent = "●";
+
+              e.currentTarget.appendChild(assigned);
+
+            }
+
+            // Ocultar la bolita en la nota
+
+            const bubble = document.getElementById("bubble-" + noteId);
+
+            if (bubble) { bubble.style.display = "none"; }
+
+          }
+
+        });
+
+        datesGrid.appendChild(dateCell);
+
+      }
+
+      const totalCells = firstDay + daysInMonth;
+
+      const cellsToAdd = 42 - totalCells;
+
+      for (let i = 0; i < cellsToAdd; i++) {
+
+        const emptyCell = document.createElement('div');
+
+        emptyCell.className = 'calendar-date empty';
+
+        datesGrid.appendChild(emptyCell);
+
+      }
+
+      calendarDiv.appendChild(datesGrid);
+
+      currentCalendarMonth = month;
+
+      currentCalendarYear = year;
+
+    }
+
+    function openCalendar() {
+
+      const { month, year } = initCalendarDate();
+
+      generateCalendar(month, year);
+
+      document.getElementById('calendarWidget').style.display = 'block';
+
+    }
+
+    const calendarIcon = document.getElementById('calendarIcon');
+
+    const calendarWidget = document.getElementById('calendarWidget');
+
+    let calendarTimeout;
+
+    function showCalendar() {
+
+      const { month, year } = initCalendarDate();
+
+      generateCalendar(month, year);
+
+      calendarWidget.style.display = 'block';
+
+    }
+
+    function hideCalendar() {
+
+      calendarTimeout = setTimeout(() => { calendarWidget.style.display = 'none'; }, 200);
+
+    }
+
+    calendarIcon.addEventListener('mouseover', () => { clearTimeout(calendarTimeout); showCalendar(); });
+
+    calendarIcon.addEventListener('mouseout', hideCalendar);
+
+    calendarWidget.addEventListener('mouseover', () => { clearTimeout(calendarTimeout); calendarWidget.style.display = 'block'; });
+
+    calendarWidget.addEventListener('mouseout', hideCalendar);
+
+    
+
+    /****************** Prevenir que clics en los menús propaguen para no cerrar el blur ******************/
+
+    document.getElementById('addNoteOptions').addEventListener('click', function(e){ e.stopPropagation(); });
+
+    document.getElementById('inputArea').addEventListener('click', function(e){ e.stopPropagation(); });
+
+  </script>
+
+</body>
+
 </html>
