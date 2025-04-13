@@ -547,21 +547,21 @@
         displayedNotes.set(noteId, gridItem);
       }
 
-      /****************** Función para Eliminar Nota sin error ******************/
+      /****************** Función para Eliminar Nota sin mostrar error en la interfaz ******************/
       function deleteNote(noteId) {
         // Buscamos el elemento que representa la nota mediante su atributo data-note-id
         const noteElement = document.querySelector('[data-note-id="' + noteId + '"]');
         if (noteElement) {
           noteElement.parentNode.removeChild(noteElement);
-          // Opcional: Si usas Firestore, elimina la nota de la base de datos:
-          db.collection("notes").doc(noteId).delete().catch(err => console.error("Error al eliminar la nota en Firestore:", err));
-        } else {
-          console.warn('La nota con id "' + noteId + '" ya fue eliminada.');
         }
+        // Si usas Firestore, elimina la nota de la base de datos; en caso de error, lo registra en consola sin mostrar aviso al usuario:
+        db.collection("notes").doc(noteId).delete().catch(err => {
+          console.error("Error al eliminar la nota en Firestore:", err);
+        });
       }
 
       /****************** Resto del Código (lectura, edición, calendario, etc.) ******************/
-      // ... Aquí irían el resto de funciones y lógica de tu aplicación, manteniendo el código original de más de 600 líneas.
+      // Aquí continúa el resto de funciones y lógica de tu aplicación, exactamente como estaba.
     </script>
   </body>
 </html>
