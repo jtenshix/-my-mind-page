@@ -446,7 +446,15 @@
       const replacedText = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
       return replacedText.replace(/\n/g, '<br>');
     }
-    const firebaseConfig = { /* ... tu config ... */ }; // Reemplaza con tu configuración real
+    const firebaseConfig = {
+      apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs", // ¡Considera mover a un entorno seguro!
+      authDomain: "oasis-b036d.firebaseapp.com",
+      projectId: "oasis-b036d",
+      storageBucket: "oasis-b036d.appspot.com",
+      messagingSenderId: "141546637821",
+      appId: "1:141546637821:web:0a861aeb13831774ed3194",
+      measurementId: "G-HB2P17H5YL"
+    }; // Reemplaza con tu configuración real
     try { firebase.initializeApp(firebaseConfig); } catch (e) { console.error("Error inicializando Firebase:", e); }
     const db = firebase.firestore();
 
@@ -495,13 +503,18 @@
       // Barra de Menú
       const menuBar = document.createElement('div'); menuBar.classList.add('menu-bar');
       const bubbleButton = document.createElement('button'); bubbleButton.classList.add('menu-icon', 'bubble-icon'); bubbleButton.innerHTML = '●'; bubbleButton.setAttribute('draggable', 'true'); bubbleButton.id = `bubble-${noteId}`; bubbleButton.title = "Arrastrar al calendario"; bubbleButton.style.display = notaData.assignedDate ? 'none' : 'inline-block';
-      bubbleButton.addEventListener('dragstart', (e) => { /* ... (código dragstart) ... */ });
+      bubbleButton.addEventListener('dragstart', (e) => {
+          // Código dragstart (pequeña imagen fantasma)
+          var imgGhost = new Image(); imgGhost.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='; e.dataTransfer.setDragImage(imgGhost, 0, 0);
+          e.dataTransfer.setData("application/note-id", noteId); e.dataTransfer.effectAllowed = "move"; openCalendar();
+      });
       bubbleButton.addEventListener('click', (e) => { e.stopPropagation(); openCalendar(); });
       const menuActions = document.createElement('div'); menuActions.classList.add('menu-actions');
       const editButton = document.createElement('button'); editButton.classList.add('menu-icon'); editButton.innerHTML = '✎'; editButton.title = "Editar";
       const deleteButton = document.createElement('button'); deleteButton.classList.add('menu-icon'); deleteButton.innerHTML = '✖'; deleteButton.title = "Eliminar";
 
-      // --- >>> INICIO DEL CAMBIO: onclick de deleteButton <<< ---
+      // --- >>> INICIO DEL CAMBIO: onclick de deleteButton (VERIFICADO) <<< ---
+      // Se elimina la condición 'if (confirm(...))' que estaba antes
       deleteButton.onclick = (e) => {
           e.stopPropagation(); // Detener propagación del evento
           // Llamar a deleteNote directamente, SIN confirmación
@@ -564,7 +577,7 @@
           // .orderBy('createdAt', 'desc')
           .onSnapshot((snapshot) => {
               // console.log("Snapshot recibido. Redibujando notas...");
-              if (!grid) return;
+              if (!grid) { console.error("GridStack no inicializado."); return; }
               grid.removeAll(); displayedNotes.clear();
               snapshot.forEach((doc) => { const result = mostrarNotaEnPantalla(doc); if (result) { grid.addWidget(result.element, result.position); displayedNotes.set(doc.id, result.element); } });
               // console.log(`Notas redibujadas: ${displayedNotes.size}`);
