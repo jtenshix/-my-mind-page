@@ -39,8 +39,8 @@
     .grid-stack-item {
         transition: transform 0.4s cubic-bezier(0.25,1,0.5,1);
         /* === Margen inferior para espaciado vertical mínimo === */
-        /* Ajustado a 60px, puedes probar con 75px si prefieres más espacio */
-        margin-bottom: 60px !important;
+        /* Ajustado a 150px (aprox 4cm) según solicitado previamente */
+        margin-bottom: 150px !important;
         /* Importante: Asegurar que el item tenga overflow visible por si el contenido crece */
         overflow: visible !important;
     }
@@ -486,7 +486,7 @@
     let grid; // Declarar grid aquí para acceso global en el script
     try {
         grid = GridStack.init({
-          margin: 75, // Espacio entre items
+          margin: 75, // Espacio horizontal entre items (Gridstack lo usa también para base vertical si float=false)
           cellHeight: 'auto', // Altura de celda basada en contenido
           disableResize: true,
           float: false, // Mantenido en false para filas predecibles
@@ -633,19 +633,21 @@
           } else { console.error("Función editNoteContent no encontrada"); }
       };
 
-      // Botón Eliminar
+      // Botón Eliminar (SIN CONFIRMACIÓN)
       const deleteButton = document.createElement('button');
       deleteButton.classList.add('menu-icon');
       deleteButton.innerHTML = '✖';
       deleteButton.title = "Eliminar nota";
       deleteButton.onclick = (e) => {
           e.stopPropagation();
-          if (confirm(`¿Estás seguro de que quieres eliminar esta nota?${notaData.assignedDate ? '\n(También se quitará del calendario)' : ''}`)) {
-               if (typeof deleteNote === 'function') {
-                    deleteNote(noteId, gridItem);
-               } else { console.error("Función deleteNote no encontrada"); }
+          // Llamar a deleteNote directamente SIN confirmación
+          if (typeof deleteNote === 'function') {
+              deleteNote(noteId, gridItem); // Se elimina directamente
+          } else {
+              console.error("Función deleteNote no encontrada");
           }
       };
+      // --- FIN DEL CAMBIO: Eliminación de confirm() ---
 
       menuActions.appendChild(editButton);
       menuActions.appendChild(deleteButton);
@@ -740,7 +742,7 @@
 
     // --- FUNCIÓN PARA ELIMINAR NOTA ---
     function deleteNote(noteId, gridItem) {
-        console.log("Intentando eliminar nota:", noteId);
+        console.log("Eliminando nota:", noteId); // Log para confirmar acción
         db.collection('notas').doc(noteId).delete()
           .then(() => {
                console.log(`Nota ${noteId} eliminada de Firestore.`);
@@ -772,44 +774,27 @@
                   return;
               }
 
-              // Guardar posiciones actuales antes de limpiar (experimental)
-              // const currentLayout = grid.save(false); // Guardar sin contenido
-
               grid.removeAll(); // Limpiar completamente el grid visual
               displayedNotes.clear(); // Limpiar el cache de referencia
 
               snapshot.forEach((doc) => {
                   const noteId = doc.id;
-                  // console.log("Procesando nota:", noteId);
                   const result = mostrarNotaEnPantalla(doc); // Llama a la función que crea el HTML
 
                   if (result && result.element && result.position) { // Verificar que devuelve lo esperado
-                      // Restaurar posición guardada si existe? (Puede ser complejo)
-                      // const savedNode = currentLayout.find(n => n.id === noteId);
-                      // if (savedNode) {
-                      //     result.position.x = savedNode.x;
-                      //     result.position.y = savedNode.y;
-                      //     result.position.w = savedNode.w;
-                      //     result.position.autoPosition = false;
-                      // }
-
                       grid.addWidget(result.element, result.position); // Añadir al grid
                       displayedNotes.set(noteId, result.element); // Guardar referencia
-                  } else {
-                      // console.log("No se generó elemento para la nota:", noteId);
                   }
               });
               console.log(`Notas redibujadas: ${displayedNotes.size}`);
 
               // Actualizar calendario después de redibujar todo (por si cambiaron fechas)
               if (currentCalendarMonth !== undefined && currentCalendarYear !== undefined) {
-                  // console.log("Actualizando calendario tras redibujar notas...");
                    fetchAllAssignedNotes().then(() => { // Recargar cache de fechas
                        generateCalendar(currentCalendarMonth, currentCalendarYear);
                    });
                } else {
-                   // Si el calendario nunca se mostró, cargar el cache inicial de fechas igualmente
-                   fetchAllAssignedNotes();
+                   fetchAllAssignedNotes(); // Cargar cache inicial si calendario no está visible
                }
 
           }, (error) => {
@@ -830,10 +815,10 @@
     const inputAreaElem = document.getElementById('inputArea');
     const imageLinkInputAreaElem = document.getElementById('imageLinkInputArea');
     const imageLinkInputElem = document.getElementById('imageLink');
-    // const imageNoteTextElem = document.getElementById('imageNoteText'); // Ya declarada arriba
+    // const imageNoteTextElem = Ya declarada arriba
     const saveImageLinkButtonElem = document.getElementById('saveImageLink');
     const textNoteInputAreaElem = document.getElementById('textNoteInputArea');
-    // const textNoteInputElem = document.getElementById('textNote'); // Ya declarada arriba
+    // const textNoteInputElem = Ya declarada arriba
     const saveTextNoteButtonElem = document.getElementById('saveTextNote');
     const blurBackgroundElem = document.querySelector('.blur-background');
 
@@ -895,6 +880,8 @@
       const texto = imageNoteTextElem ? imageNoteTextElem.value.trim() : '';
       if (link) {
         link = transformDriveLink(link);
+        // Deshabilitar botón mientras guarda
+        if(saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = true;
         db.collection('notas').add({
           url: link,
           texto: texto || null,
@@ -905,6 +892,10 @@
           .catch((error) => {
               console.error('Error al guardar el link de imagen: ', error);
               alert("Error al guardar la imagen.");
+          })
+          .finally(() => {
+               // Rehabilitar botón
+               if(saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = false;
           });
       } else {
           alert("Por favor, introduce un link para la imagen.");
@@ -916,6 +907,8 @@
       if (!textNoteInputElem) return;
       const nota = textNoteInputElem.value.trim();
       if (nota) {
+          // Deshabilitar botón mientras guarda
+          if(saveTextNoteButtonElem) saveTextNoteButtonElem.disabled = true;
         db.collection('notas').add({
             nota: nota,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -925,6 +918,10 @@
           .catch((error) => {
               console.error('Error al guardar la nota de texto: ', error);
               alert("Error al guardar la nota.");
+           })
+           .finally(() => {
+               // Rehabilitar botón
+               if(saveTextNoteButtonElem) saveTextNoteButtonElem.disabled = false;
            });
       } else {
           alert("Por favor, escribe algo en la nota.");
@@ -951,8 +948,6 @@
                         }).catch(error => console.error("Error guardando posición:", error));
                     }
                 }, 150); // Aumentar ligeramente el timeout
-            } else {
-                // console.warn("No se pudo obtener noteId o nodo para guardar posición.", el);
             }
         });
     }
@@ -965,20 +960,15 @@
 
     function getChileDate() {
         try {
-            // Intentar obtener hora de Santiago, CL
             const options = { timeZone: 'America/Santiago', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
-            const formatter = new Intl.DateTimeFormat('en-CA', options); // YYYY-MM-DD
+            const formatter = new Intl.DateTimeFormat('en-CA', options);
             const parts = formatter.formatToParts(new Date());
             const dateMap = {};
             parts.forEach(({ type, value }) => dateMap[type] = parseInt(value, 10));
-            // Crear fecha UTC y luego ajustar (esto es complejo y propenso a errores de DST)
-            // Una aproximación más simple podría ser suficiente si no se requiere precisión al segundo
-            // return new Date(); // Usar hora local como fallback simple
-             return new Date(Date.UTC(dateMap.year, dateMap.month - 1, dateMap.day, dateMap.hour, dateMap.minute, dateMap.second));
-
+            return new Date(Date.UTC(dateMap.year, dateMap.month - 1, dateMap.day, dateMap.hour, dateMap.minute, dateMap.second));
         } catch (e) {
             console.warn("Intl.DateTimeFormat con TimeZone no soportado o falló, usando hora local.", e);
-            return new Date(); // Fallback a hora local
+            return new Date();
         }
     }
 
@@ -986,8 +976,7 @@
         let today = getChileDate();
         let year = today.getFullYear();
         let month = today.getMonth();
-        const minYear = 2024;
-        const minMonth = 11; // Diciembre
+        const minYear = 2024; const minMonth = 11;
         if (year < minYear || (year === minYear && month < minMonth)) {
             return { month: minMonth, year: minYear };
         }
@@ -996,101 +985,65 @@
 
     function getMonthName(monthIndex) {
         const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-        return months[monthIndex % 12] || ''; // Asegurar índice válido
+        return months[monthIndex % 12] || '';
     }
 
     async function fetchAllAssignedNotes() {
-        // console.log("Fetching assigned notes...");
-        assignedDatesCache = {}; // Reset cache de fechas
-        notesDataCache = {}; // Reset cache de datos de notas
+        assignedDatesCache = {}; notesDataCache = {};
         try {
             const snapshot = await db.collection('notas').where('assignedDate', '!=', null).get();
             snapshot.forEach(doc => {
-                const data = doc.data();
-                const noteId = doc.id;
-                notesDataCache[noteId] = data;
-                const dateStr = data.assignedDate;
-                if (dateStr) { // Verificar que la fecha existe
-                    if (!assignedDatesCache[dateStr]) {
-                        assignedDatesCache[dateStr] = [];
-                    }
-                    if (!assignedDatesCache[dateStr].includes(noteId)) {
-                        assignedDatesCache[dateStr].push(noteId);
-                    }
+                const data = doc.data(); const noteId = doc.id;
+                notesDataCache[noteId] = data; const dateStr = data.assignedDate;
+                if (dateStr) {
+                    if (!assignedDatesCache[dateStr]) assignedDatesCache[dateStr] = [];
+                    if (!assignedDatesCache[dateStr].includes(noteId)) assignedDatesCache[dateStr].push(noteId);
                 }
             });
-            // console.log("Assigned notes cache updated.");
-        } catch (error) {
-            console.error("Error fetching assigned notes:", error);
-        }
+        } catch (error) { console.error("Error fetching assigned notes:", error); }
     }
 
     async function generateCalendar(month, year) {
-        if (Object.keys(assignedDatesCache).length === 0 && Object.keys(notesDataCache).length === 0) {
-             await fetchAllAssignedNotes(); // Cargar solo si ambos caches están vacíos
-        }
+        if (Object.keys(notesDataCache).length === 0) await fetchAllAssignedNotes(); // Cargar si cache está vacío
 
         const calendarDiv = document.getElementById('calendarWidget');
-        if (!calendarDiv) return; // Salir si el widget no existe
+        if (!calendarDiv) return;
         calendarDiv.innerHTML = '';
         const today = getChileDate();
 
-        // --- Cabecera ---
-        const header = document.createElement('div');
-        header.className = 'calendar-header';
-        const prevBtn = document.createElement('button');
-        prevBtn.innerHTML = '&lt;';
+        // Cabecera
+        const header = document.createElement('div'); header.className = 'calendar-header';
+        const prevBtn = document.createElement('button'); prevBtn.innerHTML = '&lt;';
         const minYear = 2024; const minMonth = 11;
-        if (year === minYear && month === minMonth) {
-            prevBtn.disabled = true;
-        } else {
-            prevBtn.onclick = () => generateCalendar(month === 0 ? 11 : month - 1, month === 0 ? year - 1 : year);
-        }
-        const nextBtn = document.createElement('button');
-        nextBtn.innerHTML = '&gt;';
+        if (year === minYear && month === minMonth) prevBtn.disabled = true;
+        else prevBtn.onclick = () => generateCalendar(month === 0 ? 11 : month - 1, month === 0 ? year - 1 : year);
+        const nextBtn = document.createElement('button'); nextBtn.innerHTML = '&gt;';
         nextBtn.onclick = () => generateCalendar(month === 11 ? 0 : month + 1, month === 11 ? year + 1 : year);
-        const title = document.createElement('span');
-        title.textContent = `${getMonthName(month)} ${year}`;
+        const title = document.createElement('span'); title.textContent = `${getMonthName(month)} ${year}`;
         header.appendChild(prevBtn); header.appendChild(title); header.appendChild(nextBtn);
         calendarDiv.appendChild(header);
 
-        // --- Días ---
-        const daysHeader = document.createElement('div');
-        daysHeader.className = 'calendar-days-header';
-        ['Do','Lu','Ma','Mi','Ju','Vi','Sá'].forEach(day => {
-            const dayElem = document.createElement('div'); dayElem.className = 'calendar-day'; dayElem.textContent = day; daysHeader.appendChild(dayElem);
-        });
+        // Días semana
+        const daysHeader = document.createElement('div'); daysHeader.className = 'calendar-days-header';
+        ['Do','Lu','Ma','Mi','Ju','Vi','Sá'].forEach(day => { const d = document.createElement('div'); d.className = 'calendar-day'; d.textContent = day; daysHeader.appendChild(d); });
         calendarDiv.appendChild(daysHeader);
 
-        // --- Fechas Grid ---
-        const datesGrid = document.createElement('div');
-        datesGrid.className = 'calendar-dates-grid';
+        // Grid fechas
+        const datesGrid = document.createElement('div'); datesGrid.className = 'calendar-dates-grid';
         const firstDayOfMonth = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-        for (let i = 0; i < firstDayOfMonth; i++) { // Celdas vacías inicio
-            const emptyCell = document.createElement('div'); emptyCell.className = 'calendar-date empty'; datesGrid.appendChild(emptyCell);
-        }
-        for (let date = 1; date <= daysInMonth; date++) { // Celdas días
-            const dateCell = document.createElement('div');
-            dateCell.className = 'calendar-date';
-            dateCell.textContent = date;
+        for (let i = 0; i < firstDayOfMonth; i++) { const e = document.createElement('div'); e.className = 'calendar-date empty'; datesGrid.appendChild(e); }
+        for (let date = 1; date <= daysInMonth; date++) {
+            const dateCell = document.createElement('div'); dateCell.className = 'calendar-date'; dateCell.textContent = date;
             const dateStr = `${date}/${month + 1}/${year}`;
+            if (date === today.getDate() && month === today.getMonth() && year === today.getFullYear()) dateCell.classList.add('today');
 
-            if (date === today.getDate() && month === today.getMonth() && year === today.getFullYear()) { dateCell.classList.add('today'); }
-
-            if (assignedDatesCache[dateStr]) { // Añadir bolitas
+            if (assignedDatesCache[dateStr]) { // Bolitas
                 assignedDatesCache[dateStr].forEach(noteId => {
-                    const assignedBubble = document.createElement("span");
-                    assignedBubble.classList.add("assigned-bubble");
-                    assignedBubble.setAttribute("data-note", noteId);
-                    assignedBubble.textContent = "●";
-                    // const noteTitle = notesDataCache[noteId]?.nota?.substring(0, 20) || notesDataCache[noteId]?.url || `Nota ${noteId}`;
-                    // assignedBubble.title = `Nota: ${noteTitle}...`;
-                    dateCell.appendChild(assignedBubble);
+                    const b = document.createElement("span"); b.className = "assigned-bubble"; b.setAttribute("data-note", noteId); b.textContent = "●"; dateCell.appendChild(b);
                 });
             }
-
             // Eventos Drag & Drop
             dateCell.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; dateCell.classList.add('drag-over'); });
             dateCell.addEventListener('dragleave', (e) => { dateCell.classList.remove('drag-over'); });
@@ -1098,22 +1051,16 @@
                 e.preventDefault(); dateCell.classList.remove('drag-over');
                 const noteId = e.dataTransfer.getData("application/note-id");
                 if (noteId) {
-                    // console.log(`Asignando nota ${noteId} a fecha ${dateStr}`);
                     const oldDateStr = notesDataCache[noteId]?.assignedDate;
                     try {
                         await db.collection('notas').doc(noteId).update({ assignedDate: dateStr });
                         // --- Actualizar Caches ---
                         if(notesDataCache[noteId]) notesDataCache[noteId].assignedDate = dateStr; else notesDataCache[noteId] = { assignedDate: dateStr };
-                        if (oldDateStr && assignedDatesCache[oldDateStr]) { // Quitar de fecha vieja
-                            assignedDatesCache[oldDateStr] = assignedDatesCache[oldDateStr].filter(id => id !== noteId);
-                            if (assignedDatesCache[oldDateStr].length === 0) delete assignedDatesCache[oldDateStr];
-                        }
-                        if (!assignedDatesCache[dateStr]) assignedDatesCache[dateStr] = []; // Añadir a fecha nueva
-                        if (!assignedDatesCache[dateStr].includes(noteId)) assignedDatesCache[dateStr].push(noteId);
+                        if (oldDateStr && assignedDatesCache[oldDateStr]) { assignedDatesCache[oldDateStr] = assignedDatesCache[oldDateStr].filter(id => id !== noteId); if (assignedDatesCache[oldDateStr].length === 0) delete assignedDatesCache[oldDateStr]; }
+                        if (!assignedDatesCache[dateStr]) assignedDatesCache[dateStr] = []; if (!assignedDatesCache[dateStr].includes(noteId)) assignedDatesCache[dateStr].push(noteId);
                         // --- Actualizar UI ---
-                        const bubbleInCard = document.getElementById(`bubble-${noteId}`);
-                        if (bubbleInCard) bubbleInCard.style.display = 'none';
-                        generateCalendar(currentCalendarMonth, currentCalendarYear); // Regenerar calendario
+                        const bubbleInCard = document.getElementById(`bubble-${noteId}`); if (bubbleInCard) bubbleInCard.style.display = 'none';
+                        generateCalendar(currentCalendarMonth, currentCalendarYear); // Regenerar
                     } catch (error) { console.error(`Error al asignar fecha a nota ${noteId}:`, error); alert("Error al asignar la fecha."); }
                 }
             });
@@ -1121,9 +1068,7 @@
         }
         const totalCells = firstDayOfMonth + daysInMonth; // Celdas vacías final
         const cellsNeeded = totalCells <= 35 ? 35 : 42;
-        for (let i = totalCells; i < cellsNeeded; i++) {
-            const emptyCell = document.createElement('div'); emptyCell.className = 'calendar-date empty'; datesGrid.appendChild(emptyCell);
-        }
+        for (let i = totalCells; i < cellsNeeded; i++) { const e = document.createElement('div'); e.className = 'calendar-date empty'; datesGrid.appendChild(e); }
         calendarDiv.appendChild(datesGrid);
         currentCalendarMonth = month; currentCalendarYear = year;
     }
@@ -1134,36 +1079,21 @@
     let calendarTimeout;
 
     function showCalendar() {
-        if (!calendarWidgetElem) return;
-        clearTimeout(calendarTimeout);
+        if (!calendarWidgetElem) return; clearTimeout(calendarTimeout);
         if (calendarWidgetElem.style.display !== 'block') {
-            const { month, year } = initCalendarDate();
-            generateCalendar(month, year);
-            calendarWidgetElem.style.display = 'block';
+            const { month, year } = initCalendarDate(); generateCalendar(month, year); calendarWidgetElem.style.display = 'block';
         }
     }
-    function hideCalendar() {
-        if (!calendarWidgetElem) return;
-        calendarTimeout = setTimeout(() => { calendarWidgetElem.style.display = 'none'; }, 300);
-    }
+    function hideCalendar() { if (!calendarWidgetElem) return; calendarTimeout = setTimeout(() => { calendarWidgetElem.style.display = 'none'; }, 300); }
 
-    if (calendarIconElem) {
-        calendarIconElem.addEventListener('mouseenter', showCalendar);
-        calendarIconElem.addEventListener('mouseleave', hideCalendar);
-    }
-    if (calendarWidgetElem) {
-        calendarWidgetElem.addEventListener('mouseenter', () => clearTimeout(calendarTimeout));
-        calendarWidgetElem.addEventListener('mouseleave', hideCalendar);
-    }
-    function openCalendar() { showCalendar(); } // Usada por bolita
+    if (calendarIconElem) { calendarIconElem.addEventListener('mouseenter', showCalendar); calendarIconElem.addEventListener('mouseleave', hideCalendar); }
+    if (calendarWidgetElem) { calendarWidgetElem.addEventListener('mouseenter', () => clearTimeout(calendarTimeout)); calendarWidgetElem.addEventListener('mouseleave', hideCalendar); }
+    function openCalendar() { showCalendar(); }
 
 
     /****************** Otros Event Listeners y Setup Inicial ******************/
     if (addNoteOptionsElem) addNoteOptionsElem.addEventListener('click', (e) => e.stopPropagation());
     if (inputAreaElem) inputAreaElem.addEventListener('click', (e) => e.stopPropagation());
-
-    // Carga inicial del cache de fechas (podría moverse a después de que Firestore cargue)
-    // fetchAllAssignedNotes(); // Se llama ahora desde onSnapshot y generateCalendar
 
     // --- Fin del Script ---
   </script>
