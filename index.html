@@ -611,9 +611,6 @@
             db.collection('notas').add({ url: link, texto: texto || null, createdAt: firebase.firestore.FieldValue.serverTimestamp(), tipo: 'imagen' })
               .then(() => { hideMenus(); }).catch((error) => { console.error('Error al guardar link:', error); alert("Error al guardar imagen."); })
               .finally(() => { if(saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = false; });
-        } else if (link.includes("drive.google.com")) {
-            alert("No se permiten enlaces de Google Drive.");
-            imageLinkInputElem.focus();
         } else {
             alert("Introduce un link válido.");
             imageLinkInputElem.focus();
