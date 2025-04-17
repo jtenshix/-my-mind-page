@@ -36,14 +36,15 @@
       position: relative; /* Necesario para algunos cálculos de GridStack */
     }
     .grid-stack-placeholder { display: none !important; }
-
-    /* --- Estilos GridStack Item --- */
     .grid-stack-item {
         transition: transform 0.4s cubic-bezier(0.25,1,0.5,1);
-        /* === Se eliminó margin-bottom: 150px !important; === */
-        overflow: visible !important; /* Asegurar que el item tenga overflow visible por si el contenido crece */
+        /* === Margen inferior para espaciado vertical mínimo === */
+        /* Ajustado a 150px (aprox 4cm) según solicitado previamente */
+        margin-bottom: 150px !important;
+        /* Importante: Asegurar que el item tenga overflow visible por si el contenido crece */
+        overflow: visible !important;
     }
-    /* Contenedor interno de Gridstack */
+     /* Contenedor interno de Gridstack */
     .grid-stack-item-content {
         overflow: visible !important; /* Permitir que el contenido se desborde si es necesario */
         height: 100%; /* Ocupar toda la altura del item */
@@ -68,6 +69,7 @@
       height: 100%; /* Ocupar altura del contenedor .grid-stack-item-content */
       box-sizing: border-box;
     }
+    /* No se necesita .card-content si usamos flex en .card-wrapper/.text-card */
     .image-container {
       width: 100%; /* Ajustar al ancho de la tarjeta */
       height: 240px; /* Altura fija para la imagen */
@@ -82,6 +84,7 @@
       display: block;
     }
     .note-content {
+      background-color: #fff; /* Redundante si la tarjeta es blanca */
       padding: 10px;
       text-align: left;
       font-size: 16px;
@@ -91,21 +94,22 @@
       word-wrap: break-word;
       overflow: hidden; /* Ocultar overflow del texto */
       flex-grow: 1; /* Permitir que crezca para llenar espacio */
+      /* Considerar añadir overflow-y: auto si el texto es muy largo */
+      /* max-height: 300px; */ /* Opcional: limitar altura máxima */
     }
     .note-content a { color: #0077a3; text-decoration: underline; }
 
     /* ===================== Área de Controles de la Nota ===================== */
     .menu-bar {
       background-color: #0288D1;
-      padding: 5px 8px;
+      padding: 5px 8px; /* Ajustar padding */
       display: flex;
-      justify-content: space-between;
+      justify-content: space-between; /* Distribuir elementos */
       align-items: center;
       flex-shrink: 0;
-      border-top: 1px solid #0077a3;
-      border-bottom-left-radius: 6px;
+      border-top: 1px solid #0077a3; /* Línea separadora opcional */
+      border-bottom-left-radius: 6px; /* Redondear esquinas inferiores */
       border-bottom-right-radius: 6px;
-      cursor: grab;
     }
     .menu-icon {
       background: none;
@@ -113,12 +117,14 @@
       font-size: 20px;
       color: #fff;
       cursor: pointer;
-      padding: 2px 4px;
+      padding: 2px 4px; /* Área de clic un poco mayor */
     }
     .bubble-icon {
       color: #FFCD05;
       font-size: 22px;
+      /* margin-right ya no es necesario con space-between */
     }
+    /* Contenedor para botones de la derecha */
     .menu-actions {
         display: flex;
         gap: 4px;
@@ -127,7 +133,7 @@
     /* ===================== Botón Principal para Agregar Nota/Imagen ===================== */
     #addNoteButton {
       position: absolute;
-      bottom: 30px;
+      bottom: 30px; /* Un poco más arriba */
       right: 30px;
       background-color: #006994;
       color: #fff;
@@ -140,7 +146,7 @@
       justify-content: center;
       align-items: center;
       cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3); /* Sombra más pronunciada */
       transition: background-color 0.3s ease, transform 0.3s ease;
       z-index: 1001;
     }
@@ -155,33 +161,33 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background-color: rgba(0,0,0,0.85);
+      background-color: rgba(0,0,0,0.85); /* Ligeramente más oscuro */
       border-radius: 10px;
       box-shadow: 0 5px 15px rgba(0,0,0,0.4);
       display: none;
       flex-direction: row;
       justify-content: center;
       align-items: center;
-      gap: 25px;
+      gap: 25px; /* Más espacio */
       padding: 25px;
       z-index: 1002;
     }
     #addNoteOptions .card {
-      background-color: #2c2c2c;
-      border: 1px solid #0077a3;
+      background-color: #2c2c2c; /* Fondo de tarjeta más oscuro */
+      border: 1px solid #0077a3; /* Borde más sutil */
       border-radius: 8px;
       padding: 20px;
       text-align: center;
       cursor: pointer;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
-      width: 180px;
+      width: 180px; /* Ligeramente más estrechas */
     }
     #addNoteOptions .card:hover {
-        transform: translateY(-5px) scale(1.03);
+        transform: translateY(-5px) scale(1.03); /* Efecto hover */
         box-shadow: 0 6px 12px rgba(0, 119, 163, 0.5);
      }
-    #addNoteOptions .card h2 { color: #36a2eb; margin-bottom: 10px; }
-    #addNoteOptions .card p { color: #ccc; font-size: 14px; }
+    #addNoteOptions .card h2 { color: #36a2eb; margin-bottom: 10px; } /* Color de título */
+    #addNoteOptions .card p { color: #ccc; font-size: 14px; } /* Color de texto */
 
     /* ===================== Submenú para Ingresar Datos ===================== */
     #inputArea {
@@ -189,39 +195,39 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background-color: #ffffff;
-      padding: 25px 30px;
+      background-color: #ffffff; /* Fondo blanco */
+      padding: 25px 30px; /* Más padding */
       border-radius: 8px;
       box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-      display: none;
+      display: none; /* Oculto por defecto */
       flex-direction: column;
-      gap: 15px;
-      width: 90%;
-      max-width: 550px;
+      gap: 15px; /* Espacio entre elementos */
+      width: 90%; /* Más ancho en móviles */
+      max-width: 550px; /* Ancho máximo */
       z-index: 1002;
     }
     #inputArea label {
         font-weight: bold;
         color: #333;
-        margin-bottom: 3px;
+        margin-bottom: 3px; /* Espacio debajo de la etiqueta */
         font-size: 14px;
     }
     #inputArea textarea,
     #inputArea input[type="text"] {
-      padding: 12px;
+      padding: 12px; /* Más padding interno */
       border: 1px solid #ccc;
       border-radius: 4px;
       resize: vertical;
       width: 100%;
       box-sizing: border-box;
       line-height: 1.5;
-      font-size: 16px;
+      font-size: 16px; /* Tamaño de fuente */
     }
     #inputArea textarea { min-height: 80px; }
     #inputArea textarea#textNote { min-height: 120px; }
 
     #inputArea button {
-      padding: 10px 20px;
+      padding: 10px 20px; /* Más padding horizontal */
       background-color: #006994;
       color: #fff;
       border: none;
@@ -234,16 +240,16 @@
       font-weight: bold;
     }
      #inputArea button:hover { background-color: #005577; }
-     #inputArea button:active { transform: scale(0.98); }
+     #inputArea button:active { transform: scale(0.98); } /* Efecto al presionar */
     .input-group { display: flex; flex-direction: column; gap: 5px; width: 100%;}
 
 
     /* ===================== Calendario ===================== */
     .calendar-icon {
       position: absolute;
-      bottom: 30px;
+      bottom: 30px; /* Alinear con botón Add */
       left: 30px;
-      width: 45px;
+      width: 45px; /* Ligeramente más grande */
       height: 45px;
       background-color: #fff;
       border: 1px solid #ccc;
@@ -252,24 +258,24 @@
       justify-content: center;
       align-items: center;
       color: #333;
-      font-size: 24px;
+      font-size: 24px; /* Icono más grande */
       cursor: pointer;
       z-index: 1001;
       box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
     .calendar-widget {
       position: absolute;
-      bottom: 85px;
-      left: 20px;
+      bottom: 85px; /* Ajustar posición sobre el icono */
+      left: 20px; /* Ajustar alineación */
       background: #fff;
       border: 1px solid #ddd;
       border-radius: 6px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      padding: 15px;
+      padding: 15px; /* Más padding */
       display: none;
       z-index: 1001;
-      width: 320px;
-      min-height: 300px;
+      width: 320px; /* Ancho ajustado */
+      min-height: 300px; /* Altura ajustada */
     }
     .calendar-header {
       display: flex;
@@ -289,14 +295,14 @@
     }
      .calendar-header button:hover:not(:disabled) { background-color: #e0f7fa; }
      .calendar-header button:disabled { color: #ccc; cursor: default; }
-    .calendar-header span { font-weight: bold; color: #333; font-size: 18px; }
+    .calendar-header span { font-weight: bold; color: #333; font-size: 18px; } /* Título más grande */
 
     .calendar-days-header,
     .calendar-dates-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       text-align: center;
-      gap: 6px;
+      gap: 6px; /* Espacio entre celdas */
     }
     .calendar-days-header {
         margin-bottom: 10px;
@@ -304,25 +310,25 @@
         color: #555;
         padding-bottom: 8px;
         border-bottom: 1px solid #eee;
-        font-size: 13px;
+        font-size: 13px; /* Tamaño de días */
      }
     .calendar-day { padding: 3px; }
 
     .calendar-date {
-      padding: 0;
+      padding: 0; /* Quitar padding para controlar tamaño con width/height */
       border-radius: 50%;
       color: #333;
-      border: 2px solid transparent;
+      border: 2px solid transparent; /* Borde para hover/today */
       cursor: pointer;
       position: relative;
-      width: 36px;
+      width: 36px; /* Tamaño fijo */
       height: 36px;
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0 auto;
       line-height: 1;
-      font-size: 14px;
+      font-size: 14px; /* Tamaño número */
       transition: background-color 0.2s ease, border-color 0.2s ease;
     }
     .calendar-date.empty {
@@ -335,28 +341,32 @@
          border-color: #b3e5fc;
     }
     .calendar-date.today {
-        border-color: #0077a3;
+        border-color: #0077a3; /* Borde azul para hoy */
         font-weight: bold;
         color: #005577;
     }
+    /* Drop target feedback */
     .calendar-date.drag-over {
-        background-color: #a2dff7 !important;
+        background-color: #a2dff7 !important; /* Color fuerte al arrastrar sobre */
         border-color: #0077a3 !important;
     }
 
+
+    /* Indicador de la bolita asignada en el calendario */
     .assigned-bubble {
-      color: #FFCD05;
-      font-size: 11px;
+      color: #FFCD05; /* Amarillo */
+      font-size: 11px; /* Tamaño ajustado */
       position: absolute;
-      bottom: 3px;
+      bottom: 3px; /* Posición */
       left: 50%;
       transform: translateX(-50%);
       line-height: 1;
-      text-shadow: 0 0 1px rgba(0,0,0,0.5);
-      pointer-events: none;
+      text-shadow: 0 0 1px rgba(0,0,0,0.5); /* Sombra para visibilidad */
+      pointer-events: none; /* No interferir con clics en la fecha */
     }
+    /* Permitir múltiples bolitas (simple apilado vertical) */
     .calendar-date .assigned-bubble + .assigned-bubble {
-        bottom: -2px;
+        bottom: -2px; /* Ajustar posición si hay más de una */
     }
 
 
@@ -367,7 +377,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.6); /* Más oscuro */
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
       display: none;
@@ -423,20 +433,29 @@
   <script>
     /****************** Utilidades y Configuración de Firebase ******************/
     function transformDriveLink(url) {
-        if (!url || !url.includes("drive.google.com")) return url;
+        if (!url || !url.includes("drive.google.com")) return url; // Salir si no es link de Drive
+
+        // Ya está en formato correcto?
         if (url.includes("/uc?export=view&id=")) return url;
+
         let fileId = null;
+        // Patrones comunes de Google Drive
         const patterns = [
-            /\/file\/d\/([a-zA-Z0-9_-]+)\//,
-            /[?&]id=([a-zA-Z0-9_-]+)(?:&|$)/,
-            /open\?id=([a-zA-Z0-9_-]+)(?:&|$)/,
-            /\/d\/([a-zA-Z0-9_-]+)\/(?:edit|view)/
+            /\/file\/d\/([a-zA-Z0-9_-]+)\//,         // /file/d/FILE_ID/...
+            /[?&]id=([a-zA-Z0-9_-]+)(?:&|$)/,      // ...?id=FILE_ID... o ...&id=FILE_ID...
+            /open\?id=([a-zA-Z0-9_-]+)(?:&|$)/,     // ...open?id=FILE_ID...
+            /\/d\/([a-zA-Z0-9_-]+)\/(?:edit|view)/    // /d/FILE_ID/edit... o /d/FILE_ID/view...
         ];
+
         for (const regex of patterns) {
             const match = url.match(regex);
-            if (match && match[1]) { fileId = match[1]; break; }
+            if (match && match[1]) {
+                fileId = match[1];
+                break; // Encontramos el ID
+            }
         }
-        return fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : url;
+
+        return fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : url; // Devuelve formato directo o URL original si no hay ID
     }
 
     function linkify(text) {
@@ -446,10 +465,8 @@
       return replacedText.replace(/\n/g, '<br>');
     }
 
-    // --- Configuración de Firebase ---
-    // ADVERTENCIA: Asegura tus REGLAS DE FIRESTORE.
     const firebaseConfig = {
-      apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs", // ¡Revisa tus reglas de seguridad!
+      apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs", // ¡Considera mover a un entorno seguro!
       authDomain: "oasis-b036d.firebaseapp.com",
       projectId: "oasis-b036d",
       storageBucket: "oasis-b036d.appspot.com",
@@ -461,17 +478,18 @@
         firebase.initializeApp(firebaseConfig);
     } catch (e) {
         console.error("Error inicializando Firebase:", e);
+        // Considera mostrar un mensaje al usuario aquí
     }
     const db = firebase.firestore();
 
     /****************** Inicialización de GridStack ******************/
-    let grid;
+    let grid; // Declarar grid aquí para acceso global en el script
     try {
         grid = GridStack.init({
-          margin: 75, // Espacio horizontal Y vertical (~2cm)
-          cellHeight: 'auto',
+          margin: 75, // Espacio horizontal entre items (Gridstack lo usa también para base vertical si float=false)
+          cellHeight: 'auto', // Altura de celda basada en contenido
           disableResize: true,
-          float: false,
+          float: false, // Mantenido en false para filas predecibles
           animate: true,
           alwaysShowResizeHandle: false,
           draggable: {
@@ -482,72 +500,93 @@
         });
     } catch (e) {
         console.error("Error inicializando GridStack:", e);
-        alert("Error al iniciar el área de notas.");
+        // Considera mostrar un mensaje al usuario
+        alert("Error al iniciar el área de notas. La página puede no funcionar correctamente.");
     }
 
+    // --- Ajuste para permitir scroll dentro del grid ---
     const gridContainer = document.getElementById('notaDisplay');
     if (gridContainer) {
-        gridContainer.addEventListener('wheel', function(event) { }, { passive: true });
+        gridContainer.addEventListener('wheel', function(event) {
+            // No prevenir scroll vertical
+        }, { passive: true });
     }
 
+    // Función para autoajustar altura de textareas
     function autoResizeTextarea(el) {
         if (!el) return;
         el.style.height = 'auto';
+        // Añadir 2px extra para evitar scrollbar innecesario a veces
         el.style.height = (el.scrollHeight + 2) + 'px';
     }
-    const textNoteInputElem = document.getElementById('textNote');
-    const imageNoteTextElem = document.getElementById('imageNoteText');
+    // Aplicar a los textareas del modal de input
+    const textNoteInputElem = document.getElementById('textNote'); // Re-declarar para asegurar alcance
+    const imageNoteTextElem = document.getElementById('imageNoteText'); // Re-declarar para asegurar alcance
     if (textNoteInputElem) textNoteInputElem.addEventListener('input', () => autoResizeTextarea(textNoteInputElem));
     if (imageNoteTextElem) imageNoteTextElem.addEventListener('input', () => autoResizeTextarea(imageNoteTextElem));
 
 
     /****************** Renderización de Notas, Edición y Eliminación ******************/
+
+    // Cache local para referencia rápida (opcional)
     const displayedNotes = new Map();
 
+    // --- FUNCIÓN PARA MOSTRAR NOTA ---
     function mostrarNotaEnPantalla(doc) {
       const notaData = doc.data();
       const noteId = doc.id;
+
       let gridItem = document.createElement('div');
       gridItem.classList.add('grid-stack-item');
-      gridItem.setAttribute('data-note-id', noteId);
+      gridItem.setAttribute('data-note-id', noteId); // Para referencia
+
       const content = document.createElement('div');
-      content.classList.add('grid-stack-item-content');
+      content.classList.add('grid-stack-item-content'); // Necesario para Gridstack
+
       let card;
       let noteContentElement;
 
+      // --- Tarjeta de Imagen ---
       if (notaData.url) {
           card = document.createElement('div');
           card.classList.add('card-wrapper');
+
           const imageContainer = document.createElement('div');
           imageContainer.classList.add('image-container');
           const img = document.createElement('img');
           img.src = transformDriveLink(notaData.url);
-          img.alt = notaData.texto || 'Imagen de la nota';
-          img.loading = 'lazy';
+          img.alt = notaData.texto || 'Imagen de la nota'; // Usar texto como alt
+          img.loading = 'lazy'; // Carga diferida
           img.onerror = () => {
               img.alt = 'Error al cargar imagen';
               imageContainer.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; height:100%; background-color:#eee; color:red; text-align:center; padding:10px;">⚠️<br/>Error al<br/>cargar imagen</div>`;
           }
           imageContainer.appendChild(img);
           card.appendChild(imageContainer);
+
+          // Añadir área de texto solo si existe texto
           if(notaData.texto) {
               noteContentElement = document.createElement('div');
               noteContentElement.classList.add('note-content');
               noteContentElement.innerHTML = linkify(notaData.texto);
               card.appendChild(noteContentElement);
           }
+
+      // --- Tarjeta de Texto ---
       } else if (notaData.nota) {
           card = document.createElement('div');
           card.classList.add('text-card');
+
           noteContentElement = document.createElement('div');
           noteContentElement.classList.add('note-content');
           noteContentElement.innerHTML = linkify(notaData.nota);
           card.appendChild(noteContentElement);
       } else {
-          console.warn("Nota sin contenido visible:", noteId);
-          return null;
+          console.warn("Nota sin contenido visible (URL o Texto):", noteId);
+          return null; // No añadir si no hay nada que mostrar
       }
 
+      // Linkify en el contenido textual si existe
       if (noteContentElement) {
           Array.from(noteContentElement.getElementsByTagName('a')).forEach(link => {
               link.setAttribute('target', '_blank');
@@ -555,8 +594,11 @@
           });
       }
 
+      // --- Barra de Menú ---
       const menuBar = document.createElement('div');
       menuBar.classList.add('menu-bar');
+
+      // Botón Bolita
       const bubbleButton = document.createElement('button');
       bubbleButton.classList.add('menu-icon', 'bubble-icon');
       bubbleButton.innerHTML = '●';
@@ -564,6 +606,7 @@
       bubbleButton.id = `bubble-${noteId}`;
       bubbleButton.title = "Arrastrar al calendario para asignar fecha";
       bubbleButton.style.display = notaData.assignedDate ? 'none' : 'inline-block';
+
       bubbleButton.addEventListener('dragstart', (e) => {
           var imgGhost = new Image();
           imgGhost.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
@@ -574,13 +617,17 @@
       });
       bubbleButton.addEventListener('click', (e) => { e.stopPropagation(); openCalendar(); });
 
+      // Contenedor Acciones (derecha)
       const menuActions = document.createElement('div');
       menuActions.classList.add('menu-actions');
+
+      // Botón Editar
       const editButton = document.createElement('button');
       editButton.classList.add('menu-icon');
       editButton.innerHTML = '✎';
       editButton.title = "Editar nota";
-      const deleteButton = document.createElement('button'); // Declarar aquí para pasarla a editNoteContent
+      // Botón Eliminar (declarado aquí para poder pasarlo a editNoteContent)
+      const deleteButton = document.createElement('button');
       editButton.onclick = (e) => {
           e.stopPropagation();
           if (typeof editNoteContent === 'function') {
@@ -594,135 +641,170 @@
       deleteButton.title = "Eliminar nota";
       deleteButton.onclick = (e) => {
           e.stopPropagation();
+          // Llamar a deleteNote directamente SIN confirmación
           if (typeof deleteNote === 'function') {
-              deleteNote(noteId, gridItem); // Llamar a deleteNote SIN confirmación
+              deleteNote(noteId, gridItem); // Se elimina directamente
           } else {
               console.error("Función deleteNote no encontrada");
           }
       };
+      // --- FIN DEL CAMBIO: Eliminación de confirm() --- (Este comentario es del original)
 
       menuActions.appendChild(editButton);
       menuActions.appendChild(deleteButton);
-      menuBar.appendChild(bubbleButton);
-      menuBar.appendChild(menuActions);
+      menuBar.appendChild(bubbleButton); // Bolita a la izquierda
+      menuBar.appendChild(menuActions); // Acciones a la derecha
+
       card.appendChild(menuBar);
       content.appendChild(card);
       gridItem.appendChild(content);
 
+      // --- Posición para GridStack ---
       const pos = {
           x: notaData.x, y: notaData.y,
-          w: notaData.w || 2,
-          id: noteId,
+          w: notaData.w || 2, // Ancho por defecto
+          // h: se deja que 'auto' lo calcule
+          id: noteId, // ID para GridStack
           autoPosition: (notaData.x === undefined || notaData.y === undefined)
       };
+
+      // Guardar datos en el elemento para referencia
       gridItem.docData = notaData;
+
       return { element: gridItem, position: pos };
     }
 
+    // --- FUNCIÓN PARA EDITAR NOTA ---
     function editNoteContent(card, noteId, notaData, menuActionsContainer, editButton, deleteButton) {
-        let targetElement = card.querySelector('.note-content');
+        const noteContentElement = card.querySelector('.note-content');
+        // Si no hay área de texto (ej. imagen sin texto), crear una
+        let targetElement = noteContentElement;
         if (!targetElement) {
             targetElement = document.createElement('div');
             targetElement.classList.add('note-content');
+            // Insertar ANTES de la barra de menú
             card.insertBefore(targetElement, card.querySelector('.menu-bar'));
         }
+
         const isImageNote = !!notaData.url;
         const currentText = isImageNote ? (notaData.texto || '') : (notaData.nota || '');
-        targetElement.innerHTML = '';
+
+        targetElement.innerHTML = ''; // Limpiar
+
         const editInput = document.createElement('textarea');
         editInput.value = currentText;
         editInput.style.width = '100%';
         editInput.style.minHeight = '80px';
-        editInput.style.height = 'auto';
+        editInput.style.height = 'auto'; // Permitir auto-resize
         editInput.style.boxSizing = 'border-box';
-        editInput.style.border = '1px dashed #ccc';
+        editInput.style.border = '1px dashed #ccc'; // Borde distintivo
         editInput.style.resize = 'vertical';
         targetElement.appendChild(editInput);
         autoResizeTextarea(editInput);
         editInput.addEventListener('input', () => autoResizeTextarea(editInput));
         editInput.focus();
+
+        // Crear botón Guardar Edición
         const saveEditButton = document.createElement('button');
         saveEditButton.classList.add('menu-icon');
         saveEditButton.innerHTML = '💾';
         saveEditButton.title = "Guardar cambios";
         saveEditButton.onclick = (e) => {
             e.stopPropagation();
-            const newText = editInput.value.trim();
-            const updateData = isImageNote ? { texto: newText || null } : { nota: newText };
+            const newText = editInput.value.trim(); // Quitar espacios extra
+            const updateData = isImageNote ? { texto: newText || null } : { nota: newText }; // Guardar null si está vacío
+
+            // Deshabilitar botón mientras guarda
             saveEditButton.disabled = true;
-            saveEditButton.innerHTML = '⏳';
+            saveEditButton.innerHTML = '⏳'; // Indicador de carga
+
             db.collection('notas').doc(noteId).update(updateData)
               .then(() => {
                   console.log("Nota actualizada en Firestore.");
-                  // Restaurar botones originales (onSnapshot actualizará el texto)
+                  // La vista se actualizará por onSnapshot. Solo restauramos botones.
                   menuActionsContainer.replaceChild(editButton, saveEditButton);
-                  menuActionsContainer.appendChild(deleteButton); // Re-añadir delete
+                  menuActionsContainer.appendChild(deleteButton); // Re-añadir delete por si acaso
               })
               .catch((error) => {
                   console.error('Error al actualizar la nota:', error);
                   alert("Error al guardar los cambios.");
-                  saveEditButton.disabled = false;
+                  saveEditButton.disabled = false; // Rehabilitar botón
                   saveEditButton.innerHTML = '💾';
+                  // Opcional: restaurar botones originales
                   menuActionsContainer.replaceChild(editButton, saveEditButton);
                   menuActionsContainer.appendChild(deleteButton);
               });
         };
-        menuActionsContainer.innerHTML = '';
+
+        // Reemplazar botones Editar/Eliminar con Guardar
+        menuActionsContainer.innerHTML = ''; // Limpiar acciones actuales
         menuActionsContainer.appendChild(saveEditButton);
     }
 
-    // --- FUNCIÓN PARA ELIMINAR NOTA (Versión Corregida) ---
-    function deleteNote(noteId, gridItem) { // gridItem ya no se usa pero se mantiene la firma
-      console.log("Eliminando nota:", noteId);
-      db.collection('notas').doc(noteId).delete()
-        .then(() => {
-            console.log(`Nota ${noteId} eliminada de Firestore.`);
-            // YA NO se elimina manualmente de Gridstack aquí.
-            // onSnapshot se encargará de la actualización visual.
-            displayedNotes.delete(noteId); // Limpiar cache local
-            document.querySelectorAll(`.assigned-bubble[data-note='${noteId}']`).forEach(b => b.remove()); // Limpiar calendario
-        })
-        .catch((error) => {
-            console.error("Error al solicitar eliminación en Firestore: ", error);
-            alert("Error al eliminar la nota.");
-        });
+    // --- FUNCIÓN PARA ELIMINAR NOTA ---
+    function deleteNote(noteId, gridItem) {
+        console.log("Eliminando nota:", noteId); // Log para confirmar acción
+        db.collection('notas').doc(noteId).delete()
+          .then(() => {
+               console.log(`Nota ${noteId} eliminada de Firestore.`);
+               // Opcional: eliminar inmediatamente del DOM para feedback rápido
+               // aunque onSnapshot lo hará eventualmente.
+               if (gridItem && grid && grid.engine.nodes.get(gridItem)) { // <-- Esta es la línea que causaba conflicto con onSnapshot
+                   grid.removeWidget(gridItem);
+               }
+               displayedNotes.delete(noteId); // Eliminar del cache local si se usa
+               // Quitar burbujas del calendario asociadas a esta nota
+               document.querySelectorAll(`.assigned-bubble[data-note='${noteId}']`).forEach(b => b.remove());
+          })
+          .catch((error) => {
+               console.error("Error al eliminar la nota: ", error);
+               alert("Error al eliminar la nota.");
+          });
     }
 
 
-    /****************** Escucha de Cambios en Firestore (onSnapshot) ******************/
-    if (db && typeof db.collection === 'function') {
+    /****************** Escucha de Cambios en Firestore (SIMPLIFICADA) ******************/
+
+    if (db && typeof db.collection === 'function') { // Verificar que db está inicializado
         db.collection('notas')
+          // .orderBy('createdAt', 'desc') // Opcional: Ordenar
           .onSnapshot((snapshot) => {
               console.log("Snapshot recibido. Redibujando notas...");
-              if (!grid) { console.error("GridStack no inicializado."); return; }
+              if (!grid) {
+                  console.error("GridStack no está inicializado. No se pueden mostrar notas.");
+                  return;
+              }
 
-              grid.removeAll(false); // Limpiar grid visual
-              displayedNotes.clear(); // Limpiar cache local
+              grid.removeAll(); // Limpiar completamente el grid visual
+              displayedNotes.clear(); // Limpiar el cache de referencia
 
               snapshot.forEach((doc) => {
-                  const result = mostrarNotaEnPantalla(doc);
-                  if (result && result.element && result.position) {
-                      grid.addWidget(result.element, result.position);
-                      displayedNotes.set(doc.id, result.element);
+                  const noteId = doc.id;
+                  const result = mostrarNotaEnPantalla(doc); // Llama a la función que crea el HTML
+
+                  if (result && result.element && result.position) { // Verificar que devuelve lo esperado
+                      grid.addWidget(result.element, result.position); // Añadir al grid
+                      displayedNotes.set(noteId, result.element); // Guardar referencia
                   }
               });
               console.log(`Notas redibujadas: ${displayedNotes.size}`);
 
+              // Actualizar calendario después de redibujar todo (por si cambiaron fechas)
               if (currentCalendarMonth !== undefined && currentCalendarYear !== undefined) {
-                   fetchAllAssignedNotes().then(() => {
+                   fetchAllAssignedNotes().then(() => { // Recargar cache de fechas
                        generateCalendar(currentCalendarMonth, currentCalendarYear);
                    });
-              } else {
-                   fetchAllAssignedNotes();
-              }
+                } else {
+                   fetchAllAssignedNotes(); // Cargar cache inicial si calendario no está visible
+                }
 
           }, (error) => {
-              console.error("Error crítico listener Firestore:", error);
-              alert("Error al cargar notas. Recarga la página o revisa la consola (F12).");
+              console.error("Error crítico al obtener notas de Firestore:", error);
+              alert("Error al cargar las notas. Por favor, revisa la consola (F12) y considera recargar la página.");
           });
     } else {
-        console.error("Firestore (db) no inicializado.");
-        alert("Error: No se pudo conectar a la base de datos.");
+        console.error("Firestore (db) no está inicializado correctamente.");
+        alert("Error: No se pudo conectar a la base de datos. Las notas no se cargarán.");
     }
 
 
@@ -734,8 +816,10 @@
     const inputAreaElem = document.getElementById('inputArea');
     const imageLinkInputAreaElem = document.getElementById('imageLinkInputArea');
     const imageLinkInputElem = document.getElementById('imageLink');
+    // const imageNoteTextElem = Ya declarada arriba
     const saveImageLinkButtonElem = document.getElementById('saveImageLink');
     const textNoteInputAreaElem = document.getElementById('textNoteInputArea');
+    // const textNoteInputElem = Ya declarada arriba
     const saveTextNoteButtonElem = document.getElementById('saveTextNote');
     const blurBackgroundElem = document.querySelector('.blur-background');
 
@@ -743,6 +827,7 @@
       if(addNoteOptionsElem) addNoteOptionsElem.style.display = 'none';
       if(inputAreaElem) inputAreaElem.style.display = 'none';
       if(blurBackgroundElem) blurBackgroundElem.style.display = 'none';
+      // Limpiar campos
       if(imageLinkInputElem) imageLinkInputElem.value = '';
       if(imageNoteTextElem) { imageNoteTextElem.value = ''; autoResizeTextarea(imageNoteTextElem); }
       if(textNoteInputElem) { textNoteInputElem.value = ''; autoResizeTextarea(textNoteInputElem); }
@@ -754,12 +839,13 @@
             if (addNoteOptionsElem && addNoteOptionsElem.style.display === 'flex') {
                 hideMenus();
             } else if (addNoteOptionsElem && blurBackgroundElem) {
-                hideMenus();
+                hideMenus(); // Asegurar que otros menús estén cerrados
                 addNoteOptionsElem.style.display = 'flex';
                 blurBackgroundElem.style.display = 'block';
             }
         };
     }
+
     if (addImageLinkOptionElem) {
         addImageLinkOptionElem.onclick = function (event) {
             event.stopPropagation();
@@ -771,6 +857,7 @@
             if(imageLinkInputElem) imageLinkInputElem.focus();
         };
     }
+
     if (addTextNoteOptionElem) {
         addTextNoteOptionElem.onclick = function (event) {
             event.stopPropagation();
@@ -782,16 +869,19 @@
             if(textNoteInputElem) textNoteInputElem.focus();
         };
     }
+
     if (blurBackgroundElem) {
         blurBackgroundElem.onclick = hideMenus;
     }
 
+    // --- Guardar Notas ---
     function guardarLinkDeImagen() {
       if (!imageLinkInputElem) return;
       let link = imageLinkInputElem.value.trim();
       const texto = imageNoteTextElem ? imageNoteTextElem.value.trim() : '';
       if (link) {
         link = transformDriveLink(link);
+        // Deshabilitar botón mientras guarda
         if(saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = true;
         db.collection('notas').add({
           url: link,
@@ -800,15 +890,25 @@
           tipo: 'imagen'
         })
           .then(() => { hideMenus(); })
-          .catch((error) => { console.error('Error guardando imagen:', error); alert("Error guardando imagen."); })
-          .finally(() => { if(saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = false; });
-      } else { alert("Introduce un link."); imageLinkInputElem.focus(); }
+          .catch((error) => {
+              console.error('Error al guardar el link de imagen: ', error);
+              alert("Error al guardar la imagen.");
+          })
+          .finally(() => {
+               // Rehabilitar botón
+               if(saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = false;
+          });
+      } else {
+          alert("Por favor, introduce un link para la imagen.");
+          imageLinkInputElem.focus();
+      }
     }
 
     function guardarNotaTexto() {
       if (!textNoteInputElem) return;
       const nota = textNoteInputElem.value.trim();
       if (nota) {
+          // Deshabilitar botón mientras guarda
           if(saveTextNoteButtonElem) saveTextNoteButtonElem.disabled = true;
         db.collection('notas').add({
             nota: nota,
@@ -816,37 +916,50 @@
             tipo: 'texto'
         })
           .then(() => { hideMenus(); })
-          .catch((error) => { console.error('Error guardando nota:', error); alert("Error guardando nota."); })
-          .finally(() => { if(saveTextNoteButtonElem) saveTextNoteButtonElem.disabled = false; });
-      } else { alert("Escribe algo en la nota."); textNoteInputElem.focus(); }
+          .catch((error) => {
+              console.error('Error al guardar la nota de texto: ', error);
+              alert("Error al guardar la nota.");
+           })
+           .finally(() => {
+               // Rehabilitar botón
+               if(saveTextNoteButtonElem) saveTextNoteButtonElem.disabled = false;
+           });
+      } else {
+          alert("Por favor, escribe algo en la nota.");
+          textNoteInputElem.focus();
+      }
     }
 
     if(saveImageLinkButtonElem) saveImageLinkButtonElem.onclick = guardarLinkDeImagen;
     if(saveTextNoteButtonElem) saveTextNoteButtonElem.onclick = guardarNotaTexto;
 
+    // --- Guardar posición al mover ---
     if (grid) {
         grid.on('dragstop', function (event, el) {
             const node = el.gridstackNode;
             const noteId = el.getAttribute('data-note-id');
+
             if (noteId && node) {
-                setTimeout(() => {
+                setTimeout(() => { // Usar timeout pequeño
                     const currentNode = grid.engine.nodes.get(el);
                     if(currentNode){
+                         // console.log(`Guardando posición para ${noteId}: x=${currentNode.x}, y=${currentNode.y}`);
                          db.collection('notas').doc(noteId).update({
                              x: currentNode.x, y: currentNode.y
                          }).catch(error => console.error("Error guardando posición:", error));
                     }
-                }, 50);
+                }, 150); // Aumentar ligeramente el timeout
             }
         });
     }
 
+
     /****************** Calendario y Asignación de la Bolita ******************/
     let currentCalendarMonth, currentCalendarYear;
-    let assignedDatesCache = {};
-    let notesDataCache = {};
+    let assignedDatesCache = {}; // Cache { 'D/M/YYYY': [noteId1, noteId2] }
+    let notesDataCache = {}; // Cache { noteId: { assignedDate: '...', ... } }
 
-    function getChileDate() { /* ... (sin cambios) ... */
+    function getChileDate() {
         try {
             const options = { timeZone: 'America/Santiago', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
             const formatter = new Intl.DateTimeFormat('en-CA', options);
@@ -854,19 +967,29 @@
             const dateMap = {};
             parts.forEach(({ type, value }) => dateMap[type] = parseInt(value, 10));
             return new Date(Date.UTC(dateMap.year, dateMap.month - 1, dateMap.day, dateMap.hour, dateMap.minute, dateMap.second));
-        } catch (e) { console.warn("Intl TimeZone no soportado, usando hora local.", e); return new Date(); }
+        } catch (e) {
+            console.warn("Intl.DateTimeFormat con TimeZone no soportado o falló, usando hora local.", e);
+            return new Date();
+        }
     }
-    function initCalendarDate() { /* ... (sin cambios) ... */
-        let today = getChileDate(); let year = today.getFullYear(); let month = today.getMonth();
+
+    function initCalendarDate() {
+        let today = getChileDate();
+        let year = today.getFullYear();
+        let month = today.getMonth();
         const minYear = 2024; const minMonth = 11;
-        if (year < minYear || (year === minYear && month < minMonth)) { return { month: minMonth, year: minYear }; }
+        if (year < minYear || (year === minYear && month < minMonth)) {
+            return { month: minMonth, year: minYear };
+        }
         return { month, year };
     }
-    function getMonthName(monthIndex) { /* ... (sin cambios) ... */
+
+    function getMonthName(monthIndex) {
         const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
         return months[monthIndex % 12] || '';
     }
-    async function fetchAllAssignedNotes() { /* ... (sin cambios) ... */
+
+    async function fetchAllAssignedNotes() {
         assignedDatesCache = {}; notesDataCache = {};
         try {
             const snapshot = await db.collection('notas').where('assignedDate', '!=', null).get();
@@ -880,29 +1003,49 @@
             });
         } catch (error) { console.error("Error fetching assigned notes:", error); }
     }
-    async function generateCalendar(month, year) { /* ... (sin cambios, usa los caches actualizados) ... */
-        if (Object.keys(notesDataCache).length === 0 && Object.keys(assignedDatesCache).length === 0) { await fetchAllAssignedNotes(); }
+
+    async function generateCalendar(month, year) {
+        if (Object.keys(notesDataCache).length === 0) await fetchAllAssignedNotes(); // Cargar si cache está vacío
+
         const calendarDiv = document.getElementById('calendarWidget');
-        if (!calendarDiv) return; calendarDiv.innerHTML = ''; const today = getChileDate();
+        if (!calendarDiv) return;
+        calendarDiv.innerHTML = '';
+        const today = getChileDate();
+
+        // Cabecera
         const header = document.createElement('div'); header.className = 'calendar-header';
         const prevBtn = document.createElement('button'); prevBtn.innerHTML = '&lt;';
         const minYear = 2024; const minMonth = 11;
-        if (year === minYear && month === minMonth) { prevBtn.disabled = true; }
-        else { prevBtn.onclick = () => generateCalendar(month === 0 ? 11 : month - 1, month === 0 ? year - 1 : year); }
+        if (year === minYear && month === minMonth) prevBtn.disabled = true;
+        else prevBtn.onclick = () => generateCalendar(month === 0 ? 11 : month - 1, month === 0 ? year - 1 : year);
         const nextBtn = document.createElement('button'); nextBtn.innerHTML = '&gt;';
         nextBtn.onclick = () => generateCalendar(month === 11 ? 0 : month + 1, month === 11 ? year + 1 : year);
         const title = document.createElement('span'); title.textContent = `${getMonthName(month)} ${year}`;
-        header.appendChild(prevBtn); header.appendChild(title); header.appendChild(nextBtn); calendarDiv.appendChild(header);
+        header.appendChild(prevBtn); header.appendChild(title); header.appendChild(nextBtn);
+        calendarDiv.appendChild(header);
+
+        // Días semana
         const daysHeader = document.createElement('div'); daysHeader.className = 'calendar-days-header';
-        ['Do','Lu','Ma','Mi','Ju','Vi','Sá'].forEach(day => { const d = document.createElement('div'); d.className = 'calendar-day'; d.textContent = day; daysHeader.appendChild(d); }); calendarDiv.appendChild(daysHeader);
+        ['Do','Lu','Ma','Mi','Ju','Vi','Sá'].forEach(day => { const d = document.createElement('div'); d.className = 'calendar-day'; d.textContent = day; daysHeader.appendChild(d); });
+        calendarDiv.appendChild(daysHeader);
+
+        // Grid fechas
         const datesGrid = document.createElement('div'); datesGrid.className = 'calendar-dates-grid';
-        const firstDayOfMonth = new Date(year, month, 1).getDay(); const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const firstDayOfMonth = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
         for (let i = 0; i < firstDayOfMonth; i++) { const e = document.createElement('div'); e.className = 'calendar-date empty'; datesGrid.appendChild(e); }
         for (let date = 1; date <= daysInMonth; date++) {
             const dateCell = document.createElement('div'); dateCell.className = 'calendar-date'; dateCell.textContent = date;
             const dateStr = `${date}/${month + 1}/${year}`;
-            if (date === today.getDate() && month === today.getMonth() && year === today.getFullYear()) { dateCell.classList.add('today'); }
-            if (assignedDatesCache[dateStr]) { assignedDatesCache[dateStr].forEach(noteId => { const b = document.createElement("span"); b.className = "assigned-bubble"; b.setAttribute("data-note", noteId); b.textContent = "●"; dateCell.appendChild(b); }); }
+            if (date === today.getDate() && month === today.getMonth() && year === today.getFullYear()) dateCell.classList.add('today');
+
+            if (assignedDatesCache[dateStr]) { // Bolitas
+                assignedDatesCache[dateStr].forEach(noteId => {
+                    const b = document.createElement("span"); b.className = "assigned-bubble"; b.setAttribute("data-note", noteId); b.textContent = "●"; dateCell.appendChild(b);
+                });
+            }
+            // Eventos Drag & Drop
             dateCell.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; dateCell.classList.add('drag-over'); });
             dateCell.addEventListener('dragleave', (e) => { dateCell.classList.remove('drag-over'); });
             dateCell.addEventListener('drop', async (e) => {
@@ -912,29 +1055,38 @@
                     const oldDateStr = notesDataCache[noteId]?.assignedDate;
                     try {
                         await db.collection('notas').doc(noteId).update({ assignedDate: dateStr });
+                        // --- Actualizar Caches ---
                         if(notesDataCache[noteId]) notesDataCache[noteId].assignedDate = dateStr; else notesDataCache[noteId] = { assignedDate: dateStr };
                         if (oldDateStr && assignedDatesCache[oldDateStr]) { assignedDatesCache[oldDateStr] = assignedDatesCache[oldDateStr].filter(id => id !== noteId); if (assignedDatesCache[oldDateStr].length === 0) delete assignedDatesCache[oldDateStr]; }
                         if (!assignedDatesCache[dateStr]) assignedDatesCache[dateStr] = []; if (!assignedDatesCache[dateStr].includes(noteId)) assignedDatesCache[dateStr].push(noteId);
+                        // --- Actualizar UI ---
                         const bubbleInCard = document.getElementById(`bubble-${noteId}`); if (bubbleInCard) bubbleInCard.style.display = 'none';
-                        generateCalendar(currentCalendarMonth, currentCalendarYear);
-                    } catch (error) { console.error(`Error asignando fecha a ${noteId}:`, error); alert("Error al asignar la fecha."); }
+                        generateCalendar(currentCalendarMonth, currentCalendarYear); // Regenerar
+                    } catch (error) { console.error(`Error al asignar fecha a nota ${noteId}:`, error); alert("Error al asignar la fecha."); }
                 }
-            }); datesGrid.appendChild(dateCell);
+            });
+            datesGrid.appendChild(dateCell);
         }
-        const totalCells = firstDayOfMonth + daysInMonth; const cellsNeeded = totalCells <= 35 ? 35 : 42;
-        for (let i = totalCells; i < cellsNeeded; i++) { const e = document.createElement('div'); e.className = 'calendar-date empty'; datesGrid.appendChild(e); } calendarDiv.appendChild(datesGrid);
+        const totalCells = firstDayOfMonth + daysInMonth; // Celdas vacías final
+        const cellsNeeded = totalCells <= 35 ? 35 : 42;
+        for (let i = totalCells; i < cellsNeeded; i++) { const e = document.createElement('div'); e.className = 'calendar-date empty'; datesGrid.appendChild(e); }
+        calendarDiv.appendChild(datesGrid);
         currentCalendarMonth = month; currentCalendarYear = year;
     }
-    const calendarIconElem = document.getElementById('calendarIcon'); /* ... (event listeners sin cambios) ... */
-    const calendarWidgetElem = document.getElementById('calendarWidget'); /* ... (event listeners sin cambios) ... */
+
+    // --- Mostrar/ocultar calendario ---
+    const calendarIconElem = document.getElementById('calendarIcon');
+    const calendarWidgetElem = document.getElementById('calendarWidget');
     let calendarTimeout;
-    function showCalendar() { /* ... (sin cambios) ... */
+
+    function showCalendar() {
         if (!calendarWidgetElem) return; clearTimeout(calendarTimeout);
-        if (calendarWidgetElem.style.display !== 'block') { const { month, year } = initCalendarDate(); generateCalendar(month, year); calendarWidgetElem.style.display = 'block'; }
+        if (calendarWidgetElem.style.display !== 'block') {
+            const { month, year } = initCalendarDate(); generateCalendar(month, year); calendarWidgetElem.style.display = 'block';
+        }
     }
-    function hideCalendar() { /* ... (sin cambios) ... */
-        if (!calendarWidgetElem) return; calendarTimeout = setTimeout(() => { calendarWidgetElem.style.display = 'none'; }, 300);
-    }
+    function hideCalendar() { if (!calendarWidgetElem) return; calendarTimeout = setTimeout(() => { calendarWidgetElem.style.display = 'none'; }, 300); }
+
     if (calendarIconElem) { calendarIconElem.addEventListener('mouseenter', showCalendar); calendarIconElem.addEventListener('mouseleave', hideCalendar); }
     if (calendarWidgetElem) { calendarWidgetElem.addEventListener('mouseenter', () => clearTimeout(calendarTimeout)); calendarWidgetElem.addEventListener('mouseleave', hideCalendar); }
     function openCalendar() { showCalendar(); }
@@ -943,7 +1095,6 @@
     /****************** Otros Event Listeners y Setup Inicial ******************/
     if (addNoteOptionsElem) addNoteOptionsElem.addEventListener('click', (e) => e.stopPropagation());
     if (inputAreaElem) inputAreaElem.addEventListener('click', (e) => e.stopPropagation());
-    fetchAllAssignedNotes(); // Carga inicial del cache calendario
 
     // --- Fin del Script ---
   </script>
