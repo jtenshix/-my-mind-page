@@ -641,6 +641,52 @@
     if (inputAreaElem) inputAreaElem.addEventListener('click', (e) => e.stopPropagation());
 
     // --- Fin del Script ---
+
+    // --- Función para obtener el margen de colisión ---
+    function getCollisionMargin(element) {
+        if (element.classList.contains('text-card')) {
+            // Margen de 2 cm para notas de texto
+            return 20; // 20px aproximadamente equivalen a 2 cm
+        } else if (element.classList.contains('card-wrapper')) {
+            // Margen más ajustado para notas de imagen
+            return 10; // Ajusta este valor según sea necesario
+        }
+        return 0; // Margen predeterminado
+    }
+
+    // --- Función para detectar colisiones ---
+    function isColliding(elem1, elem2) {
+        const margin1 = getCollisionMargin(elem1);
+        const margin2 = getCollisionMargin(elem2);
+
+        const rect1 = elem1.getBoundingClientRect();
+        const rect2 = elem2.getBoundingClientRect();
+
+        return !(
+            rect1.right + margin1 < rect2.left - margin2 ||
+            rect1.left - margin1 > rect2.right + margin2 ||
+            rect1.bottom + margin1 < rect2.top - margin2 ||
+            rect1.top - margin1 > rect2.bottom + margin2
+        );
+    }
+
+    // --- Función para manejar el arrastre ---
+    function onDrag(event, draggedElement) {
+        const elements = document.querySelectorAll('.grid-stack-item');
+
+        elements.forEach(element => {
+            if (element !== draggedElement && isColliding(draggedElement, element)) {
+                // Ajustar la posición de draggedElement para evitar la colisión
+                console.log('Colisión detectada con', element);
+                // Aquí puedes implementar la lógica para ajustar la posición
+            }
+        });
+    }
+
+    // --- Ejemplo de cómo podrías llamar a onDrag al arrastrar un elemento ---
+    document.querySelectorAll('.grid-stack-item').forEach(elem => {
+        elem.addEventListener('drag', (event) => onDrag(event, elem));
+    });
   </script>
 </body>
 </html>
