@@ -615,7 +615,7 @@
             return 40; // 40px aproximadamente equivalen a 2 cm
         } else if (element.classList.contains('card-wrapper')) {
             // Margen más ajustado para notas de imagen
-            return 10; // Ajusta este valor según sea necesario
+            return 40; // Ajusta este valor según sea necesario
         }
         return 0; // Margen predeterminado
     }
@@ -635,34 +635,133 @@
             rect1.top - margin1 > rect2.bottom + margin2
         );
     }
+// --- NUEVO CÓDIGO: Verificación y Empuje al Soltar la Nota ('dragstop') ---
 
-    // --- Función para manejar el arrastre ---
-    function onDrag(event, draggedElement) {
-        const elements = document.querySelectorAll('.grid-stack-item');
+// Asegúrate que la función isColliding exista (la que tenías antes)
+// function isColliding(elem1, elem2) { ... } // No la borres
 
-        elements.forEach(element => {
-            if (element !== draggedElement && isColliding(draggedElement, element)) {
-                // Ajustar la posición de draggedElement para evitar la colisión
-                console.log('Colisión detectada con', element);
-                // Aquí puedes implementar la lógica para ajustar la posición
-                // Por ejemplo, puedes mover el elemento arrastrado a una nueva posición
-                // o simplemente evitar que se superponga.
+if (typeof grid !== 'undefined' && grid) { // Solo si 'grid' existe
 
-                // Ejemplo de ajuste de posición:
-                const currentPos = grid.getGridItems(draggedElement.el)[0];
-                if (currentPos) {
-                    const newPos = {
-                        x: currentPos.x,
-                        y: currentPos.y + 1, // Mover hacia abajo
-                    };
-                    grid.move(draggedElement.el, newPos.x, newPos.y);
-                }
+    grid.on('dragstop', (event, draggedElement) => {
+        // Se activa JUSTO DESPUÉS de soltar un elemento ('draggedElement')
+        if (!draggedElement) return; // Seguridad
+
+        const draggedNode = grid.getNode(draggedElement); // Info (x,y,w,h...) del nodo que soltaste
+        if (!draggedNode) {
+             console.error("Dragstop: No se pudo obtener info del nodo soltado:", draggedElement);
+             // Aquí podrías intentar guardar usando el ID del elemento si tienes otra forma
+             return;
+        }
+        console.log(`Elemento <span class="math-inline">\{draggedNode\.id \|\| 'desconocido'\} soltado en \(</span>{draggedNode.x}, ${draggedNode.y})`);
+
+        // Obtener todos los otros elementos de la cuadrícula
+        const otherElements = grid.engine.nodes
+                                  .map(node => node.el) // Sacar el elemento HTML
+                                  .filter(el => el && el !== draggedElement); // Quitar nulos y el que acabas de soltar
+
+        let collisionTargetElement = null; // Para guardar con quién chocó
+
+        // Revisar si choca con alguno de los otros elementos
+        for (const element of otherElements) {
+            if (isColliding(draggedElement, element)) { // Usa tu función isColliding
+                const targetNode = grid.getNode(element);
+                console.warn(`¡COLISIÓN DETECTADA al soltar con ${targetNode?.id || 'otro elemento'}!`);
+                collisionTargetElement = element; // Guardamos el primero que encontramos
+                break; // Salir del bucle
             }
-        });
-    }
+        }
 
-    // --- Ejemplo de cómo podrías llamar a onDrag al arrastrar un elemento ---
-    grid.on('drag', (event, element) => onDrag(event, element));
+        // Limpiar avisos visuales previos
+        draggedElement.style.outline = 'none';
+        draggedElement.style.outlineOffset = '0px';
+
+        let finalX = draggedNode.x; // Guardar la posición final X inicial
+        let finalY = draggedNode.y; // Guardar la posición final Y inicial
+        let moveAttempted = false; // Para saber si intentamos moverlo
+
+        // Si SÍ encontramos una colisión...
+        if (collisionTargetElement) {
+            moveAttempted = true; // Marcar que intentaremos mover
+            const targetNode = grid.getNode(collisionTargetElement); // Info del nodo con el que chocó
+            if (!targetNode) {
+                console.error("Dragstop: No se pudo obtener info del nodo de colisión.");
+                // Acción de fallback: mostrar error y NO mover
+                draggedElement.style.outline = '3px dashed red';
+                setTimeout(() => { if(draggedElement) draggedElement.style.outline = 'none'; }, 2500);
+                // La posición final sigue siendo la original (finalX, finalY) -> se guardará abajo
+
+            } else {
+                // --- Calcular Dirección y Empujar ---
+                const draggedCenterX = draggedNode.x + draggedNode.w / 2;
+                const draggedCenterY = draggedNode.y + draggedNode.h / 2;
+                const targetCenterX = targetNode.x + targetNode.w / 2;
+                const targetCenterY = targetNode.y + targetNode.h / 2;
+                const dx = draggedCenterX - targetCenterX;
+                const dy = draggedCenterY - targetCenterY;
+
+                let newX = draggedNode.x;
+                let newY = draggedNode.y;
+
+                // Decidir si empujar más en horizontal o vertical
+                if (Math.abs(dx) > Math.abs(dy)) { // Empujar horizontalmente
+                    newX = (dx > 0) ? draggedNode.x + 1 : draggedNode.x - 1; // Mover 1 unidad grid
+                } else { // Empujar verticalmente
+                    newY = (dy > 0) ? draggedNode.y + 1 : draggedNode.y - 1; // Mover 1 unidad grid
+                }
+
+                // Asegurarse que no sea una posición negativa
+                newX = Math.max(0, newX);
+                newY = Math.max(0, newY);
+
+                console.log(`Intentando empujar a (${newX}, ${newY})`);
+
+                // --- Validar si el nuevo sitio está libre ANTES de mover ---
+                if (grid.isAreaEmpty(newX, newY, draggedNode.w, draggedNode.h, draggedElement)) {
+                    console.log('Empujando a sitio libre...');
+                    grid.move(draggedElement, newX, newY);
+                    // ¡ÉXITO! La nota se movió. Actualizar posición final.
+                    finalX = newX;
+                    finalY = newY;
+                } else {
+                    console.warn(`El sitio para empujar (${newX}, ${newY}) está ocupado.`);
+                    // Mostrar borde rojo de error
+                    draggedElement.style.outline = '3px dashed red';
+                    setTimeout(() => { if(draggedElement) draggedElement.style.outline = 'none'; }, 2500);
+                    // La posición final sigue siendo la original (finalX, finalY) -> se guardará abajo
+                }
+            } // Fin else targetNode existe
+        } // Fin if collisionTargetElement
+
+        // --- Guardar la Posición Final en Firestore ---
+        // Siempre guardar la posición final (sea la original o la empujada)
+        const noteId = draggedElement.getAttribute('data-note-id');
+        if (noteId) {
+            console.log(`Guardando posición final para <span class="math-inline">\{noteId\}\: \(</span>{finalX}, ${finalY})`);
+            db.collection('notas').doc(noteId).update({
+                x: finalX,
+                y: finalY
+                // w: draggedNode.w, // Opcional: guardar ancho/alto si cambian
+                // h: draggedNode.h
+            }).then(() => {
+                console.log(`Posición de ${noteId} guardada en Firestore.`);
+                // Si hubo un intento de mover fallido, quitar borde rojo ahora que se guardó la original
+                 if (moveAttempted && draggedElement.style.outline.includes('red')) {
+                      // Quitar borde rojo inmediatamente
+                      // draggedElement.style.outline = 'none';
+                 }
+            }).catch((error) => {
+                console.error(`Error al guardar posición de ${noteId} en Firestore:`, error);
+                alert(`Error al guardar la nueva posición de la nota ${noteId}. Considera recargar.`);
+            });
+        } else {
+             console.error("ERROR CRÍTICO: No se encontró data-note-id en el elemento arrastrado:", draggedElement);
+             alert("Error grave: No se pudo identificar la nota movida para guardar su posición.");
+        }
+    }); // Fin grid.on('dragstop')
+
+} else {
+    console.error("La variable 'grid' no está definida o no es válida. El código de 'dragstop' no se activará.");
+}
 
   </script>
 </body>
