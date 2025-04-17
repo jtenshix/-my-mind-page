@@ -728,7 +728,7 @@
                     // --- Validar si el nuevo sitio está libre ANTES de mover (sin cambios aquí) ---
                     if (grid.isAreaEmpty(newX, newY, draggedNode.w, draggedNode.h, draggedElement)) {
                         console.log('Empujando a sitio libre...');
-                        grid.move(draggedElement, newX, newY);
+                        grid.update(draggedElement, { x: newX, y: newY });
                         finalX = newX; // Actualizar posición final
                         finalY = newY;
                     } else {
