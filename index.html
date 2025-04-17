@@ -9,12 +9,12 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
   <style>
-    /* ===================== Estilos Globales ===================== */
+    /* Estilos CSS */
     html, body {
       margin: 0;
       padding: 0;
       height: 100vh;
-      overflow: hidden; /* Evita scroll en el body */
+      overflow: hidden;
       background: linear-gradient(to bottom, #a2dff7 0%, #a2dff7 40%, #03254c 100%);
       font-family: Arial, sans-serif;
     }
@@ -23,59 +23,51 @@
       width: 100%;
       padding: 2cm;
       box-sizing: border-box;
-      display: flex; /* Usar flexbox */
-      flex-direction: column; /* Alinear contenido verticalmente */
+      display: flex;
+      flex-direction: column;
       position: relative;
-      overflow: hidden; /* Ocultar overflow del contenedor principal */
+      overflow: hidden;
     }
     #notaDisplay {
-      flex-grow: 1; /* Permitir que el área de notas crezca */
+      flex-grow: 1;
       width: 100%;
-      overflow-y: auto; /* Permitir scroll DENTRO del área de notas */
+      overflow-y: auto;
       overflow-x: hidden;
-      position: relative; /* Necesario para algunos cálculos de GridStack */
+      position: relative;
     }
     .grid-stack-placeholder { display: none !important; }
     .grid-stack-item {
         transition: transform 0.4s cubic-bezier(0.25,1,0.5,1);
-        /* === Margen inferior para espaciado vertical mínimo === */
-        /* Ajustado a 150px (aprox 4cm) según solicitado previamente */
         margin-bottom: 150px !important;
-        /* Importante: Asegurar que el item tenga overflow visible por si el contenido crece */
         overflow: visible !important;
     }
-     /* Contenedor interno de Gridstack */
     .grid-stack-item-content {
-        overflow: visible !important; /* Permitir que el contenido se desborde si es necesario */
-        height: 100%; /* Ocupar toda la altura del item */
-        display: flex; /* Usar flex para la tarjeta interna */
+        overflow: visible !important;
+        height: 100%;
+        display: flex;
         flex-direction: column;
     }
-    /* Ajuste para que el contenedor GridStack no interfiera con el margen inferior del último item */
     .grid-stack {
-        padding-bottom: 1px; /* Pequeño padding para asegurar espacio visual al final */
+        padding-bottom: 1px;
     }
-
-    /* ===================== Tarjetas de Nota ===================== */
     .card-wrapper, .text-card {
       background-color: #fff;
       border: 2px solid #0077a3;
       border-radius: 8px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      width: 240px; /* Ancho fijo de la tarjeta */
+      width: 240px;
       display: flex;
       flex-direction: column;
       position: relative;
-      height: 100%; /* Ocupar altura del contenedor .grid-stack-item-content */
+      height: 100%;
       box-sizing: border-box;
     }
-    /* No se necesita .card-content si usamos flex en .card-wrapper/.text-card */
     .image-container {
-      width: 100%; /* Ajustar al ancho de la tarjeta */
-      height: 240px; /* Altura fija para la imagen */
+      width: 100%;
+      height: 240px;
       overflow: hidden;
       position: relative;
-      flex-shrink: 0; /* Evitar que se encoja */
+      flex-shrink: 0;
     }
     .image-container img {
       width: 100%;
@@ -84,7 +76,7 @@
       display: block;
     }
     .note-content {
-      background-color: #fff; /* Redundante si la tarjeta es blanca */
+      background-color: #fff;
       padding: 10px;
       text-align: left;
       font-size: 16px;
@@ -92,23 +84,19 @@
       min-height: 50px;
       box-sizing: border-box;
       word-wrap: break-word;
-      overflow: hidden; /* Ocultar overflow del texto */
-      flex-grow: 1; /* Permitir que crezca para llenar espacio */
-      /* Considerar añadir overflow-y: auto si el texto es muy largo */
-      /* max-height: 300px; */ /* Opcional: limitar altura máxima */
+      overflow: hidden;
+      flex-grow: 1;
     }
     .note-content a { color: #0077a3; text-decoration: underline; }
-
-    /* ===================== Área de Controles de la Nota ===================== */
     .menu-bar {
       background-color: #0288D1;
-      padding: 5px 8px; /* Ajustar padding */
+      padding: 5px 8px;
       display: flex;
-      justify-content: space-between; /* Distribuir elementos */
+      justify-content: space-between;
       align-items: center;
       flex-shrink: 0;
-      border-top: 1px solid #0077a3; /* Línea separadora opcional */
-      border-bottom-left-radius: 6px; /* Redondear esquinas inferiores */
+      border-top: 1px solid #0077a3;
+      border-bottom-left-radius: 6px;
       border-bottom-right-radius: 6px;
     }
     .menu-icon {
@@ -117,23 +105,19 @@
       font-size: 20px;
       color: #fff;
       cursor: pointer;
-      padding: 2px 4px; /* Área de clic un poco mayor */
+      padding: 2px 4px;
     }
     .bubble-icon {
       color: #FFCD05;
       font-size: 22px;
-      /* margin-right ya no es necesario con space-between */
     }
-    /* Contenedor para botones de la derecha */
     .menu-actions {
         display: flex;
         gap: 4px;
     }
-
-    /* ===================== Botón Principal para Agregar Nota/Imagen ===================== */
     #addNoteButton {
       position: absolute;
-      bottom: 30px; /* Un poco más arriba */
+      bottom: 30px;
       right: 30px;
       background-color: #006994;
       color: #fff;
@@ -146,7 +130,7 @@
       justify-content: center;
       align-items: center;
       cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3); /* Sombra más pronunciada */
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
       transition: background-color 0.3s ease, transform 0.3s ease;
       z-index: 1001;
     }
@@ -154,80 +138,75 @@
       background-color: #005577;
       transform: scale(1.05);
     }
-
-    /* ===================== Menú Emergente ===================== */
     #addNoteOptions {
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background-color: rgba(0,0,0,0.85); /* Ligeramente más oscuro */
+      background-color: rgba(0,0,0,0.85);
       border-radius: 10px;
       box-shadow: 0 5px 15px rgba(0,0,0,0.4);
       display: none;
       flex-direction: row;
       justify-content: center;
       align-items: center;
-      gap: 25px; /* Más espacio */
+      gap: 25px;
       padding: 25px;
       z-index: 1002;
     }
     #addNoteOptions .card {
-      background-color: #2c2c2c; /* Fondo de tarjeta más oscuro */
-      border: 1px solid #0077a3; /* Borde más sutil */
+      background-color: #2c2c2c;
+      border: 1px solid #0077a3;
       border-radius: 8px;
       padding: 20px;
       text-align: center;
       cursor: pointer;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
-      width: 180px; /* Ligeramente más estrechas */
+      width: 180px;
     }
     #addNoteOptions .card:hover {
-        transform: translateY(-5px) scale(1.03); /* Efecto hover */
+        transform: translateY(-5px) scale(1.03);
         box-shadow: 0 6px 12px rgba(0, 119, 163, 0.5);
      }
-    #addNoteOptions .card h2 { color: #36a2eb; margin-bottom: 10px; } /* Color de título */
-    #addNoteOptions .card p { color: #ccc; font-size: 14px; } /* Color de texto */
-
-    /* ===================== Submenú para Ingresar Datos ===================== */
+    #addNoteOptions .card h2 { color: #36a2eb; margin-bottom: 10px; }
+    #addNoteOptions .card p { color: #ccc; font-size: 14px; }
     #inputArea {
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background-color: #ffffff; /* Fondo blanco */
-      padding: 25px 30px; /* Más padding */
+      background-color: #ffffff;
+      padding: 25px 30px;
       border-radius: 8px;
       box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-      display: none; /* Oculto por defecto */
+      display: none;
       flex-direction: column;
-      gap: 15px; /* Espacio entre elementos */
-      width: 90%; /* Más ancho en móviles */
-      max-width: 550px; /* Ancho máximo */
+      gap: 15px;
+      width: 90%;
+      max-width: 550px;
       z-index: 1002;
     }
     #inputArea label {
         font-weight: bold;
         color: #333;
-        margin-bottom: 3px; /* Espacio debajo de la etiqueta */
+        margin-bottom: 3px;
         font-size: 14px;
     }
     #inputArea textarea,
     #inputArea input[type="text"] {
-      padding: 12px; /* Más padding interno */
+      padding: 12px;
       border: 1px solid #ccc;
       border-radius: 4px;
       resize: vertical;
       width: 100%;
       box-sizing: border-box;
       line-height: 1.5;
-      font-size: 16px; /* Tamaño de fuente */
+      font-size: 16px;
     }
     #inputArea textarea { min-height: 80px; }
     #inputArea textarea#textNote { min-height: 120px; }
-
     #inputArea button {
-      padding: 10px 20px; /* Más padding horizontal */
+      padding: 10px 20px;
       background-color: #006994;
       color: #fff;
       border: none;
@@ -240,15 +219,13 @@
       font-weight: bold;
     }
      #inputArea button:hover { background-color: #005577; }
-     #inputArea button:active { transform: scale(0.98); } /* Efecto al presionar */
+     #inputArea button:active { transform: scale(0.98); }
     .input-group { display: flex; flex-direction: column; gap: 5px; width: 100%;}
-
-    /* ===================== Calendario ===================== */
     .calendar-icon {
       position: absolute;
-      bottom: 30px; /* Alinear con botón Add */
+      bottom: 30px;
       left: 30px;
-      width: 45px; /* Ligeramente más grande */
+      width: 45px;
       height: 45px;
       background-color: #fff;
       border: 1px solid #ccc;
@@ -257,24 +234,24 @@
       justify-content: center;
       align-items: center;
       color: #333;
-      font-size: 24px; /* Icono más grande */
+      font-size: 24px;
       cursor: pointer;
       z-index: 1001;
       box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
     .calendar-widget {
       position: absolute;
-      bottom: 85px; /* Ajustar posición sobre el icono */
-      left: 20px; /* Ajustar alineación */
+      bottom: 85px;
+      left: 20px;
       background: #fff;
       border: 1px solid #ddd;
       border-radius: 6px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      padding: 15px; /* Más padding */
+      padding: 15px;
       display: none;
       z-index: 1001;
-      width: 320px; /* Ancho ajustado */
-      min-height: 300px; /* Altura ajustada */
+      width: 320px;
+      min-height: 300px;
     }
     .calendar-header {
       display: flex;
@@ -294,14 +271,13 @@
     }
      .calendar-header button:hover:not(:disabled) { background-color: #e0f7fa; }
      .calendar-header button:disabled { color: #ccc; cursor: default; }
-    .calendar-header span { font-weight: bold; color: #333; font-size: 18px; } /* Título más grande */
-
+    .calendar-header span { font-weight: bold; color: #333; font-size: 18px; }
     .calendar-days-header,
     .calendar-dates-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       text-align: center;
-      gap: 6px; /* Espacio entre celdas */
+      gap: 6px;
     }
     .calendar-days-header {
         margin-bottom: 10px;
@@ -309,25 +285,24 @@
         color: #555;
         padding-bottom: 8px;
         border-bottom: 1px solid #eee;
-        font-size: 13px; /* Tamaño de días */
+        font-size: 13px;
      }
     .calendar-day { padding: 3px; }
-
     .calendar-date {
-      padding: 0; /* Quitar padding para controlar tamaño con width/height */
+      padding: 0;
       border-radius: 50%;
       color: #333;
-      border: 2px solid transparent; /* Borde para hover/today */
+      border: 2px solid transparent;
       cursor: pointer;
       position: relative;
-      width: 36px; /* Tamaño fijo */
+      width: 36px;
       height: 36px;
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0 auto;
       line-height: 1;
-      font-size: 14px; /* Tamaño número */
+      font-size: 14px;
       transition: background-color 0.2s ease, border-color 0.2s ease;
     }
     .calendar-date.empty {
@@ -340,41 +315,35 @@
          border-color: #b3e5fc;
     }
     .calendar-date.today {
-        border-color: #0077a3; /* Borde azul para hoy */
+        border-color: #0077a3;
         font-weight: bold;
         color: #005577;
     }
-    /* Drop target feedback */
     .calendar-date.drag-over {
-        background-color: #a2dff7 !important; /* Color fuerte al arrastrar sobre */
+        background-color: #a2dff7 !important;
         border-color: #0077a3 !important;
     }
-
-    /* Indicador de la bolita asignada en el calendario */
     .assigned-bubble {
-      color: #FFCD05; /* Amarillo */
-      font-size: 11px; /* Tamaño ajustado */
+      color: #FFCD05;
+      font-size: 11px;
       position: absolute;
-      bottom: 3px; /* Posición */
+      bottom: 3px;
       left: 50%;
       transform: translateX(-50%);
       line-height: 1;
-      text-shadow: 0 0 1px rgba(0,0,0,0.5); /* Sombra para visibilidad */
-      pointer-events: none; /* No interferir con clics en la fecha */
+      text-shadow: 0 0 1px rgba(0,0,0,0.5);
+      pointer-events: none;
     }
-    /* Permitir múltiples bolitas (simple apilado vertical) */
     .calendar-date .assigned-bubble + .assigned-bubble {
-        bottom: -2px; /* Ajustar posición si hay más de una */
+        bottom: -2px;
     }
-
-    /* ===================== Capa para Cerrar Menús (Blur) ===================== */
     .blur-background {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.6); /* Más oscuro */
+      background: rgba(0,0,0,0.6);
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
       display: none;
@@ -438,14 +407,14 @@
     }
 
     const firebaseConfig = {
-      apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs", // ¡Considera mover a un entorno seguro!
+      apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs",
       authDomain: "oasis-b036d.firebaseapp.com",
       projectId: "oasis-b036d",
       storageBucket: "oasis-b036d.appspot.com",
       messagingSenderId: "141546637821",
       appId: "1:141546637821:web:0a861aeb13831774ed3194",
       measurementId: "G-HB2P17H5YL"
-    }; // Reemplaza con tu configuración real
+    };
     try { firebase.initializeApp(firebaseConfig); } catch (e) { console.error("Error inicializando Firebase:", e); }
     const db = firebase.firestore();
 
@@ -679,12 +648,22 @@
                 // Aquí puedes implementar la lógica para ajustar la posición
                 // Por ejemplo, puedes mover el elemento arrastrado a una nueva posición
                 // o simplemente evitar que se superponga.
+
+                // Ejemplo de ajuste de posición:
+                const currentPos = grid.getGridItems(draggedElement.el)[0];
+                if (currentPos) {
+                    const newPos = {
+                        x: currentPos.x,
+                        y: currentPos.y + 1, // Mover hacia abajo
+                    };
+                    grid.move(draggedElement.el, newPos.x, newPos.y);
+                }
             }
         });
     }
 
     // --- Ejemplo de cómo podrías llamar a onDrag al arrastrar un elemento ---
-    grid.on('drag', (event, element) => onDrag(event, element.el));
+    grid.on('drag', (event, element) => onDrag(event, element));
 
   </script>
 </body>
