@@ -486,7 +486,7 @@
     let grid; // Declarar grid aquí para acceso global en el script
     try {
         grid = GridStack.init({
-          margin: 76, // Aquí está el cambio para el espaciado de 2cm
+          margin: 76, // Espacio horizontal entre items (Gridstack lo usa también para base vertical si float=false)
           cellHeight: 'auto', // Altura de celda basada en contenido
           disableResize: true,
           float: false, // Mantenido en false para filas predecibles
