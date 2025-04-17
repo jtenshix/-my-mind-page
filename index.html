@@ -635,24 +635,31 @@
             rect1.top - margin1 > rect2.bottom + margin2
         );
     }
-// --- NUEVO CÓDIGO CORREGIDO: Verificación y Empuje al Soltar ('dragstop') ---
+// --- NUEVO CÓDIGO CORREGIDO #2: Verificación y Empuje al Soltar ('dragstop') ---
 
     // (Asegúrate que las funciones getCollisionMargin y isColliding sigan existiendo antes)
 
-    if (typeof grid !== 'undefined' && grid) { // Solo si 'grid' existe
+    if (typeof grid !== 'undefined' && grid && grid.engine) { // Solo si 'grid' y 'grid.engine' existen
 
         grid.on('dragstop', (event, draggedElement) => {
             // Se activa JUSTO DESPUÉS de soltar un elemento ('draggedElement')
             if (!draggedElement) return; // Seguridad
 
-            // --- CORRECCIÓN AQUÍ ---
-            const draggedNode = grid.getElementNode(draggedElement); // Usar getElementNode
-            // ----------------------
+            // --- CORRECCIÓN #2 AQUÍ ---
+            // Buscar el nodo correspondiente al elemento DOM en el motor de Gridstack
+            const draggedNode = grid.engine.nodes.find(node => node.el === draggedElement);
+            // --------------------------
 
             if (!draggedNode) {
-                 console.error("Dragstop: No se pudo obtener info del nodo soltado:", draggedElement);
-                 return;
+                 console.error("Dragstop: No se pudo encontrar el nodo en engine para:", draggedElement);
+                 return; // Salir si no encontramos el nodo
             }
+            // Verificar si el nodo tiene coordenadas válidas antes de continuar
+            if (typeof draggedNode.x !== 'number' || typeof draggedNode.y !== 'number') {
+                console.error("Dragstop: El nodo encontrado no tiene coordenadas válidas.", draggedNode);
+                return; // Salir si el nodo está incompleto
+            }
+
             console.log(`Elemento ${draggedNode.id || 'desconocido'} soltado en (${draggedNode.x}, ${draggedNode.y})`);
 
             // Obtener todos los otros elementos de la cuadrícula
@@ -665,9 +672,9 @@
             // Revisar si choca con alguno de los otros elementos
             for (const element of otherElements) {
                 if (isColliding(draggedElement, element)) { // Usa tu función isColliding
-                     // --- CORRECCIÓN AQUÍ ---
-                     const targetNodeTemp = grid.getElementNode(element); // Usar getElementNode para chequear ID
-                     // ----------------------
+                     // --- CORRECCIÓN #2 AQUÍ (para el log, no crítico) ---
+                     const targetNodeTemp = grid.engine.nodes.find(node => node.el === element);
+                     // ----------------------------------------------------
                     console.warn(`¡COLISIÓN DETECTADA al soltar con ${targetNodeTemp?.id || 'otro elemento'}!`);
                     collisionTargetElement = element; // Guardamos el primero que encontramos
                     break; // Salir del bucle
@@ -686,12 +693,13 @@
             if (collisionTargetElement) {
                 moveAttempted = true; // Marcar que intentaremos mover
 
-                 // --- CORRECCIÓN AQUÍ ---
-                 const targetNode = grid.getElementNode(collisionTargetElement); // Usar getElementNode
-                 // ----------------------
+                 // --- CORRECCIÓN #2 AQUÍ ---
+                 const targetNode = grid.engine.nodes.find(node => node.el === collisionTargetElement);
+                 // --------------------------
 
-                if (!targetNode) {
-                    console.error("Dragstop: No se pudo obtener info del nodo de colisión.");
+                 // Verificar si encontramos el nodo de colisión y si tiene coordenadas
+                if (!targetNode || typeof targetNode.x !== 'number' || typeof targetNode.y !== 'number') {
+                    console.error("Dragstop: No se pudo encontrar nodo válido para el elemento de colisión.");
                     draggedElement.style.outline = '3px dashed red';
                     setTimeout(() => { if(draggedElement) draggedElement.style.outline = 'none'; }, 2500);
                     // Guardar posición original abajo
@@ -729,29 +737,35 @@
                         setTimeout(() => { if(draggedElement) draggedElement.style.outline = 'none'; }, 2500);
                         // Guardar posición original abajo
                     }
-                } // Fin else targetNode existe
+                } // Fin else targetNode válido
             } // Fin if collisionTargetElement
 
-            // --- Guardar la Posición Final en Firestore (sin cambios aquí) ---
+            // --- Guardar la Posición Final en Firestore (con verificación extra) ---
             const noteId = draggedElement.getAttribute('data-note-id');
             if (noteId) {
-                console.log(`Guardando posición final para ${noteId}: (${finalX}, ${finalY})`);
-                db.collection('notas').doc(noteId).update({
-                    x: finalX,
-                    y: finalY
-                    // w: draggedNode.w, // Opcional
-                    // h: draggedNode.h
-                }).then(() => {
-                    console.log(`Posición de ${noteId} guardada en Firestore.`);
-                    // Quitar borde rojo si existía y se guardó bien
-                     if (draggedElement.style.outline.includes('red')) {
-                           draggedElement.style.outline = 'none';
-                           draggedElement.style.outlineOffset = '0px';
-                     }
-                }).catch((error) => {
-                    console.error(`Error al guardar posición de ${noteId} en Firestore:`, error);
-                    alert(`Error al guardar la nueva posición de la nota ${noteId}. Considera recargar.`);
-                });
+                // Asegurarse que finalX y finalY son números antes de guardar
+                if (typeof finalX === 'number' && typeof finalY === 'number') {
+                     console.log(`Guardando posición final para ${noteId}: (${finalX}, ${finalY})`);
+                     db.collection('notas').doc(noteId).update({
+                         x: finalX,
+                         y: finalY
+                         // w: draggedNode.w, // Opcional
+                         // h: draggedNode.h
+                     }).then(() => {
+                         console.log(`Posición de ${noteId} guardada en Firestore.`);
+                         // Quitar borde rojo si se guardó bien (incluso si el empuje falló)
+                         if (draggedElement.style.outline.includes('red')) {
+                               draggedElement.style.outline = 'none';
+                               draggedElement.style.outlineOffset = '0px';
+                         }
+                     }).catch((error) => {
+                         console.error(`Error al guardar posición de ${noteId} en Firestore:`, error);
+                         alert(`Error al guardar la nueva posición de la nota ${noteId}. Considera recargar.`);
+                     });
+                 } else {
+                     console.error(`Error: Coordenadas finales inválidas para ${noteId} (${finalX}, ${finalY}). No se guardará.`);
+                     alert(`Error: Posición final inválida para nota ${noteId}, no se pudo guardar.`);
+                 }
             } else {
                  console.error("ERROR CRÍTICO: No se encontró data-note-id en el elemento arrastrado:", draggedElement);
                  alert("Error grave: No se pudo identificar la nota movida para guardar su posición.");
@@ -759,7 +773,7 @@
         }); // Fin grid.on('dragstop')
 
     } else {
-        console.error("La variable 'grid' no está definida o no es válida...");
+        console.error("La variable 'grid' o 'grid.engine' no está definida o no es válida...");
     } // Fin check if grid exists
   </script>
 </body>
