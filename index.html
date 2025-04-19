@@ -603,10 +603,140 @@ function isColliding(elem1, elem2) {
     if (db && typeof db.collection === 'function') {
         db.collection('notas')
           .onSnapshot((snapshot) => {
-              if (!grid) { console.error("GridStack no inicializado."); return; }
-              grid.removeAll(); displayedNotes.clear();
-              snapshot.forEach((doc) => { const result = mostrarNotaEnPantalla(doc); if (result) { grid.addWidget(result.element, result.position); displayedNotes.set(doc.id, result.element); } });
-              if (currentCalendarMonth !== undefined) { fetchAllAssignedNotes().then(() => generateCalendar(currentCalendarMonth, currentCalendarYear)); } else { fetchAllAssignedNotes(); }
+            // ******** ESTE ES EL CÓDIGO QUE DEBES PEGAR ********
+
+          if (!grid) { console.error("GridStack no inicializado."); return; }
+
+          let needsCalendarUpdate = false; // Bandera para saber si refrescar calendario
+
+          // Procesamos SOLO los cambios detectados por Firestore
+          snapshot.docChanges().forEach((change) => {
+              const noteId = change.doc.id;
+              const notaData = change.doc.data();
+
+              console.log(`Cambio detectado: Tipo=${change.type}, ID=${noteId}`); // Log para depurar
+
+              if (change.type === "added") {
+                  // Se añadió una nueva nota a Firestore
+                  // Verificamos si ya existe en el grid (por si acaso, ej: carga inicial)
+                  const existingElement = grid.engine.nodes.find(n => n.id === noteId)?.el; // Busca por ID de gridstack
+                  // O alternativamente: document.querySelector(`.grid-stack-item[data-note-id="${noteId}"]`);
+
+                  if (!existingElement) {
+                      console.log(`Añadiendo widget para ${noteId}`);
+                      const result = mostrarNotaEnPantalla(change.doc);
+                      if (result) {
+                          // Añadimos el nuevo widget al grid
+                          grid.addWidget(result.element, result.position);
+                          if (notaData.assignedDate) needsCalendarUpdate = true; // Marcar si afecta calendario
+                      }
+                  } else {
+                      console.log(`Widget para ${noteId} ya existía, no se añade de nuevo.`);
+                      // Podríamos querer actualizar su contenido/posición si los datos son diferentes
+                      // (Código de 'modified' podría ir aquí también para la carga inicial)
+                  }
+
+              } else if (change.type === "modified") {
+                  // Una nota existente cambió (contenido, posición, fecha asignada)
+                  console.log(`Modificando widget para ${noteId}`);
+                  const widgetElement = grid.engine.nodes.find(n => n.id === noteId)?.el; // Busca por ID de gridstack
+                  // O alternativamente: document.querySelector(`.grid-stack-item[data-note-id="${noteId}"]`);
+
+                  if (widgetElement) {
+                      const oldData = widgetElement.docData || {}; // Usamos los datos guardados en el elemento si existen
+
+                      // 1. Actualizar Contenido (Texto/Imagen) si cambió
+                      const noteContentElement = widgetElement.querySelector('.note-content');
+                      const newText = notaData.url ? (notaData.texto || '') : (notaData.nota || '');
+                      const oldText = notaData.url ? (oldData.texto || '') : (oldData.nota || '');
+
+                      if (noteContentElement && newText !== oldText) {
+                           console.log(` - Actualizando contenido de texto para ${noteId}`);
+                           noteContentElement.innerHTML = linkify(newText);
+                           // Re-aplicar target blank a los links si es necesario
+                            Array.from(noteContentElement.getElementsByTagName('a')).forEach(link => { link.setAttribute('target', '_blank'); link.setAttribute('rel', 'noopener noreferrer'); });
+                      }
+                      // Si es imagen y la URL cambió (menos común)
+                      if (notaData.url && notaData.url !== oldData.url) {
+                           console.log(` - Actualizando URL de imagen para ${noteId}`);
+                           const img = widgetElement.querySelector('.image-container img');
+                           if (img) img.src = notaData.url;
+                      }
+
+                      // 2. Actualizar Posición si cambió (y si no es la que estamos arrastrando nosotros mismos)
+                      // (Puede ser complejo evitar actualizar si el cambio de X,Y fue por el drag local)
+                      // Por ahora, actualizamos si Firestore dice que cambió:
+                      if ((typeof notaData.x === 'number' && notaData.x !== oldData.x) || (typeof notaData.y === 'number' && notaData.y !== oldData.y)) {
+                          // Solo si la posición en Firestore es diferente a la actual en GridStack
+                          const currentNode = grid.engine.nodes.find(n => n.id === noteId);
+                          if (currentNode && (currentNode.x !== notaData.x || currentNode.y !== notaData.y)) {
+                              console.log(` - Actualizando posición para ${noteId} a (${notaData.x}, ${notaData.y})`);
+                              grid.update(widgetElement, { x: notaData.x, y: notaData.y });
+                          }
+                      }
+
+                      // 3. Actualizar estado de la burbuja del calendario
+                      const bubbleButton = widgetElement.querySelector(`#bubble-${noteId}`);
+                      const needsBubble = !notaData.assignedDate; // Se muestra si NO tiene fecha
+                      if (bubbleButton) {
+                           const shouldDisplayBubble = bubbleButton.style.display !== 'none';
+                           if (needsBubble && !shouldDisplayBubble) {
+                               console.log(` - Mostrando burbuja para ${noteId}`);
+                               bubbleButton.style.display = 'inline-block';
+                           } else if (!needsBubble && shouldDisplayBubble) {
+                               console.log(` - Ocultando burbuja para ${noteId}`);
+                               bubbleButton.style.display = 'none';
+                           }
+                      }
+                      // Marcar si afecta calendario
+                      if (notaData.assignedDate !== oldData.assignedDate) {
+                           needsCalendarUpdate = true;
+                      }
+
+                      // Actualizar los datos cacheados en el elemento
+                      widgetElement.docData = notaData;
+                      // Actualizar caché global para el calendario
+                      notesDataCache[noteId] = notaData;
+
+
+                  } else {
+                      console.warn(`Se recibió 'modified' para ${noteId}, pero no se encontró el widget en el grid.`);
+                      // Podría ser una nota que se modificó y eliminó rápidamente.
+                  }
+
+              } else if (change.type === "removed") {
+                  // Una nota fue eliminada de Firestore
+                   console.log(`Eliminando widget para ${noteId}`);
+                   const widgetElement = grid.engine.nodes.find(n => n.id === noteId)?.el;
+                   // O alternativamente: document.querySelector(`.grid-stack-item[data-note-id="${noteId}"]`);
+
+                   if (widgetElement) {
+                       // Eliminamos el widget del grid
+                       grid.removeWidget(widgetElement); // El tercer parámetro `false` evita que se guarde la eliminación (ya viene de Firestore)
+                       if (notesDataCache[noteId]?.assignedDate) needsCalendarUpdate = true; // Marcar si afecta calendario
+                       delete notesDataCache[noteId]; // Limpiar caché
+                       // Podríamos necesitar limpiar `assignedDatesCache` también, pero fetchAll lo hará
+                   } else {
+                       console.warn(`Se recibió 'removed' para ${noteId}, pero no se encontró el widget.`);
+                   }
+              }
+          }); // Fin del forEach(change)
+
+          // Actualiza el calendario SI algún cambio lo requirió
+          if (needsCalendarUpdate && currentCalendarMonth !== undefined) {
+              console.log("Actualizando calendario debido a cambios...");
+              // Usamos fetchAllAssignedNotes para asegurar que la caché esté actualizada
+              fetchAllAssignedNotes().then(() => {
+                 generateCalendar(currentCalendarMonth, currentCalendarYear);
+                 // Podrías querer quitar también las burbujas del DOM manually si es necesario
+                 // document.querySelectorAll(`.assigned-bubble[data-note='${noteId_eliminado}']`).forEach(b => b.remove());
+              });
+          } else if (needsCalendarUpdate) {
+              // Si el calendario no se ha mostrado nunca, solo actualizamos la caché
+              fetchAllAssignedNotes();
+          }
+// ******** FIN DEL CÓDIGO A PEGAR ********
+        
           }, (error) => { console.error("Error Firestore:", error); alert("Error al cargar notas."); });
     } else { console.error("Firestore (db) no inicializado."); alert("Error: No se pudo conectar a la base de datos."); }
 
