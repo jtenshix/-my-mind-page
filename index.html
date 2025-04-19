@@ -423,7 +423,7 @@
     let grid;
     try {
         grid = GridStack.init({
-          margin: 0, cellHeight: 'auto', disableResize: true, float: false, animate: true, alwaysShowResizeHandle: false,
+          margin: 75, cellHeight: 'auto', disableResize: true, float: false, animate: true, alwaysShowResizeHandle: false,
           draggable: { handle: '.menu-bar', scroll: true, appendTo: 'body' }
         });
     } catch (e) { console.error("Error inicializando GridStack:", e); alert("Error al iniciar el área de notas."); }
@@ -436,6 +436,75 @@
     const imageNoteTextElem = document.getElementById('imageNoteText');
     if (textNoteInputElem) textNoteInputElem.addEventListener('input', () => autoResizeTextarea(textNoteInputElem));
     if (imageNoteTextElem) imageNoteTextElem.addEventListener('input', () => autoResizeTextarea(imageNoteTextElem));
+    // --- Función para obtener el margen de colisión ---
+function getCollisionMargin(element) {
+    // Usar 40px para ambos tipos para chequeo de ~80px total
+    if (!element || typeof element.querySelector !== 'function') return 0;
+    const cardElement = element.querySelector('.text-card') || element.querySelector('.card-wrapper');
+    if(cardElement) return 40;
+    if (element.classList.contains('text-card') || element.classList.contains('card-wrapper')) { return 40; }
+    return 0;
+}
+
+// --- Función para detectar colisiones ---
+function isColliding(elem1, elem2) {
+     if (!elem1 || !elem2 || !elem1.getBoundingClientRect || !elem2.getBoundingClientRect || !elem1.offsetParent || !elem2.offsetParent) { return false; }
+     const rect1 = elem1.getBoundingClientRect();
+     const rect2 = elem2.getBoundingClientRect();
+     if (rect1.width === 0 || rect1.height === 0 || rect2.width === 0 || rect2.height === 0) { return false; }
+     const margin1 = getCollisionMargin(elem1);
+     const margin2 = getCollisionMargin(elem2);
+     const separated = (
+         (rect1.right + margin1) < (rect2.left - margin2) ||
+         (rect1.left - margin1) > (rect2.right + margin2) ||
+         (rect1.bottom + margin1) < (rect2.top - margin2) ||
+         (rect1.top - margin1) > (rect2.bottom + margin2)
+     );
+     return !separated;
+}
+
+    
+    // --- Función para obtener el margen de colisión ---
+function getCollisionMargin(element) {
+    // Usar 40px para ambos tipos para chequeo de ~80px total
+    if (!element || typeof element.querySelector !== 'function') return 0;
+    // Intenta buscar la tarjeta DENTRO del grid-item
+    const cardElement = element.querySelector('.text-card') || element.querySelector('.card-wrapper');
+    if(cardElement) return 40;
+
+    // Si no la encontró adentro, prueba si el elemento MISMO es la tarjeta (menos probable)
+    if (element.classList.contains('text-card') || element.classList.contains('card-wrapper')) {
+        return 40;
+    }
+    return 0;
+}
+
+// --- Función para detectar colisiones ---
+function isColliding(elem1, elem2) {
+     // Comprobar si los elementos son válidos y visibles
+     if (!elem1 || !elem2 || !elem1.getBoundingClientRect || !elem2.getBoundingClientRect || !elem1.offsetParent || !elem2.offsetParent) {
+         return false;
+     }
+     const rect1 = elem1.getBoundingClientRect();
+     const rect2 = elem2.getBoundingClientRect();
+     // Ignorar si alguno no tiene tamaño
+     if (rect1.width === 0 || rect1.height === 0 || rect2.width === 0 || rect2.height === 0) {
+         return false;
+     }
+
+     const margin1 = getCollisionMargin(elem1);
+     const margin2 = getCollisionMargin(elem2);
+
+     // Comprobar si NO hay colisión
+     const separated = (
+         (rect1.right + margin1) < (rect2.left - margin2) ||   // elem1 está completamente a la izquierda de elem2
+         (rect1.left - margin1) > (rect2.right + margin2) ||  // elem1 está completamente a la derecha de elem2
+         (rect1.bottom + margin1) < (rect2.top - margin2) ||  // elem1 está completamente arriba de elem2
+         (rect1.top - margin1) > (rect2.bottom + margin2)     // elem1 está completamente abajo de elem2
+     );
+
+     return !separated; // Devuelve true si SÍ hay colisión (si NO están separados)
+}
 
     /****************** Renderización, Edición y Eliminación de Notas ******************/
     const displayedNotes = new Map();
@@ -605,7 +674,287 @@
     async function fetchAllAssignedNotes() { assignedDatesCache = {}; notesDataCache = {}; try { const snap = await db.collection('notas').where('assignedDate', '!=', null).get(); snap.forEach(doc => { const d = doc.data(); const id = doc.id; notesDataCache[id] = d; const dateStr = d.assignedDate; if (dateStr) { if (!assignedDatesCache[dateStr]) assignedDatesCache[dateStr] = []; if (!assignedDatesCache[dateStr].includes(id)) assignedDatesCache[dateStr].push(id); } }); } catch (err) { console.error("Error fetch dates:", err); } }
     async function generateCalendar(month, year) { if (Object.keys(notesDataCache).length === 0) await fetchAllAssignedNotes(); const calDiv = document.getElementById('calendarWidget'); if (!calDiv) return; calDiv.innerHTML = ''; const today = getChileDate(); const hdr = document.createElement('div'); hdr.className = 'calendar-header'; const pBtn = document.createElement('button'); pBtn.innerHTML = '&lt;'; const minY = 2024; const minM = 11; if (year === minY && month === minM) pBtn.disabled = true; else pBtn.onclick = () => generateCalendar(month === 0 ? 11 : month - 1, month === 0 ? year - 1 : year); const nBtn = document.createElement('button'); nBtn.innerHTML = '&gt;'; nBtn.onclick = () => generateCalendar(month === 11 ? 0 : month + 1, month === 11 ? year + 1 : year); const title = document.createElement('span'); title.textContent = `${getMonthName(month)} ${year}`; hdr.appendChild(pBtn); hdr.appendChild(title); hdr.appendChild(nBtn); calDiv.appendChild(hdr); const daysHdr = document.createElement('div'); daysHdr.className = 'calendar-days-header'; ['Do','Lu','Ma','Mi','Ju','Vi','Sá'].forEach(day => { const d = document.createElement('div'); d.className = 'calendar-day'; d.textContent = day; daysHdr.appendChild(d); }); calDiv.appendChild(daysHdr); const datesG = document.createElement('div'); datesG.className = 'calendar-dates-grid'; const firstD = new Date(year, month, 1).getDay(); const daysInM = new Date(year, month + 1, 0).getDate(); for (let i = 0; i < firstD; i++) { const e = document.createElement('div'); e.className = 'calendar-date empty'; datesG.appendChild(e); } for (let date = 1; date <= daysInM; date++) { const cell = document.createElement('div'); cell.className = 'calendar-date'; cell.textContent = date; const dStr = `${date}/${month + 1}/${year}`; if (date === today.getDate() && month === today.getMonth() && year === today.getFullYear()) cell.classList.add('today'); if (assignedDatesCache[dStr]) { assignedDatesCache[dStr].forEach(id => { const b = document.createElement("span"); b.className = "assigned-bubble"; b.setAttribute("data-note", id); b.textContent = "●"; cell.appendChild(b); }); } cell.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; cell.classList.add('drag-over'); }); cell.addEventListener('dragleave', (e) => { cell.classList.remove('drag-over'); }); cell.addEventListener('drop', async (e) => { e.preventDefault(); cell.classList.remove('drag-over'); const noteId = e.dataTransfer.getData("application/note-id"); if (noteId) { const oldDStr = notesDataCache[noteId]?.assignedDate; try { await db.collection('notas').doc(noteId).update({ assignedDate: dStr }); if(notesDataCache[noteId]) notesDataCache[noteId].assignedDate = dStr; else notesDataCache[noteId] = { assignedDate: dStr }; if (oldDStr && assignedDatesCache[oldDStr]) { assignedDatesCache[oldDStr] = assignedDatesCache[oldDStr].filter(id => id !== noteId); if (assignedDatesCache[oldDStr].length === 0) delete assignedDatesCache[oldDStr]; } if (!assignedDatesCache[dStr]) assignedDatesCache[dStr] = []; if (!assignedDatesCache[dStr].includes(noteId)) assignedDatesCache[dStr].push(noteId); const bubbleInC = document.getElementById(`bubble-${noteId}`); if (bubbleInC) bubbleInC.style.display = 'none'; generateCalendar(currentCalendarMonth, currentCalendarYear); } catch (err) { console.error(`Err assign date ${noteId}:`, err); alert("Error."); } } }); datesG.appendChild(cell); } const totalC = firstD + daysInM; const cellsN = totalC <= 35 ? 35 : 42; for (let i = totalC; i < cellsN; i++) { const e = document.createElement('div'); e.className = 'calendar-date empty'; datesG.appendChild(e); } calDiv.appendChild(datesG); currentCalendarMonth = month; currentCalendarYear = year; }
     const calendarIconElem = document.getElementById('calendarIcon'); const calendarWidgetElem = document.getElementById('calendarWidget'); let calendarTimeout; function showCalendar() { if (!calendarWidgetElem) return; clearTimeout(calendarTimeout); if (calendarWidgetElem.style.display !== 'block') { const { month, year } = initCalendarDate(); generateCalendar(month, year); calendarWidgetElem.style.display = 'block'; } } function hideCalendar() { if (!calendarWidgetElem) return; calendarTimeout = setTimeout(() => { calendarWidgetElem.style.display = 'none'; }, 300); } if (calendarIconElem) { calendarIconElem.addEventListener('mouseenter', showCalendar); calendarIconElem.addEventListener('mouseleave', hideCalendar); } if (calendarWidgetElem) { calendarWidgetElem.addEventListener('mouseenter', () => clearTimeout(calendarTimeout)); calendarWidgetElem.addEventListener('mouseleave', hideCalendar); } function openCalendar() { showCalendar(); }
+// --- Variables para guardar la posición original al arrastrar ---
+let originalDragX = null;
+let originalDragY = null;
 
+// --- Guardar posición al EMPEZAR a arrastrar ---
+if (typeof grid !== 'undefined' && grid && grid.engine) { // Asegurarse que grid está listo
+    grid.on('dragstart', (event, draggedElement) => {
+        const node = grid.engine.nodes.find(n => n.el === draggedElement);
+        if (node) {
+            originalDragX = node.x;
+            originalDragY = node.y;
+            console.log(`Drag start desde (${originalDragX}, ${originalDragY})`);
+        } else {
+            originalDragX = null; originalDragY = null;
+            console.error("Dragstart: No se encontró nodo.");
+        }
+         if (draggedElement) {
+             draggedElement.style.transition = 'none'; // Desactivar transición CSS temporalmente
+             draggedElement.style.outline = 'none';
+             draggedElement.style.outlineOffset = '0px';
+         }
+    });
+} else {
+     console.error("Grid no listo para añadir listener dragstart.");
+}
+    // --- Revertir posición si hay colisión al SOLTAR (con setTimeout) ---
+if (typeof grid !== 'undefined' && grid && grid.engine) {
+
+    grid.on('dragstop', (event, draggedElement) => {
+        if (!draggedElement) return;
+
+        // Guardar referencia al elemento y pos original por si setTimeout causa problemas
+        const currentDraggedElement = draggedElement;
+        const initialX = originalDragX;
+        const initialY = originalDragY;
+
+        // Usar setTimeout para dar tiempo al renderizado final
+        setTimeout(() => {
+            // Verificar si el elemento sigue siendo parte del grid (podría haber sido eliminado)
+            const nodeExists = grid.engine.nodes.some(node => node.el === currentDraggedElement);
+            if (!nodeExists) {
+                 console.warn("Dragstop Timeout: El elemento arrastrado ya no está en el grid.");
+                 originalDragX = null; originalDragY = null; // Limpiar
+                 return;
+            }
+
+            const draggedNode = grid.engine.nodes.find(node => node.el === currentDraggedElement);
+
+            // Verificar si tenemos nodo y si LA POSICIÓN ORIGINAL FUE GUARDADA
+            if (!draggedNode || typeof draggedNode.x !== 'number' || typeof draggedNode.y !== 'number' || initialX === null || initialY === null) {
+                 console.error("Dragstop Timeout: Info incompleta nodo/pos. original.", draggedNode, initialX, initialY);
+                 const currentX_fallback = draggedNode?.x; const currentY_fallback = draggedNode?.y;
+                 const noteId_fallback = currentDraggedElement.getAttribute('data-note-id');
+                 if (noteId_fallback && typeof currentX_fallback === 'number' && typeof currentY_fallback === 'number') {
+                      console.log(`Guardando pos actual fallback <span class="math-inline">\{noteId\_fallback\}\: \(</span>{currentX_fallback}, ${currentY_fallback})`);
+                      if(db && typeof db.collection === 'function') { // Check db
+                         db.collection('notas').doc(noteId_fallback).update({x: currentX_fallback, y: currentY_fallback }).catch(err => console.error("Error guardando pos fallback:", err));
+                      }
+                 }
+                 originalDragX = null; originalDragY = null; // Resetear
+                 return;
+            }
+
+            console.log(`Elemento <span class="math-inline">\{draggedNode\.id \|\| 'desconocido'\} soltado en \(</span>{draggedNode.x}, ${draggedNode.y}) [Timeout Check]`);
+            const droppedX = draggedNode.x; const droppedY = draggedNode.y;
+
+            // Obtener otros elementos (asegurándose de que son grid items)
+            const otherElements = grid.engine.nodes
+                .map(node => node.el) // Obtener el DOM element
+                .filter(el => el && el !== currentDraggedElement && el.classList.contains('grid-stack-item')); // Filtrar
+
+            let collisionFound = false;
+            let collisionTargetId = 'unknown';
+
+            // Chequeo de colisión
+            console.log(`--- Iniciando chequeo de colisión para ${draggedNode.id || 'dragged'} ---`);
+            for (const element of otherElements) {
+                // Pasar los elementos .grid-stack-item a isColliding
+                if (isColliding(currentDraggedElement, element)) {
+                     const targetNodeTemp = grid.engine.nodes.find(node => node.el === element);
+                     collisionTargetId = targetNodeTemp?.id || 'unknown';
+                    console.warn(`¡COLISIÓN DETECTADA [Timeout Check] con ${collisionTargetId}!`);
+                    collisionFound = true;
+                    break;
+                }
+            }
+             console.log(`--- Fin chequeo de colisión. collisionFound: ${collisionFound} ---`);
+
+            // Lógica de Revertir o Aceptar
+            let finalX = droppedX; let finalY = droppedY;
+
+            if (collisionFound) {
+                // ¡Hay Colisión! Revertir a la posición original guardada
+                console.log(`Colisión encontrada. Revirtiendo a (${initialX}, ${initialY})`);
+                finalX = initialX; finalY = initialY;
+
+                // Mover visualmente el elemento de vuelta AHORA
+                // Asegurarse que el nodo aún existe antes de moverlo
+                if (grid.engine.nodes.find(node => node.el === currentDraggedElement)) {
+                     // Verificar si la posición de revertir es diferente a la actual antes de mover
+                     if (droppedX !== finalX || droppedY !== finalY) {
+                        console.log("Ejecutando grid.update para revertir...");
+                        grid.update(currentDraggedElement, { x: finalX, y: finalY });
+                     } else {
+                        console.log("Posición soltada ya es la original, no se necesita revertir visualmente.");
+                     }
+                } else {
+                     console.warn("El elemento ya no existe en el grid, no se puede revertir visualmente.");
+                }
+
+                // Aviso visual temporal
+                currentDraggedElement.style.outline = '3px dashed orange';
+                currentDraggedElement.style.outlineOffset = '2px';
+                setTimeout(() => { if(currentDraggedElement) { currentDraggedElement.style.transition = ''; currentDraggedElement.style.outline = 'none'; currentDraggedElement.style.outlineOffset = '0px'; } }, 700);
+
+            } else {
+                // No hubo colisión, la posición es válida
+                console.log('Posición válida, no se revierte.');
+                currentDraggedElement.style.transition = ''; // Reactivar transición CSS
+                currentDraggedElement.style.outline = 'none';
+                currentDraggedElement.style.outlineOffset = '0px';
+            }
+
+            // Guardar Posición Final en Firestore (SIEMPRE guardar la posición final determinada)
+             const noteId = currentDraggedElement.getAttribute('data-note-id');
+             if (noteId) {
+                 // Asegurarse de que finalX y finalY son números válidos
+                 if (typeof finalX === 'number' && typeof finalY === 'number' && !isNaN(finalX) && !isNaN(finalY)) {
+                      console.log(`Guardando posición final para <span class="math-inline">\{noteId\}\: \(</span>{finalX}, ${finalY})`);
+                       // Asegurarse de que db existe y es un objeto firestore válido antes de usarlo
+                      if(db && typeof db.collection === 'function') { // Check db
+                         db.collection('notas').doc(noteId).update({ x: finalX, y: finalY })
+                             .then(() => { console.log(`Posición ${noteId} guardada.`); })
+                             .catch((error) => { console.error(`Error guardando ${noteId}:`, error); alert(`Error al guardar ${noteId}.`); });
+                      } else {
+                          console.error("Error: db no está disponible para guardar posición final.");
+                      }
+                  } else {
+                       console.error(`Error: Coordenadas finales inválidas para <span class="math-inline">\{noteId\} \(</span>{finalX}, ${finalY}). No se guardará.`);
+                       // Considera no guardar o guardar la posición original si initialX/Y son válidos
+                  }
+             } else { console.error("ERROR CRÍTICO: No se encontró noteId."); }
+
+            // Limpiar las variables de posición original después de usarlas
+            originalDragX = null; originalDragY = null;
+
+        }, 50); // <-- Pequeña pausa de 50 milisegundos
+
+    }); // Fin grid.on('dragstop')
+
+} else {
+    console.error("La variable 'grid' o 'grid.engine' no está definida o no es válida...");
+} // Fin check if grid exists
+    // --- Revertir posición si hay colisión al SOLTAR (con setTimeout) ---
+if (typeof grid !== 'undefined' && grid && grid.engine) {
+
+    grid.on('dragstop', (event, draggedElement) => {
+        if (!draggedElement) return;
+
+        // Guardar referencia al elemento y pos original por si setTimeout causa problemas
+        const currentDraggedElement = draggedElement;
+        const initialX = originalDragX;
+        const initialY = originalDragY;
+
+        // Usar setTimeout para dar tiempo al renderizado final
+        setTimeout(() => {
+            // Verificar si el elemento sigue siendo parte del grid (podría haber sido eliminado)
+            const nodeExists = grid.engine.nodes.some(node => node.el === currentDraggedElement);
+            if (!nodeExists) {
+                 console.warn("Dragstop Timeout: El elemento arrastrado ya no está en el grid.");
+                 originalDragX = null; originalDragY = null; // Limpiar
+                 return;
+            }
+
+            const draggedNode = grid.engine.nodes.find(node => node.el === currentDraggedElement);
+
+            // Verificar si tenemos nodo y si LA POSICIÓN ORIGINAL FUE GUARDADA
+            if (!draggedNode || typeof draggedNode.x !== 'number' || typeof draggedNode.y !== 'number' || initialX === null || initialY === null) {
+                 console.error("Dragstop Timeout: Info incompleta nodo/pos. original.", draggedNode, initialX, initialY);
+                 const currentX_fallback = draggedNode?.x; const currentY_fallback = draggedNode?.y;
+                 const noteId_fallback = currentDraggedElement.getAttribute('data-note-id');
+                 if (noteId_fallback && typeof currentX_fallback === 'number' && typeof currentY_fallback === 'number') {
+                      console.log(`Guardando pos actual fallback <span class="math-inline">\{noteId\_fallback\}\: \(</span>{currentX_fallback}, ${currentY_fallback})`);
+                      if(db && typeof db.collection === 'function') { // Check db
+                         db.collection('notas').doc(noteId_fallback).update({x: currentX_fallback, y: currentY_fallback }).catch(err => console.error("Error guardando pos fallback:", err));
+                      }
+                 }
+                 originalDragX = null; originalDragY = null; // Resetear
+                 return;
+            }
+
+            console.log(`Elemento <span class="math-inline">\{draggedNode\.id \|\| 'desconocido'\} soltado en \(</span>{draggedNode.x}, ${draggedNode.y}) [Timeout Check]`);
+            const droppedX = draggedNode.x; const droppedY = draggedNode.y;
+
+            // Obtener otros elementos (asegurándose de que son grid items)
+            const otherElements = grid.engine.nodes
+                .map(node => node.el) // Obtener el DOM element
+                .filter(el => el && el !== currentDraggedElement && el.classList.contains('grid-stack-item')); // Filtrar
+
+            let collisionFound = false;
+            let collisionTargetId = 'unknown';
+
+            // Chequeo de colisión
+            console.log(`--- Iniciando chequeo de colisión para ${draggedNode.id || 'dragged'} ---`);
+            for (const element of otherElements) {
+                // Pasar los elementos .grid-stack-item a isColliding
+                if (isColliding(currentDraggedElement, element)) {
+                     const targetNodeTemp = grid.engine.nodes.find(node => node.el === element);
+                     collisionTargetId = targetNodeTemp?.id || 'unknown';
+                    console.warn(`¡COLISIÓN DETECTADA [Timeout Check] con ${collisionTargetId}!`);
+                    collisionFound = true;
+                    break;
+                }
+            }
+             console.log(`--- Fin chequeo de colisión. collisionFound: ${collisionFound} ---`);
+
+            // Lógica de Revertir o Aceptar
+            let finalX = droppedX; let finalY = droppedY;
+
+            if (collisionFound) {
+                // ¡Hay Colisión! Revertir a la posición original guardada
+                console.log(`Colisión encontrada. Revirtiendo a (${initialX}, ${initialY})`);
+                finalX = initialX; finalY = initialY;
+
+                // Mover visualmente el elemento de vuelta AHORA
+                // Asegurarse que el nodo aún existe antes de moverlo
+                if (grid.engine.nodes.find(node => node.el === currentDraggedElement)) {
+                     // Verificar si la posición de revertir es diferente a la actual antes de mover
+                     if (droppedX !== finalX || droppedY !== finalY) {
+                        console.log("Ejecutando grid.update para revertir...");
+                        grid.update(currentDraggedElement, { x: finalX, y: finalY });
+                     } else {
+                        console.log("Posición soltada ya es la original, no se necesita revertir visualmente.");
+                     }
+                } else {
+                     console.warn("El elemento ya no existe en el grid, no se puede revertir visualmente.");
+                }
+
+                // Aviso visual temporal
+                currentDraggedElement.style.outline = '3px dashed orange';
+                currentDraggedElement.style.outlineOffset = '2px';
+                setTimeout(() => { if(currentDraggedElement) { currentDraggedElement.style.transition = ''; currentDraggedElement.style.outline = 'none'; currentDraggedElement.style.outlineOffset = '0px'; } }, 700);
+
+            } else {
+                // No hubo colisión, la posición es válida
+                console.log('Posición válida, no se revierte.');
+                currentDraggedElement.style.transition = ''; // Reactivar transición CSS
+                currentDraggedElement.style.outline = 'none';
+                currentDraggedElement.style.outlineOffset = '0px';
+            }
+
+            // Guardar Posición Final en Firestore (SIEMPRE guardar la posición final determinada)
+             const noteId = currentDraggedElement.getAttribute('data-note-id');
+             if (noteId) {
+                 // Asegurarse de que finalX y finalY son números válidos
+                 if (typeof finalX === 'number' && typeof finalY === 'number' && !isNaN(finalX) && !isNaN(finalY)) {
+                      console.log(`Guardando posición final para <span class="math-inline">\{noteId\}\: \(</span>{finalX}, ${finalY})`);
+                       // Asegurarse de que db existe y es un objeto firestore válido antes de usarlo
+                      if(db && typeof db.collection === 'function') { // Check db
+                         db.collection('notas').doc(noteId).update({ x: finalX, y: finalY })
+                             .then(() => { console.log(`Posición ${noteId} guardada.`); })
+                             .catch((error) => { console.error(`Error guardando ${noteId}:`, error); alert(`Error al guardar ${noteId}.`); });
+                      } else {
+                          console.error("Error: db no está disponible para guardar posición final.");
+                      }
+                  } else {
+                       console.error(`Error: Coordenadas finales inválidas para <span class="math-inline">\{noteId\} \(</span>{finalX}, ${finalY}). No se guardará.`);
+                       // Considera no guardar o guardar la posición original si initialX/Y son válidos
+                  }
+             } else { console.error("ERROR CRÍTICO: No se encontró noteId."); }
+
+            // Limpiar las variables de posición original después de usarlas
+            originalDragX = null; originalDragY = null;
+
+        }, 50); // <-- Pequeña pausa de 50 milisegundos
+
+    }); // Fin grid.on('dragstop')
+
+} else {
+    console.error("La variable 'grid' o 'grid.engine' no está definida o no es válida...");
+} // Fin check if grid exists
   </script>
 </body>
 </html>
