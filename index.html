@@ -427,6 +427,50 @@
           draggable: { handle: '.menu-bar', scroll: true, appendTo: 'body' }
         });
     } catch (e) { console.error("Error inicializando GridStack:", e); alert("Error al iniciar el área de notas."); }
+    // ****** COPIA Y PEGA TODO ESTE BLOQUE ******
+
+/****************** Escucha de Cambios en GridStack (Drag/Drop) ******************/
+if (grid) { // Asegurarse que grid se inicializó bien
+
+    // Listener para el evento 'change' (cuando algo cambia en el grid, INCLUYENDO drag/drop)
+    grid.on('change', function(event, items) {
+        console.log("Evento 'change' de GridStack disparado.");
+        items.forEach(function(item) {
+            // Intentamos obtener el ID de la nota del atributo data-note-id
+            const noteId = item.el?.getAttribute('data-note-id') || item.id || '(desconocido)';
+            console.log(` - Nota ID: ${noteId}, Posición final según GridStack: x=${item.x}, y=${item.y}, w=${item.w}, h=${item.h}`);
+
+            // IMPORTANTE: Aquí es donde deberíamos guardar la posición final en Firestore
+            // si GridStack es quien decide la posición final después de un drag/drop.
+            const noteIdToSave = item.el?.getAttribute('data-note-id');
+            // const isUserAction = event?.detail?.triggeredBy === 'user'; // Intentar detectar si fue el usuario (puede variar según versión GS)
+
+            // Guardamos si tenemos datos válidos. Podríamos necesitar más lógica para evitar guardar
+            // en cambios que no son de drag/drop si eso causa problemas.
+            if (noteIdToSave && typeof item.x === 'number' && typeof item.y === 'number') {
+                 console.log(`   (Considerando guardar x:${item.x}, y:${item.y} para ${noteIdToSave} en Firestore desde 'change')`);
+                 // DESCOMENTA la línea de abajo para activar el guardado automático desde aquí (QUITANDO // ):
+                  db.collection('notas').doc(noteIdToSave).update({ x: item.x, y: item.y }).catch(err => console.error(`Error guardando posición desde 'change': ${err}`));
+            }
+
+        });
+    });
+
+    // Listener para 'dragstop' (solo para ver dónde se suelta inicialmente)
+    grid.on('dragstop', function(event, element) {
+         const node = grid.getNode(element);
+         if (node) {
+            const noteId = node.el?.getAttribute('data-note-id') || node.id || '(desconocido)';
+            console.log(`Evento 'dragstop': Nota ID: ${noteId} soltada en x=${node.x}, y=${node.y}`);
+         }
+    });
+
+    // Línea de verificación para saber si estos listeners se añadieron
+    console.log(">>> LISTENER ATTACHED TO GRID <<<");
+
+} // Fin del if (grid)
+
+// ****** FIN DEL BLOQUE A COPIAR Y PEGAR ******
 
     /****************** Utilidades UI (Scroll, Resize Textarea) ******************/
     const gridContainer = document.getElementById('notaDisplay');
