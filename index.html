@@ -458,7 +458,7 @@ if (grid) { // Asegurarse que grid se inicializó bien
 
     // Listener para 'dragstop' (solo para ver dónde se suelta inicialmente)
     grid.on('dragstop', function(event, element) {
-         const node = grid.getNode(element);
+         const node = grid.engine.nodes.find(n => n.el === element); // 
          if (node) {
             const noteId = node.el?.getAttribute('data-note-id') || node.id || '(desconocido)';
             console.log(`Evento 'dragstop': Nota ID: ${noteId} soltada en x=${node.x}, y=${node.y}`);
