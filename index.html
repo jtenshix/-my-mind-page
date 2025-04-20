@@ -423,8 +423,14 @@
     let grid;
     try {
         grid = GridStack.init({
-          margin: 10, cellHeight: 'auto', disableResize: true, float: false, animate: true, alwaysShowResizeHandle: false,
-          draggable: { handle: '.menu-bar', scroll: true, appendTo: 'body' }
+            column: 36, // <--- ¡AÑADE ESTA LÍNEA AQUÍ! (Puedes empezar con 24 o 36)
+            margin: 10, // El margen que quieres
+            cellHeight: 'auto',
+            disableResize: true,
+            float: false,
+            animate: true,
+            alwaysShowResizeHandle: false,
+            draggable: { handle: '.menu-bar', scroll: true, appendTo: 'body' }
         });
     } catch (e) { console.error("Error inicializando GridStack:", e); alert("Error al iniciar el área de notas."); }
     // ****** COPIA Y PEGA TODO ESTE BLOQUE ******
