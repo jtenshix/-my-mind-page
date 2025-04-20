@@ -567,7 +567,6 @@ if (grid) { // Asegurarse que grid se inicializó bien
         db.collection('notas').doc(noteId).delete()
           .then(() => {
                console.log(`Nota ${noteId} eliminada de Firestore.`);
-               if (gridItem && grid && grid.engine.nodes.get(gridItem)) grid.removeWidget(gridItem); // Opcional: quitar rápido del DOM
                displayedNotes.delete(noteId);
                document.querySelectorAll(`.assigned-bubble[data-note='${noteId}']`).forEach(b => b.remove()); // Quitar del calendario
           })
