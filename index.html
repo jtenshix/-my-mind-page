@@ -423,7 +423,7 @@
     let grid;
     try {
         grid = GridStack.init({
-          margin: 75, cellHeight: 'auto', disableResize: true, float: false, animate: true, alwaysShowResizeHandle: false,
+          margin: 10, cellHeight: 'auto', disableResize: true, float: false, animate: true, alwaysShowResizeHandle: false,
           draggable: { handle: '.menu-bar', scroll: true, appendTo: 'body' }
         });
     } catch (e) { console.error("Error inicializando GridStack:", e); alert("Error al iniciar el área de notas."); }
