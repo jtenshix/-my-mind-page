@@ -864,7 +864,7 @@
             // Usamos fetchAllAssignedNotes para asegurar que la caché esté actualizada
             fetchAllAssignedNotes().then(() => {
               generateCalendar(currentCalendarMonth, currentCalendarYear);
-              // Podrías querer quitar también las burbujas del DOM manually si es necesario
+              // Podrías querer quitar también las burbujas del DOM manualmente si es necesario
               // document.querySelectorAll(`.assigned-bubble[data-note='${noteId_eliminado}']`).forEach(b => b.remove());
             });
           } else if (needsCalendarUpdate) {
