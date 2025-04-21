@@ -505,7 +505,7 @@
     let grid;
     try {
       grid = GridStack.init({
-        column: 36, // <--- ¡AÑADE ESTA LÍNEA AQUÍ! (Puedes empezar con 24 o 36)
+        column: 36, // Asegúrate de que esta línea esté presente y configurada correctamente
         margin: 10, // El margen que quieres
         cellHeight: 'auto',
         disableResize: true,
@@ -534,7 +534,6 @@
           // IMPORTANTE: Aquí es donde deberíamos guardar la posición final en Firestore
           // si GridStack es quien decide la posición final después de un drag/drop.
           const noteIdToSave = item.el?.getAttribute('data-note-id');
-          // const isUserAction = event?.detail?.triggeredBy === 'user'; // Intentar detectar si fue el usuario (puede variar según versión GS)
           // Guardamos si tenemos datos válidos. Podríamos necesitar más lógica para evitar guardar
           // en cambios que no son de drag/drop si eso causa problemas.
           if (noteIdToSave && typeof item.x === 'number' && typeof item.y === 'number') {
@@ -560,14 +559,8 @@
     } // Fin del if (grid)
     /****************** Utilidades UI (Scroll, Resize Textarea) ******************/
     const gridContainer = document.getElementById('notaDisplay');
-    if (gridContainer) gridContainer.addEventListener('wheel', (event) => {}, {
-      passive: true
-    });
-    function autoResizeTextarea(el) {
-      if (!el) return;
-      el.style.height = 'auto';
-      el.style.height = (el.scrollHeight + 2) + 'px';
-    }
+    if (gridContainer) gridContainer.addEventListener('wheel', (event) => {}, { passive: true });
+    function autoResizeTextarea(el) { if (!el) return; el.style.height = 'auto'; el.style.height = (el.scrollHeight + 2) + 'px'; }
     const textNoteInputElem = document.getElementById('textNote');
     const imageNoteTextElem = document.getElementById('imageNoteText');
     if (textNoteInputElem) textNoteInputElem.addEventListener('input', () => autoResizeTextarea(textNoteInputElem));
@@ -594,9 +587,7 @@
         img.src = notaData.url;
         img.alt = notaData.texto || 'Imagen de la nota';
         img.loading = 'lazy';
-        img.onerror = () => {
-          imageContainer.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; height:100%; background-color:#eee; color:red; text-align:center; padding:10px;">⚠️<br/>Error al<br/>cargar imagen</div>`;
-        }
+        img.onerror = () => { imageContainer.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; height:100%; background-color:#eee; color:red; text-align:center; padding:10px;">⚠️<br/>Error al<br/>cargar imagen</div>`; }
         imageContainer.appendChild(img);
         card.appendChild(imageContainer);
         if (notaData.texto) {
