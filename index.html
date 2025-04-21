@@ -671,7 +671,7 @@ j<!DOCTYPE html>
         y: notaData.y,
         w: notaData.w || 2,
         id: noteId,
-        autoPosition: (notaData.x === undefined || notaData.y === undefined)
+        autoPosition: true // (notaData.x === undefined || notaData.y === undefined)
       };
       gridItem.docData = notaData; // Guardar datos para referencia
       return {
