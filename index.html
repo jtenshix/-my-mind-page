@@ -811,9 +811,9 @@
                   const currentNode = grid.engine.nodes.find(n => n.id === noteId);
                   if (currentNode && (currentNode.x !== notaData.x || currentNode.y !== notaData.y)) {
                     console.log(` - Actualizando posición para ${noteId} a (${notaData.x}, ${notaData.y})`);
-                    grid.update(widgetElement, {
-                      x: notaData.x,
-                      y: notaData.y
+                    //grid.update(widgetElement, {
+                     //x: notaData.x,
+                      //y: notaData.y
                     });
                   }
                 }
