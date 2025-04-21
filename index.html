@@ -507,7 +507,7 @@ j<!DOCTYPE html>
       grid = GridStack.init({
         column: 36, // Asegúrate de que esta línea esté presente y configurada correctamente
         margin: 10, // El margen que quieres
-        cellHeight: 'auto',
+        cellHeight: '60',
         disableResize: true,
         float: true,
         animate: true,
@@ -671,7 +671,7 @@ j<!DOCTYPE html>
         y: notaData.y,
         w: notaData.w || 2,
         id: noteId,
-        autoPosition: true // (notaData.x === undefined || notaData.y === undefined)
+        autoPosition: (notaData.x === undefined || notaData.y === undefined)
       };
       gridItem.docData = notaData; // Guardar datos para referencia
       return {
