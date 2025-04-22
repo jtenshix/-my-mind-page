@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Notas Interactivas</title>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
   <style>
@@ -197,6 +199,24 @@
   </div>
 
   <script>
+    // Configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_AUTH_DOMAIN",
+      projectId: "TU_PROJECT_ID",
+      storageBucket: "TU_STORAGE_BUCKET",
+      messagingSenderId: "TU_MESSAGING_SENDER_ID",
+      appId: "TU_APP_ID"
+    };
+
+    try {
+      firebase.initializeApp(firebaseConfig);
+    } catch (e) {
+      console.error("Error inicializando Firebase:", e);
+    }
+
+    const db = firebase.firestore();
+
     // Inicialización de GridStack
     let grid;
     try {
@@ -220,16 +240,19 @@
     }
 
     // Función para crear una nueva nota
-    function crearNota(texto) {
-      const gridItem = document.createElement('div');
+    function crearNota(doc) {
+      const notaData = doc.data();
+      const noteId = doc.id;
+      let gridItem = document.createElement('div');
       gridItem.classList.add('grid-stack-item');
+      gridItem.setAttribute('data-note-id', noteId);
 
       const content = document.createElement('div');
       content.classList.add('grid-stack-item-content');
 
       const noteContent = document.createElement('div');
       noteContent.classList.add('note-content');
-      noteContent.textContent = texto;
+      noteContent.textContent = notaData.nota;
 
       const menuBar = document.createElement('div');
       menuBar.classList.add('menu-bar');
@@ -238,15 +261,50 @@
       deleteButton.classList.add('menu-icon');
       deleteButton.innerHTML = '✖';
       deleteButton.title = "Eliminar";
-      deleteButton.onclick = () => grid.removeWidget(gridItem);
+      deleteButton.onclick = () => deleteNote(noteId, gridItem);
 
       menuBar.appendChild(deleteButton);
       content.appendChild(noteContent);
       content.appendChild(menuBar);
       gridItem.appendChild(content);
 
-      grid.addWidget(gridItem, 0, 0, 2, 2); // Posición inicial y tamaño
+      const pos = {
+        x: notaData.x,
+        y: notaData.y,
+        w: notaData.w || 2,
+        id: noteId,
+        autoPosition: (notaData.x === undefined || notaData.y === undefined)
+      };
+
+      gridItem.docData = notaData; // Guardar datos para referencia
+      grid.addWidget(gridItem, pos);
     }
+
+    // Función para eliminar una nota
+    function deleteNote(noteId, gridItem) {
+      db.collection('notas').doc(noteId).delete()
+        .then(() => {
+          grid.removeWidget(gridItem);
+        })
+        .catch((error) => {
+          console.error("Error al eliminar:", error);
+          alert("Error al eliminar la nota.");
+        });
+    }
+
+    // Escucha de cambios en Firestore
+    db.collection('notas').onSnapshot((snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === "added") {
+          crearNota(change.doc);
+        } else if (change.type === "removed") {
+          const widgetElement = document.querySelector(`.grid-stack-item[data-note-id="${change.doc.id}"]`);
+          if (widgetElement) {
+            grid.removeWidget(widgetElement);
+          }
+        }
+      });
+    });
 
     // Manejo de la interfaz para agregar notas
     const addNoteButtonElem = document.getElementById('addNoteButton');
@@ -271,8 +329,18 @@
     saveTextNoteButtonElem.onclick = () => {
       const nota = textNoteInputElem.value.trim();
       if (nota) {
-        crearNota(nota);
-        hideMenus();
+        db.collection('notas').add({
+          nota: nota,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          tipo: 'texto'
+        })
+        .then(() => {
+          hideMenus();
+        })
+        .catch((error) => {
+          console.error('Error al guardar nota:', error);
+          alert("Error al guardar nota.");
+        });
       } else {
         alert("Escribe algo en la nota.");
       }
