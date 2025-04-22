@@ -39,16 +39,17 @@
       min-width: 1000px;
     }
 
+    .grid-stack-placeholder {
+      display: none !important;
+    }
+
     .grid-stack-item {
-      border: none; /* Elimina cualquier borde no deseado */
-      box-shadow: none; /* Elimina cualquier sombra no deseada */
       transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
       overflow: visible !important;
     }
 
     .grid-stack-item-content {
-      border: none; /* Asegúrate de que no haya bordes no deseados */
-      box-shadow: none; /* Asegúrate de que no haya sombras no deseadas */
+      overflow: visible !important;
       height: auto;
       width: 100%;
       display: flex;
@@ -58,8 +59,9 @@
     .card-wrapper,
     .text-card {
       background-color: #fff;
-      border: 2px solid #0077a3; /* Asegúrate de que este sea el borde deseado */
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Asegúrate de que esta sea la sombra deseada */
+      border: 2px solid #0077a3;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       width: 240px;
       display: flex;
       flex-direction: column;
