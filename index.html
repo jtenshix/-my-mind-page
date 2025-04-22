@@ -41,11 +41,17 @@
 
     .grid-stack-placeholder {
       display: none !important;
-    }
+       /* --- Nuevos estilos para el placeholder --- */
+  background-color: rgba(0, 119, 163, 0.3); /* Fondo azul semi-transparente */
+  border: 3px dashed #005577; /* Borde punteado */
+  border-radius: 8px; /* Bordes redondeados */
+  opacity: 1; /* Asegura que la opacidad general sea completa si rgba no basta */
+  /* --- Fin nuevos estilos --- */
+}
 
     .grid-stack-item {
       transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-      overflow: visible !important;
+      /*overflow: visible !important;*/ 
     }
 
     .grid-stack-item-content {
