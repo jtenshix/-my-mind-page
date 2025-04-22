@@ -39,14 +39,17 @@
       min-width: 1000px;
     }
 
-    .grid-stack-placeholder {
-      /*display: none !important;*/
-       /* --- Nuevos estilos para el placeholder --- */
-  background-color: rgba(0, 119, 163, 0.3); /* Fondo azul semi-transparente */
-  border: 3px dashed #005577; /* Borde punteado */
-  border-radius: 8px; /* Bordes redondeados */
-  opacity: 1; /* Asegura que la opacidad general sea completa si rgba no basta */
-  /* --- Fin nuevos estilos --- */
+.grid-stack-placeholder {
+      /* display: none !important; */ /* Esta línea está COMENTADA para que el placeholder sea visible */
+       /* --- Estilos para el placeholder --- */
+      background-color: rgba(0, 119, 163, 0.3); /* Fondo azul semi-transparente */
+      border: 3px dashed #005577; /* <-- AJUSTA este número (3px) para el GROSOR del borde */
+      border-radius: 8px; /* Bordes redondeados */
+      opacity: 1; /* Asegura que no sea transparente */
+
+      padding: 1 px; /* <-- AJUSTA este número (10px) para el ESPACIO INTERNO */
+      /* --- Fin estilos --- */
+    }
 }
 
     .grid-stack-item {
