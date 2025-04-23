@@ -20,7 +20,11 @@
     .grid-stack-placeholder {
       display: none !important;
     }
-
+/* Eliminar sombra al arrastrar la nota */
+.grid-stack-item.grid-stack-item-dragging .card-wrapper,
+.grid-stack-item.grid-stack-item-dragging .text-card {
+  box-shadow: none !important; /* Esto quita la sombra */
+}
     .container {
       /* ... tus estilos existentes ... */
     }
