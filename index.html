@@ -79,8 +79,6 @@
       border: 2px solid #0077a3;
       border-radius: 8px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      width: 240px;
-      height: 240px; /* Tamaño fijo para las notas */
       display: flex;
       flex-direction: column;
       position: relative;
@@ -89,7 +87,7 @@
 
     .image-container {
       width: 100%;
-      height: 240px; /* Tamaño fijo para las notas */
+      height: 100%; /* Tamaño fijo para las notas */
       overflow: hidden;
       position: relative;
       flex-shrink: 0;
@@ -682,6 +680,7 @@
         x: notaData.x,
         y: notaData.y,
         w: notaData.w || 2,
+        h: notaData.h || 3,
         id: noteId,
         autoPosition: (notaData.x === undefined || notaData.y === undefined)
       };
