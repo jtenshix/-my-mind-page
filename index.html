@@ -479,7 +479,7 @@
     function linkify(text) {
       if (!text) return "";
       const urlRegex = /(?<!href=["'])(https?:\/\/[^\s<>"']+)/g;
-      const replacedText = text.replace(urlRegex, '<a href="\$1" target="_blank" rel="noopener noreferrer">\$1</a>');
+      const replacedText = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
       return replacedText.replace(/\n/g, '<br>');
     }
     const firebaseConfig = {
@@ -977,4 +977,222 @@
         });
       } else {
         alert("Escribe algo en la nota.");
-      
+        textNoteInputElem.focus();
+      }
+    }
+    if (saveImageLinkButtonElem) saveImageLinkButtonElem.onclick = guardarLinkDeImagen;
+    if (saveTextNoteButtonElem) saveTextNoteButtonElem.onclick = guardarNotaTexto;
+    /****************** Calendario y Asignación de la Bolita ******************/
+    let currentCalendarMonth, currentCalendarYear;
+    let assignedDatesCache = {};
+    let notesDataCache = {};
+    function getChileDate() {
+      try {
+        const opts = {
+          timeZone: 'America/Santiago',
+          year: 'numeric',
+          month: 'numeric',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric',
+          second: 'numeric',
+          hour12: false
+        };
+        const fmt = new Intl.DateTimeFormat('en-CA', opts);
+        const p = fmt.formatToParts(new Date());
+        const d = {};
+        p.forEach(({
+          type,
+          value
+        }) => d[type] = parseInt(value, 10));
+        return new Date(Date.UTC(d.year, d.month - 1, d.day, d.hour, d.minute, d.second));
+      } catch (e) {
+        console.warn("Intl fallback", e);
+        return new Date();
+      }
+    }
+    function initCalendarDate() {
+      let today = getChileDate();
+      let year = today.getFullYear();
+      let month = today.getMonth();
+      const minY = 2024;
+      const minM = 11;
+      if (year < minY || (year === minY && month < minM)) {
+        return {
+          month: minM,
+          year: minY
+        };
+      }
+      return {
+        month,
+        year
+      };
+    }
+    function getMonthName(idx) {
+      const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+      return months[idx % 12] || '';
+    }
+    async function fetchAllAssignedNotes() {
+      assignedDatesCache = {};
+      notesDataCache = {};
+      try {
+        const snap = await db.collection('notas').where('assignedDate', '!=', null).get();
+        snap.forEach(doc => {
+          const d = doc.data();
+          const id = doc.id;
+          notesDataCache[id] = d;
+          const dateStr = d.assignedDate;
+          if (dateStr) {
+            if (!assignedDatesCache[dateStr]) assignedDatesCache[dateStr] = [];
+            if (!assignedDatesCache[dateStr].includes(id)) assignedDatesCache[dateStr].push(id);
+          }
+        });
+      } catch (err) {
+        console.error("Error fetch dates:", err);
+      }
+    }
+    async function generateCalendar(month, year) {
+      if (Object.keys(notesDataCache).length === 0) await fetchAllAssignedNotes();
+      const calDiv = document.getElementById('calendarWidget');
+      if (!calDiv) return;
+      calDiv.innerHTML = '';
+      const today = getChileDate();
+      const hdr = document.createElement('div');
+      hdr.className = 'calendar-header';
+      const pBtn = document.createElement('button');
+      pBtn.innerHTML = '&lt;';
+      const minY = 2024;
+      const minM = 11;
+      if (year === minY && month === minM) pBtn.disabled = true;
+      else pBtn.onclick = () => generateCalendar(month === 0 ? 11 : month - 1, month === 0 ? year - 1 : year);
+      const nBtn = document.createElement('button');
+      nBtn.innerHTML = '&gt;';
+      nBtn.onclick = () => generateCalendar(month === 11 ? 0 : month + 1, month === 11 ? year + 1 : year);
+      const title = document.createElement('span');
+      title.textContent = `${getMonthName(month)} ${year}`;
+      hdr.appendChild(pBtn);
+      hdr.appendChild(title);
+      hdr.appendChild(nBtn);
+      calDiv.appendChild(hdr);
+      const daysHdr = document.createElement('div');
+      daysHdr.className = 'calendar-days-header';
+      ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá'].forEach(day => {
+        const d = document.createElement('div');
+        d.className = 'calendar-day';
+        d.textContent = day;
+        daysHdr.appendChild(d);
+      });
+      calDiv.appendChild(daysHdr);
+      const datesG = document.createElement('div');
+      datesG.className = 'calendar-dates-grid';
+      const firstD = new Date(year, month, 1).getDay();
+      const daysInM = new Date(year, month + 1, 0).getDate();
+      for (let i = 0; i < firstD; i++) {
+        const e = document.createElement('div');
+        e.className = 'calendar-date empty';
+        datesG.appendChild(e);
+      }
+      for (let date = 1; date <= daysInM; date++) {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-date';
+        cell.textContent = date;
+        const dStr = `${date}/${month + 1}/${year}`;
+        if (date === today.getDate() && month === today.getMonth() && year === today.getFullYear()) cell.classList.add('today');
+        if (assignedDatesCache[dStr]) {
+          assignedDatesCache[dStr].forEach(id => {
+            const b = document.createElement("span");
+            b.className = "assigned-bubble";
+            b.setAttribute("data-note", id);
+            b.textContent = "●";
+            cell.appendChild(b);
+          });
+        }
+        cell.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          cell.classList.add('drag-over');
+        });
+        cell.addEventListener('dragleave', (e) => {
+          cell.classList.remove('drag-over');
+        });
+        cell.addEventListener('drop', async (e) => {
+          e.preventDefault();
+          cell.classList.remove('drag-over');
+          const noteId = e.dataTransfer.getData("application/note-id");
+          if (noteId) {
+            const oldDStr = notesDataCache[noteId]?.assignedDate;
+            try {
+              await db.collection('notas').doc(noteId).update({
+                assignedDate: dStr
+              });
+              if (notesDataCache[noteId]) notesDataCache[noteId].assignedDate = dStr;
+              else notesDataCache[noteId] = {
+                assignedDate: dStr
+              };
+              if (oldDStr && assignedDatesCache[oldDStr]) {
+                assignedDatesCache[oldDStr] = assignedDatesCache[oldDStr].filter(id => id !== noteId);
+                if (assignedDatesCache[oldDStr].length === 0) delete assignedDatesCache[oldDStr];
+              }
+              if (!assignedDatesCache[dStr]) assignedDatesCache[dStr] = [];
+              if (!assignedDatesCache[dStr].includes(noteId)) assignedDatesCache[dStr].push(noteId);
+              const bubbleInC = document.getElementById(`bubble-${noteId}`);
+              if (bubbleInC) bubbleInC.style.display = 'none';
+              generateCalendar(currentCalendarMonth, currentCalendarYear);
+            } catch (err) {
+              console.error(`Err assign date ${noteId}:`, err);
+              alert("Error.");
+            }
+          }
+        });
+        datesG.appendChild(cell);
+      }
+      const totalC = firstD + daysInM;
+      const cellsN = totalC <= 35 ? 35 : 42;
+      for (let i = totalC; i < cellsN; i++) {
+        const e = document.createElement('div');
+        e.className = 'calendar-date empty';
+        datesG.appendChild(e);
+      }
+      calDiv.appendChild(datesG);
+      currentCalendarMonth = month;
+      currentCalendarYear = year;
+    }
+    const calendarIconElem = document.getElementById('calendarIcon');
+    const calendarWidgetElem = document.getElementById('calendarWidget');
+    let calendarTimeout;
+    function showCalendar() {
+      if (!calendarWidgetElem) return;
+      clearTimeout(calendarTimeout);
+      if (calendarWidgetElem.style.display !== 'block') {
+        const {
+          month,
+          year
+        } = initCalendarDate();
+        generateCalendar(month, year);
+        calendarWidgetElem.style.display = 'block';
+      }
+    }
+    function hideCalendar() {
+      if (!calendarWidgetElem) return;
+      calendarTimeout = setTimeout(() => {
+        calendarWidgetElem.style.display = 'none';
+      }, 300);
+    }
+    if (calendarIconElem) {
+      calendarIconElem.addEventListener('mouseenter', showCalendar);
+      calendarIconElem.addEventListener('mouseleave', hideCalendar);
+    }
+    if (calendarWidgetElem) {
+      calendarWidgetElem.addEventListener('mouseenter', () => clearTimeout(calendarTimeout));
+      calendarWidgetElem.addEventListener('mouseleave', hideCalendar);
+    }
+    function openCalendar() {
+      showCalendar();
+    }
+    // --- Variables para guardar la posición original al arrastrar ---
+    let originalDragX = null;
+    let originalDragY = null;
+  </script>
+</body>
+
+</html>
