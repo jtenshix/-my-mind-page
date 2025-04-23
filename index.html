@@ -10,32 +10,27 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
  <style>
-/* Estilo para notas de IMAGEN mientras se arrastran */
+
+   
+/* Estilo para notas de IMAGEN mientras se arrastran: SOMBRA A (distinta) */
 .grid-stack-item[data-note-type="imagen"].grid-stack-item-dragging {
-  opacity: 0.8 !important; /* Menos transparente */
-  border: 3px solid blue !important; /* Borde azul */
-  background-color: rgba(170, 205, 255, 0.4) !important; /* Fondo azul claro semi-transparente */
-  box-shadow: none !important; /* Asegúrate de quitar la sombra si la quieres */
+  opacity: 0.7 !important;
+  border: 3px dashed red !important; /* Borde rojo claro */
+  background-color: rgba(255, 0, 0, 0.3) !important; /* Fondo rojo semi-transparente */
+  box-shadow: none !important;
 }
 
-/* Estilo para notas de TEXTO mientras se arrastran */
+/* Estilo para notas de TEXTO (con o sin link) mientras se arrastran: SOMBRA B (igual) */
 .grid-stack-item[data-note-type="texto"].grid-stack-item-dragging {
-  opacity: 0.9 !important; /* Menos transparencia que las imágenes */
-  border: 2px dashed grey !important; /* Borde gris punteado */
-  background-color: rgba(220, 220, 220, 0.5) !important; /* Fondo gris semi-transparente */
-  box-shadow: none !important; /* Asegúrate de quitar la sombra */
+  opacity: 0.7 !important;
+  border: 3px dashed green !important; /* Borde verde */
+  background-color: rgba(0, 255, 0, 0.3) !important; /* Fondo verde semi-transparente */
+  box-shadow: none !important;
 }
-
 /* Ocultar el placeholder de GridStack */
 .grid-stack-placeholder {
   display: none !important;
 }
-
-/* Eliminar sombra al arrastrar la nota (redundante si usas data-note-type, pero la dejo si la necesitas por alguna razón) */
-.grid-stack-item.grid-stack-item-dragging .text-card {
-  box-shadow: none !important;
-}
-
 /* Estilos CSS base y layout */
 html,
 body {
