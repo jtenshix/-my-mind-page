@@ -1632,265 +1632,145 @@ window.addEventListener('resize', () => {
               } else {
 
                 console.warn(`Se recibió 'removed' para ${noteId}, pero no se encontró el widget.`);
-
               }
-
             }
-
           }); // Fin del forEach(change)
-
           // Actualiza el calendario SI algún cambio lo requirió
-
           if (needsCalendarUpdate && currentCalendarMonth !== undefined) {
-
             console.log("Actualizando calendario debido a cambios...");
-
             // Usamos fetchAllAssignedNotes para asegurar que la caché esté actualizada
-
             fetchAllAssignedNotes().then(() => {
-
               generateCalendar(currentCalendarMonth, currentCalendarYear);
-
-              // Podrías querer quitar también las burbujas del DOM manualmente si es necesario
-
+             // Podrías querer quitar también las burbujas del DOM manualmente si es necesario
               // document.querySelectorAll(`.assigned-bubble[data-note='${noteId_eliminado}']`).forEach(b => b.remove());
-
             });
-
           } else if (needsCalendarUpdate) {
-
             // Si el calendario no se ha mostrado nunca, solo actualizamos la caché
-
             fetchAllAssignedNotes();
-
           }
-
         }, (error) => {
-
           console.error("Error Firestore:", error);
-
           alert("Error al cargar notas.");
-
         });
-
     } else {
-
       console.error("Firestore (db) no inicializado.");
-
       alert("Error: No se pudo conectar a la base de datos.");
-
     }
 
     /****************** Manejo de la Interfaz para Agregar Notas ******************/
-
     const addNoteButtonElem = document.getElementById('addNoteButton');
-
     const addNoteOptionsElem = document.getElementById('addNoteOptions');
-
     const addImageLinkOptionElem = document.getElementById('addImageLinkOption');
-
     const addTextNoteOptionElem = document.getElementById('addTextNoteOption');
-
     const inputAreaElem = document.getElementById('inputArea');
-
     const imageLinkInputAreaElem = document.getElementById('imageLinkInputArea');
-
     const imageLinkInputElem = document.getElementById('imageLink');
-
     const saveImageLinkButtonElem = document.getElementById('saveImageLink');
-
     const textNoteInputAreaElem = document.getElementById('textNoteInputArea');
-
     const saveTextNoteButtonElem = document.getElementById('saveTextNote');
-
     const blurBackgroundElem = document.querySelector('.blur-background');
-
     function hideMenus() {
 
       if (addNoteOptionsElem) addNoteOptionsElem.style.display = 'none';
-
       if (inputAreaElem) inputAreaElem.style.display = 'none';
-
       if (blurBackgroundElem) blurBackgroundElem.style.display = 'none';
-
       if (imageLinkInputElem) imageLinkInputElem.value = '';
-
       if (imageNoteTextElem) {
-
         imageNoteTextElem.value = '';
-
         autoResizeTextarea(imageNoteTextElem);
-
       }
 
       if (textNoteInputElem) {
-
         textNoteInputElem.value = '';
-
         autoResizeTextarea(textNoteInputElem);
-
       }
-
     }
 
     if (addNoteButtonElem) addNoteButtonElem.onclick = (e) => {
-
       e.stopPropagation();
-
       if (addNoteOptionsElem && addNoteOptionsElem.style.display === 'flex') {
-
         hideMenus();
-
       } else if (addNoteOptionsElem && blurBackgroundElem) {
-
         hideMenus();
-
         addNoteOptionsElem.style.display = 'flex';
-
         blurBackgroundElem.style.display = 'block';
-
       }
-
     };
 
     if (addImageLinkOptionElem) addImageLinkOptionElem.onclick = (e) => {
-
       e.stopPropagation();
-
       if (addNoteOptionsElem) addNoteOptionsElem.style.display = 'none';
-
       if (imageLinkInputAreaElem) imageLinkInputAreaElem.style.display = 'block';
-
       if (textNoteInputAreaElem) textNoteInputAreaElem.style.display = 'none';
-
       if (inputAreaElem) inputAreaElem.style.display = 'flex';
-
       if (blurBackgroundElem) blurBackgroundElem.style.display = 'block';
-
       if (imageLinkInputElem) imageLinkInputElem.focus();
 
     };
 
     if (addTextNoteOptionElem) addTextNoteOptionElem.onclick = (e) => {
-
       e.stopPropagation();
-
       if (addNoteOptionsElem) addNoteOptionsElem.style.display = 'none';
-
       if (imageLinkInputAreaElem) imageLinkInputAreaElem.style.display = 'none';
-
       if (textNoteInputAreaElem) textNoteInputAreaElem.style.display = 'block';
-
       if (inputAreaElem) inputAreaElem.style.display = 'flex';
-
       if (blurBackgroundElem) blurBackgroundElem.style.display = 'block';
-
       if (textNoteInputElem) textNoteInputElem.focus();
-
     };
 
     if (blurBackgroundElem) blurBackgroundElem.onclick = hideMenus;
 
    // --- REEMPLAZA TU FUNCIÓN guardarLinkDeImagen COMPLETA POR ESTA ---
-
     function guardarLinkDeImagen() {
-
       if (!imageLinkInputElem) return;
-
       let link = imageLinkInputElem.value.trim();
-
       const texto = imageNoteTextElem ? imageNoteTextElem.value.trim() : '';
-
       if (link) {
-
         if (saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = true;
-
         db.collection('notas').add({
-
           url: link,
-
           texto: texto || null,
-
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-
           tipo: 'imagen',
-
           // >>>>>>>>> AÑADE ESTAS DOS LÍNEAS AQUÍ para definir tamaño por defecto <<<<<<<<<
-
           w: 1, // Ancho por defecto (2 columnas)
-
           h: 1,  // Altura por defecto (4 filas)
-
           // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
         })
-
         .then(() => {
-
           hideMenus();
-
         }).catch((error) => {
-
           console.error('Error al guardar link:', error);
-
           alert("Error al guardar imagen.");
-
         })
-
         .finally(() => {
-
           if (saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = false;
-
         });
-
       } else {
-
         alert("Introduce un link válido.");
-
         imageLinkInputElem.focus();
-
       }
-
     }
-
 // --- FIN DEL BLOQUE DE REEMPLAZO DE LA FUNCIÓN guardarLinkDeImagen ---
-
     // --- REEMPLAZA TU FUNCIÓN guardarNotaTexto COMPLETA POR ESTA (CAMBIO 2) ---
-
 function guardarNotaTexto()  {
-
   if (!textNoteInputElem) return;
-
   const nota = textNoteInputElem.value.trim();
-
   if (nota) {
-
     if (saveTextNoteButtonElem) saveTextNoteButtonElem.disabled = true;
-
     db.collection('notas').add({
-
       nota: nota,
-
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-
       tipo: 'texto',
-
       // Define tamaño 2x2 en GridStack para notas de texto nuevas
-
       w: 1,
-
       h: 1,
-
     })
 
     .then(() => {
-
       hideMenus();
-
     }).catch((error) => {
-
       console.error('Error al guardar nota:', error);
-
       alert("Error al guardar nota.");
 
     })
@@ -1906,117 +1786,65 @@ function guardarNotaTexto()  {
     alert("Escribe algo en la nota.");
 
     textNoteInputElem.focus();
-
   }
-
 }
 
 // --- FIN DEL BLOQUE DE REEMPLAZO DE LA FUNCIÓN guardarNotaTexto ---
-
-
-
 // ... (el resto de tu código JavaScript, déjalo como está) ...
 
     if (saveImageLinkButtonElem) saveImageLinkButtonElem.onclick = guardarLinkDeImagen;
-
     if (saveTextNoteButtonElem) saveTextNoteButtonElem.onclick = guardarNotaTexto;
 
     /****************** Calendario y Asignación de la Burbuja ******************/
-
     let currentCalendarMonth, currentCalendarYear;
-
     let assignedDatesCache = {};
-
     let notesDataCache = {};
-
     function getChileDate() {
-
       try {
-
         const opts = {
-
           timeZone: 'America/Santiago',
-
           year: 'numeric',
-
           month: 'numeric',
-
           day: 'numeric',
-
           hour: 'numeric',
-
           minute: 'numeric',
-
           second: 'numeric',
-
           hour12: false
 
         };
-
         const fmt = new Intl.DateTimeFormat('en-CA', opts);
-
         const p = fmt.formatToParts(new Date());
-
         const d = {};
-
         p.forEach(({
-
           type,
-
           value
-
         }) => d[type] = parseInt(value, 10));
-
         return new Date(Date.UTC(d.year, d.month - 1, d.day, d.hour, d.minute, d.second));
-
       } catch (e) {
-
         console.warn("Intl fallback", e);
-
         return new Date();
-
       }
-
     }
-
     function initCalendarDate() {
-
       let today = getChileDate();
-
       let year = today.getFullYear();
-
       let month = today.getMonth();
-
       const minY = 2024;
-
       const minM = 11;
-
       if (year < minY || (year === minY && month < minM)) {
-
         return {
-
           month: minM,
-
           year: minY
-
         };
-
       }
-
       return {
-
         month,
-
         year
-
       };
 
     }
-
     function getMonthName(idx) {
-
       const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-
       return months[idx % 12] || '';
 
     }
@@ -2174,31 +2002,18 @@ function guardarNotaTexto()  {
         cell.addEventListener('dragover', (e) => {
 
           e.preventDefault();
-
           e.dataTransfer.dropEffect = "move";
-
-          cell.classList.add('drag-over');
-
+         cell.classList.add('drag-over');
         });
-
         cell.addEventListener('dragleave', (e) => {
-
           cell.classList.remove('drag-over');
-
         });
-
         cell.addEventListener('drop', async (e) => {
-
           e.preventDefault();
-
           cell.classList.remove('drag-over');
-
           const noteId = e.dataTransfer.getData("application/note-id");
-
           if (noteId) {
-
             const oldDStr = notesDataCache[noteId]?.assignedDate;
-
             try {
 
               await db.collection('notas').doc(noteId).update({
@@ -2206,9 +2021,7 @@ function guardarNotaTexto()  {
                 assignedDate: dStr
 
               });
-
               if (notesDataCache[noteId]) notesDataCache[noteId].assignedDate = dStr;
-
               else notesDataCache[noteId] = {
 
                 assignedDate: dStr
@@ -2216,135 +2029,77 @@ function guardarNotaTexto()  {
               };
 
               if (oldDStr && assignedDatesCache[oldDStr]) {
-
                 assignedDatesCache[oldDStr] = assignedDatesCache[oldDStr].filter(id => id !== noteId);
-
                 if (assignedDatesCache[oldDStr].length === 0) delete assignedDatesCache[oldDStr];
-
               }
-
               if (!assignedDatesCache[dStr]) assignedDatesCache[dStr] = [];
-
               if (!assignedDatesCache[dStr].includes(noteId)) assignedDatesCache[dStr].push(noteId);
-
               const bubbleInC = document.getElementById(`bubble-${noteId}`);
-
               if (bubbleInC) bubbleInC.style.display = 'none';
-
               generateCalendar(currentCalendarMonth, currentCalendarYear);
-
             } catch (err) {
-
               console.error(`Err assign date ${noteId}:`, err);
-
               alert("Error.");
-
             }
-
           }
-
         });
 
         datesG.appendChild(cell);
-
       }
-
       const totalC = firstD + daysInM;
-
       const cellsN = totalC <= 35 ? 35 : 42;
-
       for (let i = totalC; i < cellsN; i++) {
-
         const e = document.createElement('div');
-
         e.className = 'calendar-date empty';
 
         datesG.appendChild(e);
-
       }
-
       calDiv.appendChild(datesG);
-
       currentCalendarMonth = month;
-
       currentCalendarYear = year;
-
     }
-
     const calendarIconElem = document.getElementById('calendarIcon');
-
     const calendarWidgetElem = document.getElementById('calendarWidget');
-
     let calendarTimeout;
-
     function showCalendar() {
-
       if (!calendarWidgetElem) return;
-
       clearTimeout(calendarTimeout);
-
       if (calendarWidgetElem.style.display !== 'block') {
 
         const {
-
           month,
-
           year
 
         } = initCalendarDate();
-
         generateCalendar(month, year);
-
         calendarWidgetElem.style.display = 'block';
-
       }
 
     }
-
     function hideCalendar() {
-
       if (!calendarWidgetElem) return;
-
       calendarTimeout = setTimeout(() => {
-
         calendarWidgetElem.style.display = 'none';
-
       }, 300);
 
     }
-
     if (calendarIconElem) {
 
       calendarIconElem.addEventListener('mouseenter', showCalendar);
-
       calendarIconElem.addEventListener('mouseleave', hideCalendar);
-
     }
 
     if (calendarWidgetElem) {
-
       calendarWidgetElem.addEventListener('mouseenter', () => clearTimeout(calendarTimeout));
-
       calendarWidgetElem.addEventListener('mouseleave', hideCalendar);
-
     }
-
     function openCalendar() {
-
       showCalendar();
-
     }
-
     // --- Variables para guardar la posición original al arrastrar ---
-
     let originalDragX = null;
-
     let originalDragY = null;
 
   </script>
-
 </body>
-
-
-
 </html>
