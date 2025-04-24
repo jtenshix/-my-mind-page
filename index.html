@@ -8,6 +8,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
   <style>
     
     /* Añade este bloque para eliminar las sombras */
@@ -412,9 +413,23 @@
         width: 150px;
       }
     }
+    @media (max-width: 576px) {
+
+}
   </style>
 </head>
 <body>
+  <div id="auth-section" style="padding: 15px; background-color: #f0f0f0; border-bottom: 1px solid #ccc; text-align: center; margin-bottom: 10px;">
+  <div id="login-form">
+    <input type="email" id="login-email" placeholder="Correo" style="padding: 8px; margin-right: 5px;">
+    <input type="password" id="login-password" placeholder="Contraseña" style="padding: 8px; margin-right: 5px;">
+    <button id="login-button" style="padding: 8px 12px;">Entrar</button>
+  </div>
+  <div id="user-info" style="display: none;">
+    <span>Conectado como: <strong id="user-email-display"></strong></span>
+    <button id="logout-button" style="padding: 8px 12px; margin-left: 15px;">Salir</button>
+  </div>
+</div>
   <div class="container">
     <div id="notaDisplay" class="grid-stack"></div>
     <button id="addNoteButton" title="Añadir nueva nota o imagen">+</button>
@@ -477,6 +492,7 @@
     }
 
     const db = firebase.firestore();
+    const auth = firebase.auth();
 
     let grid;
     try {
@@ -755,100 +771,7 @@
         });
     }
 
-    if (db && typeof db.collection === 'function') {
-      db.collection('notas').onSnapshot((snapshot) => {
-        if (!grid) {
-          console.error("GridStack no inicializado.");
-          return;
-        }
-        let needsCalendarUpdate = false;
-        snapshot.docChanges().forEach((change) => {
-          const noteId = change.doc.id;
-          const notaData = change.doc.data();
-          console.log(`Cambio detectado: Tipo=${change.type}, ID=${noteId}`);
-          if (change.type === "added") {
-            const existingElement = grid.engine.nodes.find(n => n.id === noteId)?.el;
-            if (!existingElement) {
-              console.log(`Añadiendo widget para ${noteId}`);
-              const result = mostrarNotaEnPantalla(change.doc);
-              if (result) {
-                grid.addWidget(result.element, result.position);
-                if (notaData.assignedDate) needsCalendarUpdate = true;
-              }
-            } else {
-              console.log(`Widget para ${noteId} ya existía, no se añade de nuevo.`);
-            }
-          } else if (change.type === "modified") {
-            console.log(`Modificando widget para ${noteId}`);
-            const widgetElement = grid.engine.nodes.find(n => n.id === noteId)?.el;
-            if (widgetElement) {
-              const oldData = widgetElement.docData || {};
-              const noteContentElement = widgetElement.querySelector('.note-content');
-              const newText = notaData.url ? (notaData.texto || '') : (notaData.nota || '');
-              const oldText = notaData.url ? (oldData.texto || '') : (oldData.nota || '');
-              if (noteContentElement && newText !== oldText) {
-                console.log(` - Actualizando contenido de texto para ${noteId}`);
-                noteContentElement.innerHTML = linkify(newText);
-                Array.from(noteContentElement.getElementsByTagName('a')).forEach(link => {
-                  link.setAttribute('target', '_blank');
-                  link.setAttribute('rel', 'noopener noreferrer');
-                });
-              }
-              if (notaData.url && notaData.url !== oldData.url) {
-                console.log(` - Actualizando URL de imagen para ${noteId}`);
-                const img = widgetElement.querySelector('.image-container img');
-                if (img) img.src = notaData.url;
-              }
-              if ((typeof notaData.x === 'number' && notaData.x !== oldData.x) || (typeof notaData.y === 'number' && notaData.y !== oldData.y)) {
-                const currentNode = grid.engine.nodes.find(n => n.id === noteId);
-                if (currentNode && (currentNode.x !== notaData.x || currentNode.y !== notaData.y)) {
-                  console.log(` - Actualizando posición para ${noteId} a (${notaData.x}, ${notaData.y})`);
-                }
-              }
-              const bubbleButton = widgetElement.querySelector(`#bubble-${noteId}`);
-              const needsBubble = !notaData.assignedDate;
-              if (bubbleButton) {
-                const shouldDisplayBubble = bubbleButton.style.display !== 'none';
-                if (needsBubble && !shouldDisplayBubble) {
-                  console.log(` - Mostrando burbuja para ${noteId}`);
-                  bubbleButton.style.display = 'inline-block';
-                } else if (!needsBubble && shouldDisplayBubble) {
-                  console.log(` - Ocultando burbuja para ${noteId}`);
-                  bubbleButton.style.display = 'none';
-                }
-              }
-              if (notaData.assignedDate !== oldData.assignedDate) {
-                needsCalendarUpdate = true;
-              }
-              widgetElement.docData = notaData;
-              notesDataCache[noteId] = notaData;
-            } else {
-              console.warn(`Se recibió 'modified' para ${noteId}, pero no se encontró el widget en el grid.`);
-            }
-          } else if (change.type === "removed") {
-            console.log(`Eliminando widget para ${noteId}`);
-            const widgetElement = grid.engine.nodes.find(n => n.id === noteId)?.el;
-            if (widgetElement) {
-              grid.removeWidget(widgetElement);
-              if (notesDataCache[noteId]?.assignedDate) needsCalendarUpdate = true;
-              delete notesDataCache[noteId];
-            } else {
-              console.warn(`Se recibió 'removed' para ${noteId}, pero no se encontró el widget.`);
-            }
-          }
-        });
-        if (needsCalendarUpdate && currentCalendarMonth !== undefined) {
-          console.log("Actualizando calendario debido a cambios...");
-          fetchAllAssignedNotes().then(() => {
-            generateCalendar(currentCalendarMonth, currentCalendarYear);
-          });
-        } else if (needsCalendarUpdate) {
-          fetchAllAssignedNotes();
-        }
-      }, (error) => {
-        console.error("Error Firestore:", error);
-        alert("Error al cargar notas.");
-      });
+   
     } else {
       console.error("Firestore (db) no inicializado.");
       alert("Error: No se pudo conectar a la base de datos.");
@@ -1183,6 +1106,160 @@
 
     let originalDragX = null;
     let originalDragY = null;
+    // --- NUEVO CÓDIGO PARA LOGIN/LOGOUT ---
+
+// Referencias a los elementos HTML del login/logout que añadiste antes
+const loginFormDiv = document.getElementById('login-form');
+const userInfoDiv = document.getElementById('user-info');
+const userEmailDisplay = document.getElementById('user-email-display');
+const loginButton = document.getElementById('login-button');
+const logoutButton = document.getElementById('logout-button');
+const emailInput = document.getElementById('login-email');
+const passwordInput = document.getElementById('login-password');
+
+let unsubscribeFirestore = null; // Importante: para poder parar de escuchar notas
+
+// Esto se ejecuta AUTOMÁTICAMENTE cuando alguien inicia o cierra sesión
+auth.onAuthStateChanged(user => {
+  if (user) {
+    // --- QUÉ HACER SI HAY USUARIO CONECTADO ---
+    console.log('Usuario conectado:', user.email);
+    loginFormDiv.style.display = 'none'; // Oculta formulario login
+    userInfoDiv.style.display = 'block'; // Muestra info de usuario y botón salir
+    userEmailDisplay.textContent = user.email; // Muestra el email
+
+    if (db && typeof db.collection === 'function') {
+      db.collection('notas').onSnapshot((snapshot) => {
+        if (!grid) {
+          console.error("GridStack no inicializado.");
+          return;
+        }
+        let needsCalendarUpdate = false;
+        snapshot.docChanges().forEach((change) => {
+          const noteId = change.doc.id;
+          const notaData = change.doc.data();
+          console.log(`Cambio detectado: Tipo=${change.type}, ID=${noteId}`);
+          if (change.type === "added") {
+            const existingElement = grid.engine.nodes.find(n => n.id === noteId)?.el;
+            if (!existingElement) {
+              console.log(`Añadiendo widget para ${noteId}`);
+              const result = mostrarNotaEnPantalla(change.doc);
+              if (result) {
+                grid.addWidget(result.element, result.position);
+                if (notaData.assignedDate) needsCalendarUpdate = true;
+              }
+            } else {
+              console.log(`Widget para ${noteId} ya existía, no se añade de nuevo.`);
+            }
+          } else if (change.type === "modified") {
+            console.log(`Modificando widget para ${noteId}`);
+            const widgetElement = grid.engine.nodes.find(n => n.id === noteId)?.el;
+            if (widgetElement) {
+              const oldData = widgetElement.docData || {};
+              const noteContentElement = widgetElement.querySelector('.note-content');
+              const newText = notaData.url ? (notaData.texto || '') : (notaData.nota || '');
+              const oldText = notaData.url ? (oldData.texto || '') : (oldData.nota || '');
+              if (noteContentElement && newText !== oldText) {
+                console.log(` - Actualizando contenido de texto para ${noteId}`);
+                noteContentElement.innerHTML = linkify(newText);
+                Array.from(noteContentElement.getElementsByTagName('a')).forEach(link => {
+                  link.setAttribute('target', '_blank');
+                  link.setAttribute('rel', 'noopener noreferrer');
+                });
+              }
+              if (notaData.url && notaData.url !== oldData.url) {
+                console.log(` - Actualizando URL de imagen para ${noteId}`);
+                const img = widgetElement.querySelector('.image-container img');
+                if (img) img.src = notaData.url;
+              }
+              if ((typeof notaData.x === 'number' && notaData.x !== oldData.x) || (typeof notaData.y === 'number' && notaData.y !== oldData.y)) {
+                const currentNode = grid.engine.nodes.find(n => n.id === noteId);
+                if (currentNode && (currentNode.x !== notaData.x || currentNode.y !== notaData.y)) {
+                  console.log(` - Actualizando posición para ${noteId} a (${notaData.x}, ${notaData.y})`);
+                }
+              }
+              const bubbleButton = widgetElement.querySelector(`#bubble-${noteId}`);
+              const needsBubble = !notaData.assignedDate;
+              if (bubbleButton) {
+                const shouldDisplayBubble = bubbleButton.style.display !== 'none';
+                if (needsBubble && !shouldDisplayBubble) {
+                  console.log(` - Mostrando burbuja para ${noteId}`);
+                  bubbleButton.style.display = 'inline-block';
+                } else if (!needsBubble && shouldDisplayBubble) {
+                  console.log(` - Ocultando burbuja para ${noteId}`);
+                  bubbleButton.style.display = 'none';
+                }
+              }
+              if (notaData.assignedDate !== oldData.assignedDate) {
+                needsCalendarUpdate = true;
+              }
+              widgetElement.docData = notaData;
+              notesDataCache[noteId] = notaData;
+            } else {
+              console.warn(`Se recibió 'modified' para ${noteId}, pero no se encontró el widget en el grid.`);
+            }
+          } else if (change.type === "removed") {
+            console.log(`Eliminando widget para ${noteId}`);
+            const widgetElement = grid.engine.nodes.find(n => n.id === noteId)?.el;
+            if (widgetElement) {
+              grid.removeWidget(widgetElement);
+              if (notesDataCache[noteId]?.assignedDate) needsCalendarUpdate = true;
+              delete notesDataCache[noteId];
+            } else {
+              console.warn(`Se recibió 'removed' para ${noteId}, pero no se encontró el widget.`);
+            }
+          }
+        });
+        if (needsCalendarUpdate && currentCalendarMonth !== undefined) {
+          console.log("Actualizando calendario debido a cambios...");
+          fetchAllAssignedNotes().then(() => {
+            generateCalendar(currentCalendarMonth, currentCalendarYear);
+          });
+        } else if (needsCalendarUpdate) {
+          fetchAllAssignedNotes();
+        }
+      }, (error) => {
+        console.error("Error Firestore:", error);
+        alert("Error al cargar notas.");
+      });
+    console.log("Acceso permitido, cargar notas...");
+
+
+  } else {
+    // --- QUÉ HACER SI NADIE ESTÁ CONECTADO ---
+    console.log('Nadie conectado.');
+    loginFormDiv.style.display = 'block'; // Muestra formulario login
+    userInfoDiv.style.display = 'none';  // Oculta info de usuario
+
+    // ***** Aquí deberíamos limpiar todo (VER PASO 4) *****
+    console.log("Acceso denegado, limpiar notas...");
+
+  }
+});
+
+// Acción para el botón "Entrar"
+loginButton.addEventListener('click', () => {
+  const email = emailInput.value;
+  const password = passwordInput.value;
+  if (!email || !password) {
+      return alert('Ingresa correo y contraseña');
+  }
+  auth.signInWithEmailAndPassword(email, password)
+      .catch(error => {
+          console.error('Error Login:', error);
+          alert('Error al iniciar sesión: ' + error.message);
+      });
+});
+
+// Acción para el botón "Salir"
+logoutButton.addEventListener('click', () => {
+  auth.signOut().catch(error => {
+      console.error('Error Logout:', error);
+      alert('Error al cerrar sesión.');
+  });
+});
+
+// --- FIN NUEVO CÓDIGO ---
   </script>
 </body>
 </html>
