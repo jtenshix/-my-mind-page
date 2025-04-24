@@ -454,6 +454,21 @@ body {
   z-index: 1000;
   cursor: pointer;
 }
+   /* Responsive GridStack Columns */
+@media (max-width: 575.98px) {
+    /* Móvil: 3 Columnas (handled by JS) */
+}
+@media (min-width: 576px) and (max-width: 991.98px) {
+    /* Tablet: 6 Columnas (handled by JS) */
+}
+/* Default is 12 columns */
+
+/* Optional: Ajustes básicos para modales/botones en móvil */
+@media (max-width: 575.98px) {
+    #inputArea { width: 95%; }
+    #addNoteOptions { flex-direction: column; gap: 15px; padding: 20px; }
+    #addNoteOptions .card { width: 150px; }
+}
 </style>
 </head>
 
@@ -540,6 +555,44 @@ body {
       console.error("Error inicializando GridStack:", e);
       alert("Error al iniciar el área de notas.");
     }
+    // Lógica JS para ajustar columnas de GridStack con el tamaño de la pantalla
+
+const gridStackElement = document.getElementById('notaDisplay');
+let currentColumnCount = 12;
+
+const breakpoints = [
+    { width: 992, cols: 12 },
+    { width: 576, cols: 6 },
+    { width: 0, cols: 3 }
+];
+
+function adjustGridColumns() {
+    const screenWidth = window.innerWidth;
+    let newColumnCount = 12;
+
+    for (const bp of breakpoints) {
+        if (screenWidth >= bp.width) {
+            newColumnCount = bp.cols;
+            break;
+        }
+    }
+
+    if (newColumnCount !== currentColumnCount) {
+        if (grid) {
+             grid.column(newColumnCount, true); // Ajusta columnas
+        }
+        currentColumnCount = newColumnCount;
+    }
+}
+
+adjustGridColumns(); // Ejecutar al cargar
+let resizeTimer;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(adjustGridColumns, 100); // Ejecutar al redimensionar
+});
+
+// --- Fin Lógica JS Responsiva ---
     /****************** Escucha de Cambios en GridStack (Drag/Drop) ******************/
     if (grid) { // Asegúrate que grid se inicializó bien
       // Listener para el evento 'change' (cuando algo cambia en el grid, INCLUYENDO drag/drop)
