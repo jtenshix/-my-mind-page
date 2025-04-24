@@ -12,21 +12,27 @@
  <style>
 
    
-/* Estilo para notas de IMAGEN mientras se arrastran: SOMBRA A (distinta) */
-.grid-stack-item[data-note-type="imagen"].grid-stack-item-dragging {
-  opacity: 0.7 !important;
-  border: 3px dashed red !important; /* Borde rojo claro */
-  background-color: rgba(255, 0, 0, 0.3) !important; /* Fondo rojo semi-transparente */
-  box-shadow: none !important;
+/* REEMPLAZA tus reglas originales de arrastre por ESTE BLOQUE */
+
+/* Estilo para arrastrar IMAGEN y su contenido */
+.grid-stack-item[data-note-type="imagen"].grid-stack-item-dragging,
+.grid-stack-item[data-note-type="imagen"].grid-stack-item-dragging .grid-stack-item-content { /* Aplica también al contenido */
+  opacity: 0.7 !important;
+  border: 3px dashed red !important;
+  background-color: rgba(255, 0, 0, 0.3) !important;
+  box-shadow: none !important; /* Quita sombra */
 }
 
-/* Estilo para notas de TEXTO (con o sin link) mientras se arrastran: SOMBRA B (igual) */
-.grid-stack-item[data-note-type="texto"].grid-stack-item-dragging {
-  opacity: 0.7 !important;
-  border: 3px dashed green !important; /* Borde verde */
-  background-color: rgba(0, 255, 0, 0.3) !important; /* Fondo verde semi-transparente */
-  box-shadow: none !important;
+/* Estilo para arrastrar TEXTO y su contenido */
+.grid-stack-item[data-note-type="texto"].grid-stack-item-dragging,
+.grid-stack-item[data-note-type="texto"].grid-stack-item-dragging .grid-stack-item-content { /* Aplica también al contenido */
+  opacity: 0.7 !important;
+  border: 3px dashed green !important;
+  background-color: rgba(0, 255, 0, 0.3) !important;
+  box-shadow: none !important; /* Quita sombra */
 }
+
+/* Las reglas siguientes (placeholder, html/body, etc.) déjalas como están */
 /* Ocultar el placeholder de GridStack */
 .grid-stack-placeholder {
   display: none !important;
@@ -973,29 +979,37 @@ body {
         imageLinkInputElem.focus();
       }
     }
-    function guardarNotaTexto() {
-      if (!textNoteInputElem) return;
-      const nota = textNoteInputElem.value.trim();
-      if (nota) {
-        if (saveTextNoteButtonElem) saveTextNoteButtonElem.disabled = true;
-        db.collection('notas').add({
-          nota: nota,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          tipo: 'texto'
-        })
-        .then(() => {
-          hideMenus();
-        }).catch((error) => {
-          console.error('Error al guardar nota:', error);
-          alert("Error al guardar nota.");
-        })
-        .finally(() => {
-          if (saveTextNoteButtonElem) saveTextNoteButtonElem.disabled = false;
-        });
-      } else {
-        alert("Escribe algo en la nota.");
-        textNoteInputElem.focus();
-      }
+    // --- REEMPLAZA TU FUNCIÓN guardarNotaTexto COMPLETA POR ESTA (CAMBIO 2) ---
+function guardarNotaTexto() {
+  if (!textNoteInputElem) return;
+  const nota = textNoteInputElem.value.trim();
+  if (nota) {
+    if (saveTextNoteButtonElem) saveTextNoteButtonElem.disabled = true;
+    db.collection('notas').add({
+      nota: nota,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      tipo: 'texto',
+      // Define tamaño 2x2 en GridStack para notas de texto nuevas
+      w: 2,
+      h: 2,
+    })
+    .then(() => {
+      hideMenus();
+    }).catch((error) => {
+      console.error('Error al guardar nota:', error);
+      alert("Error al guardar nota.");
+    })
+    .finally(() => {
+      if (saveTextNoteButtonElem) saveTextNoteButtonElem.disabled = false;
+    });
+  } else {
+    alert("Escribe algo en la nota.");
+    textNoteInputElem.focus();
+  }
+}
+// --- FIN DEL BLOQUE DE REEMPLAZO DE LA FUNCIÓN guardarNotaTexto ---
+
+// ... (el resto de tu código JavaScript, déjalo como está) ...
     }
     if (saveImageLinkButtonElem) saveImageLinkButtonElem.onclick = guardarLinkDeImagen;
     if (saveTextNoteButtonElem) saveTextNoteButtonElem.onclick = guardarNotaTexto;
