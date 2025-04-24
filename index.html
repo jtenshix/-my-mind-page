@@ -954,32 +954,38 @@ body {
       if (textNoteInputElem) textNoteInputElem.focus();
     };
     if (blurBackgroundElem) blurBackgroundElem.onclick = hideMenus;
-    function guardarLinkDeImagen() {
-      if (!imageLinkInputElem) return;
-      let link = imageLinkInputElem.value.trim();
-      const texto = imageNoteTextElem ? imageNoteTextElem.value.trim() : '';
-      if (link) {
-        if (saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = true;
-        db.collection('notas').add({
-          url: link,
-          texto: texto || null,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          tipo: 'imagen'
-        })
-        .then(() => {
-          hideMenus();
-        }).catch((error) => {
-          console.error('Error al guardar link:', error);
-          alert("Error al guardar imagen.");
-        })
-        .finally(() => {
-          if (saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = false;
-        });
-      } else {
-        alert("Introduce un link válido.");
-        imageLinkInputElem.focus();
-      }
-    }
+   // --- REEMPLAZA TU FUNCIÓN guardarLinkDeImagen COMPLETA POR ESTA ---
+    function guardarLinkDeImagen() {
+      if (!imageLinkInputElem) return;
+      let link = imageLinkInputElem.value.trim();
+      const texto = imageNoteTextElem ? imageNoteTextElem.value.trim() : '';
+      if (link) {
+        if (saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = true;
+        db.collection('notas').add({
+          url: link,
+          texto: texto || null,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          tipo: 'imagen',
+          // >>>>>>>>> AÑADE ESTAS DOS LÍNEAS AQUÍ para definir tamaño por defecto <<<<<<<<<
+          w: 2, // Ancho por defecto (2 columnas)
+          h: 4,  // Altura por defecto (4 filas)
+          // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        })
+        .then(() => {
+          hideMenus();
+        }).catch((error) => {
+          console.error('Error al guardar link:', error);
+          alert("Error al guardar imagen.");
+        })
+        .finally(() => {
+          if (saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = false;
+        });
+      } else {
+        alert("Introduce un link válido.");
+        imageLinkInputElem.focus();
+      }
+    }
+// --- FIN DEL BLOQUE DE REEMPLAZO DE LA FUNCIÓN guardarLinkDeImagen ---
     // --- REEMPLAZA TU FUNCIÓN guardarNotaTexto COMPLETA POR ESTA (CAMBIO 2) ---
 function guardarNotaTexto()  {
   if (!textNoteInputElem) return;
