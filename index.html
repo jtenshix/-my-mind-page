@@ -1122,144 +1122,340 @@ let unsubscribeFirestore = null; // Importante: para poder parar de escuchar not
 // Esto se ejecuta AUTOMÁTICAMENTE cuando alguien inicia o cierra sesión
 auth.onAuthStateChanged(user => {
   if (user) {
-    // --- QUÉ HACER SI HAY USUARIO CONECTADO ---
-    console.log('Usuario conectado:', user.email);
-    loginFormDiv.style.display = 'none'; // Oculta formulario login
-    userInfoDiv.style.display = 'block'; // Muestra info de usuario y botón salir
-    userEmailDisplay.textContent = user.email; // Muestra el email
+   // Pega ESTO COMPLETO dentro del if(user), después de userEmailDisplay.textContent = ...;
 
-    if (db && typeof db.collection === 'function') {
-      db.collection('notas').onSnapshot((snapshot) => {
+if (!unsubscribeFirestore) { // Para evitar iniciar múltiples listeners
+    console.log("(Auth) Iniciando listener de Firestore..."); // Log para saber que empieza
+
+    unsubscribeFirestore = db.collection('notas').onSnapshot((snapshot) => {
         if (!grid) {
-          console.error("GridStack no inicializado.");
+          console.error("(Auth) GridStack no inicializado dentro del listener.");
           return;
         }
+        console.log("(Auth) Datos recibidos de Firestore."); // Log para saber que llegan datos
         let needsCalendarUpdate = false;
+
         snapshot.docChanges().forEach((change) => {
           const noteId = change.doc.id;
           const notaData = change.doc.data();
-          console.log(`Cambio detectado: Tipo=${change.type}, ID=${noteId}`);
+          console.log(`(Auth) Cambio detectado: Tipo=${change.type}, ID=${noteId}`);
+
+          const widgetElement = grid.engine.nodes.find(n => n.id === noteId)?.el; // Busca el elemento una vez
+
           if (change.type === "added") {
-            const existingElement = grid.engine.nodes.find(n => n.id === noteId)?.el;
-            if (!existingElement) {
-              console.log(`Añadiendo widget para ${noteId}`);
-              const result = mostrarNotaEnPantalla(change.doc);
+            if (!widgetElement) {
+              console.log(`(Auth) Añadiendo widget para ${noteId}`);
+              const result = mostrarNotaEnPantalla(change.doc); // Usas tu función
               if (result) {
                 grid.addWidget(result.element, result.position);
+                notesDataCache[noteId] = notaData; // Guarda en caché
                 if (notaData.assignedDate) needsCalendarUpdate = true;
               }
             } else {
-              console.log(`Widget para ${noteId} ya existía, no se añade de nuevo.`);
+              console.log(`(Auth) 'added' pero widget ${noteId} ya existía. Actualizando datos por si acaso.`);
+              // Actualiza por si acaso hubo un error antes
+              if (widgetElement) widgetElement.docData = notaData;
+              notesDataCache[noteId] = notaData;
             }
           } else if (change.type === "modified") {
-            console.log(`Modificando widget para ${noteId}`);
-            const widgetElement = grid.engine.nodes.find(n => n.id === noteId)?.el;
+            console.log(`(Auth) Modificando widget para ${noteId}`);
             if (widgetElement) {
               const oldData = widgetElement.docData || {};
+              // --- Tu lógica de modificar el widget (texto, imagen, burbuja, etc.) ---
               const noteContentElement = widgetElement.querySelector('.note-content');
               const newText = notaData.url ? (notaData.texto || '') : (notaData.nota || '');
-              const oldText = notaData.url ? (oldData.texto || '') : (oldData.nota || '');
-              if (noteContentElement && newText !== oldText) {
-                console.log(` - Actualizando contenido de texto para ${noteId}`);
-                noteContentElement.innerHTML = linkify(newText);
-                Array.from(noteContentElement.getElementsByTagName('a')).forEach(link => {
-                  link.setAttribute('target', '_blank');
-                  link.setAttribute('rel', 'noopener noreferrer');
-                });
+              if (noteContentElement && newText !== (oldData.texto || oldData.nota || '')) { // Compara con data vieja
+                 console.log(`(Auth) - Actualizando texto para ${noteId}`);
+                 noteContentElement.innerHTML = linkify(newText); // Usa tu función
+                 // ... código para links target=_blank ...
               }
               if (notaData.url && notaData.url !== oldData.url) {
-                console.log(` - Actualizando URL de imagen para ${noteId}`);
-                const img = widgetElement.querySelector('.image-container img');
-                if (img) img.src = notaData.url;
-              }
-              if ((typeof notaData.x === 'number' && notaData.x !== oldData.x) || (typeof notaData.y === 'number' && notaData.y !== oldData.y)) {
-                const currentNode = grid.engine.nodes.find(n => n.id === noteId);
-                if (currentNode && (currentNode.x !== notaData.x || currentNode.y !== notaData.y)) {
-                  console.log(` - Actualizando posición para ${noteId} a (${notaData.x}, ${notaData.y})`);
-                }
+                 // ... código para actualizar imagen ...
               }
               const bubbleButton = widgetElement.querySelector(`#bubble-${noteId}`);
-              const needsBubble = !notaData.assignedDate;
-              if (bubbleButton) {
-                const shouldDisplayBubble = bubbleButton.style.display !== 'none';
-                if (needsBubble && !shouldDisplayBubble) {
-                  console.log(` - Mostrando burbuja para ${noteId}`);
-                  bubbleButton.style.display = 'inline-block';
-                } else if (!needsBubble && shouldDisplayBubble) {
-                  console.log(` - Ocultando burbuja para ${noteId}`);
-                  bubbleButton.style.display = 'none';
-                }
-              }
+              // ... código para mostrar/ocultar burbuja ...
+              // --- Fin lógica de modificar ---
               if (notaData.assignedDate !== oldData.assignedDate) {
-                needsCalendarUpdate = true;
+                 needsCalendarUpdate = true;
               }
-              widgetElement.docData = notaData;
-              notesDataCache[noteId] = notaData;
+              widgetElement.docData = notaData; // Guarda data nueva en el elemento
+              notesDataCache[noteId] = notaData; // Actualiza caché
             } else {
-              console.warn(`Se recibió 'modified' para ${noteId}, pero no se encontró el widget en el grid.`);
+              console.warn(`(Auth) Se recibió 'modified' para ${noteId}, pero no se encontró widget.`);
             }
           } else if (change.type === "removed") {
-            console.log(`Eliminando widget para ${noteId}`);
-            const widgetElement = grid.engine.nodes.find(n => n.id === noteId)?.el;
+            console.log(`(Auth) Eliminando widget para ${noteId}`);
             if (widgetElement) {
               grid.removeWidget(widgetElement);
               if (notesDataCache[noteId]?.assignedDate) needsCalendarUpdate = true;
-              delete notesDataCache[noteId];
+              delete notesDataCache[noteId]; // Elimina de caché
+              displayedNotes.delete(noteId); // Elimina del Map si lo usas así
             } else {
-              console.warn(`Se recibió 'removed' para ${noteId}, pero no se encontró el widget.`);
+              console.warn(`(Auth) Se recibió 'removed' para ${noteId}, pero no se encontró widget.`);
             }
           }
-        });
-        if (needsCalendarUpdate && currentCalendarMonth !== undefined) {
-          console.log("Actualizando calendario debido a cambios...");
-          fetchAllAssignedNotes().then(() => {
-            generateCalendar(currentCalendarMonth, currentCalendarYear);
-          });
-        } else if (needsCalendarUpdate) {
-          fetchAllAssignedNotes();
+        }); // Fin forEach
+
+        // Lógica para actualizar calendario (igual que antes)
+        if (needsCalendarUpdate && typeof generateCalendar === 'function' && currentCalendarMonth !== undefined) {
+           console.log("(Auth) Actualizando calendario...");
+           if (typeof fetchAllAssignedNotes === 'function') {
+               fetchAllAssignedNotes().then(() => {
+                  generateCalendar(currentCalendarMonth, currentCalendarYear);
+               });
+           } else { console.error("Funcion fetchAllAssignedNotes no definida"); }
+        } else if (needsCalendarUpdate && typeof fetchAllAssignedNotes === 'function') {
+           fetchAllAssignedNotes();
         }
-      }, (error) => {
-        console.error("Error Firestore:", error);
-        alert("Error al cargar notas.");
-      });
-    console.log("Acceso permitido, cargar notas...");
+
+    }, (error) => { // Manejo de error del listener
+        console.error("(Auth) Error escuchando Firestore:", error);
+        alert("Error al cargar/actualizar notas: " + error.message);
+        // Si el error es de permisos, cerramos sesión para evitar problemas
+        if (error.code === 'permission-denied') {
+            console.warn("Permiso denegado por Firestore. Cerrando sesión.");
+            auth.signOut();
+        }
+    }); // Fin del onSnapshot
+} // Fin del if (!unsubscribeFirestore)
+// Asegúrate que estas variables estén definidas ANTES de este bloque:
+    const loginFormDiv = document.getElementById('login-form');
+    const userInfoDiv = document.getElementById('user-info');
+    const userEmailDisplay = document.getElementById('user-email-display');
+    let unsubscribeFirestore = null; // Debe estar definida afuera para que persista
+    // const grid = ... // Tu variable grid ya debe existir
+    // const displayedNotes = ... // Tu Map ya debe existir
+    // const notesDataCache = ... // Tu objeto cache ya debe existir
+    // const assignedDatesCache = ... // Tu objeto cache calendario ya debe existir
+    // const calendarWidgetElem = ... // El elemento del calendario ya debe existir
+
+    // --- COMIENZA EL BLOQUE onAuthStateChanged COMPLETO Y CORREGIDO ---
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        // --- USUARIO CONECTADO ---
+        console.log('Usuario conectado:', user.email);
+        // Actualiza la UI para mostrar estado logueado
+        if (loginFormDiv) loginFormDiv.style.display = 'none';
+        if (userInfoDiv) userInfoDiv.style.display = 'block';
+        if (userEmailDisplay) userEmailDisplay.textContent = user.email;
+
+        // Iniciar listener de notas si no está activo
+        if (!unsubscribeFirestore) {
+            console.log("(Auth) Iniciando listener de Firestore...");
+
+            unsubscribeFirestore = db.collection('notas').onSnapshot((snapshot) => {
+                // Verifica si grid existe aquí también, por si acaso
+                if (!grid) {
+                  console.error("(Auth) GridStack no inicializado dentro del listener.");
+                  return;
+                }
+                console.log("(Auth) Datos recibidos de Firestore.");
+                let needsCalendarUpdate = false; // Resetear flag en cada snapshot
+
+                snapshot.docChanges().forEach((change) => {
+                  const noteId = change.doc.id;
+                  const notaData = change.doc.data();
+                  console.log(`(Auth) Cambio detectado: Tipo=${change.type}, ID=${noteId}`);
+
+                  const widgetElement = grid.engine.nodes.find(n => n.id === noteId)?.el; // Busca el elemento una vez
+
+                  if (change.type === "added") {
+                    if (!widgetElement) {
+                      console.log(`(Auth) Añadiendo widget para ${noteId}`);
+                      // Asegúrate que mostrarNotaEnPantalla esté definida antes
+                      if (typeof mostrarNotaEnPantalla === 'function') {
+                          const result = mostrarNotaEnPantalla(change.doc);
+                          if (result) {
+                            grid.addWidget(result.element, result.position);
+                            // Actualiza tus caches/registros internos
+                            notesDataCache[noteId] = notaData;
+                            displayedNotes.set(noteId, result.element);
+                            if (notaData.assignedDate) needsCalendarUpdate = true;
+                          }
+                      } else { console.error("Función mostrarNotaEnPantalla no definida"); }
+                    } else {
+                      console.log(`(Auth) 'added' pero widget ${noteId} ya existía. Verificando/actualizando datos.`);
+                      // Si ya existe, asegura que la data interna esté actualizada
+                      if (widgetElement) widgetElement.docData = notaData;
+                      notesDataCache[noteId] = notaData;
+                      // Compara fecha por si cambió justo y necesitas actualizar calendario
+                      if (notaData.assignedDate !== (widgetElement?.docData?.assignedDate)) {
+                          needsCalendarUpdate = true;
+                      }
+                    }
+                  } else if (change.type === "modified") {
+                    console.log(`(Auth) Modificando widget para ${noteId}`);
+                    if (widgetElement) {
+                      const oldData = widgetElement.docData || {};
+                      // --- Lógica para actualizar el widget existente ---
+                       const noteContentElement = widgetElement.querySelector('.note-content');
+                       const newText = notaData.url ? (notaData.texto || '') : (notaData.nota || '');
+                       // Compara data vieja con nueva antes de actualizar DOM innecesariamente
+                       if (noteContentElement && newText !== (oldData.texto || oldData.nota || '')) {
+                           console.log(`(Auth) - Actualizando texto para ${noteId}`);
+                           // Asegúrate que linkify esté definida
+                           if(typeof linkify === 'function') {
+                               noteContentElement.innerHTML = linkify(newText);
+                               Array.from(noteContentElement.getElementsByTagName('a')).forEach(link => {
+                                    link.setAttribute('target', '_blank');
+                                    link.setAttribute('rel', 'noopener noreferrer');
+                               });
+                           } else { console.error("Función linkify no definida"); noteContentElement.textContent = newText; }
+                       }
+                       if (notaData.url && notaData.url !== oldData.url) {
+                           console.log(`(Auth) - Actualizando URL imagen para ${noteId}`);
+                           const img = widgetElement.querySelector('.image-container img');
+                           if (img) img.src = notaData.url;
+                       }
+                       // Actualiza visibilidad de burbuja de calendario
+                       const bubbleButton = widgetElement.querySelector(`#bubble-${noteId}`);
+                       if (bubbleButton) {
+                            const needsBubble = !notaData.assignedDate;
+                            const isBubbleVisible = bubbleButton.style.display !== 'none';
+                            if (needsBubble && !isBubbleVisible) {
+                                console.log(`(Auth) - Mostrando burbuja para ${noteId}`);
+                                bubbleButton.style.display = 'inline-block';
+                            } else if (!needsBubble && isBubbleVisible) {
+                                console.log(`(Auth) - Ocultando burbuja para ${noteId}`);
+                                bubbleButton.style.display = 'none';
+                            }
+                       }
+                      // --- Fin lógica modificar ---
+                      if (notaData.assignedDate !== oldData.assignedDate) {
+                         needsCalendarUpdate = true; // Marcar para actualizar calendario si fecha cambió
+                      }
+                      widgetElement.docData = notaData; // Actualiza data en el elemento DOM
+                      notesDataCache[noteId] = notaData; // Actualiza caché general
+                    } else {
+                      console.warn(`(Auth) Se recibió 'modified' para ${noteId}, pero widget no encontrado.`);
+                      // Actualiza el cache de todos modos
+                      notesDataCache[noteId] = notaData;
+                      // Podrías intentar añadirlo si no existe, o marcar para recargar calendario
+                      needsCalendarUpdate = true;
+                    }
+                  } else if (change.type === "removed") {
+                     console.log(`(Auth) Eliminando widget para ${noteId}`);
+                     if (widgetElement) {
+                        grid.removeWidget(widgetElement); // Elimina del grid
+                        if (notesDataCache[noteId]?.assignedDate) needsCalendarUpdate = true;
+                        delete notesDataCache[noteId]; // Elimina de caché general
+                        displayedNotes.delete(noteId); // Elimina del Map si lo usas
+                        // Asegúrate de quitar burbujas del calendario si existían
+                        document.querySelectorAll(`.assigned-bubble[data-note='${noteId}']`).forEach(b => b.remove());
+                     } else {
+                       console.warn(`(Auth) Se recibió 'removed' para ${noteId}, pero widget no encontrado en grid.`);
+                       // Limpia caches por si acaso
+                       delete notesDataCache[noteId];
+                       displayedNotes.delete(noteId);
+                       document.querySelectorAll(`.assigned-bubble[data-note='${noteId}']`).forEach(b => b.remove());
+                       needsCalendarUpdate = true; // Forzar update calendario
+                     }
+                  }
+                }); // Fin forEach
+
+                // Lógica para actualizar calendario si hubo cambios relevantes
+                if (needsCalendarUpdate && typeof generateCalendar === 'function' && currentCalendarMonth !== undefined) {
+                  console.log("(Auth) Actualizando calendario porque needsCalendarUpdate es true.");
+                  // Llama a tus funciones de calendario
+                  if (typeof fetchAllAssignedNotes === 'function') {
+                      fetchAllAssignedNotes().then(() => {
+                         // Asegúrate que generateCalendar esté definida
+                         generateCalendar(currentCalendarMonth, currentCalendarYear);
+                      });
+                  } else { console.error("Funcion fetchAllAssignedNotes no definida"); }
+                } else if (needsCalendarUpdate && typeof fetchAllAssignedNotes === 'function') {
+                   // Si el calendario no está visible pero hubo cambios, al menos recarga los datos
+                  fetchAllAssignedNotes();
+                }
+
+            }, (error) => { // Manejo de error del listener onSnapshot
+                console.error("(Auth) Error escuchando Firestore:", error);
+                alert("Error al cargar/actualizar notas: " + error.message);
+                // Si el error es por falta de permisos, cerramos sesión automáticamente
+                if (error.code === 'permission-denied') {
+                    console.warn("Permiso denegado por Firestore. Cerrando sesión.");
+                    auth.signOut(); // Cierra sesión para evitar bucle de errores
+                }
+            }); // Fin del onSnapshot
+            console.log("(Auth) Listener de Firestore ACTIVADO.");
+        } // Fin del if (!unsubscribeFirestore)
+
+      } else {
+        // --- USUARIO DESCONECTADO ---
+        console.log('Nadie conectado. Limpiando...');
+        // Actualiza la UI para mostrar estado no logueado
+        if (loginFormDiv) loginFormDiv.style.display = 'block';
+        if (userInfoDiv) userInfoDiv.style.display = 'none';
+
+        // Detener listener y limpiar pantalla/caches
+        if (unsubscribeFirestore) {
+          unsubscribeFirestore(); // Llama a la función para detener escucha
+          unsubscribeFirestore = null; // Resetea la variable
+          console.log("Listener de notas DETENIDO.");
+        }
+        if (grid) {
+          grid.removeAll(true); // Limpia todas las notas del grid (true para no animar)
+          console.log("Grid limpiado.");
+        }
+        // Limpia variables/caches internos
+        displayedNotes.clear(); // Limpia Map si lo usas
+        notesDataCache = {};
+        assignedDatesCache = {};
+        // Opcional: resetear calendario
+        if (calendarWidgetElem) calendarWidgetElem.style.display = 'none';
 
 
-  } else {
-    // --- QUÉ HACER SI NADIE ESTÁ CONECTADO ---
-    console.log('Nadie conectado.');
-    loginFormDiv.style.display = 'block'; // Muestra formulario login
-    userInfoDiv.style.display = 'none';  // Oculta info de usuario
+      } // Fin del else (usuario desconectado)
+    }); // Fin del onAuthStateChanged
+    // --- FIN BLOQUE onAuthStateChanged ---
 
-    // ***** Aquí deberíamos limpiar todo (VER PASO 4) *****
-    console.log("Acceso denegado, limpiar notas...");
+// --- Código para los Botones de Login/Logout (ASEGÚRATE DE TENERLO) ---
 
-  }
-});
+    // Estas variables ya deberían estar definidas más arriba con los getElementById
+    // const loginButton = document.getElementById('login-button');
+    // const logoutButton = document.getElementById('logout-button');
+    // const emailInput = document.getElementById('login-email');
+    // const passwordInput = document.getElementById('login-password');
 
-// Acción para el botón "Entrar"
-loginButton.addEventListener('click', () => {
-  const email = emailInput.value;
-  const password = passwordInput.value;
-  if (!email || !password) {
-      return alert('Ingresa correo y contraseña');
-  }
-  auth.signInWithEmailAndPassword(email, password)
-      .catch(error => {
-          console.error('Error Login:', error);
-          alert('Error al iniciar sesión: ' + error.message);
-      });
-});
+    if (loginButton && emailInput && passwordInput) {
+        loginButton.addEventListener('click', () => {
+          const email = emailInput.value;
+          const password = passwordInput.value;
+          if (!email || !password) {
+              return alert('Ingresa correo y contraseña');
+          }
+          // Intenta iniciar sesión
+          auth.signInWithEmailAndPassword(email, password)
+              .then(userCredential => {
+                  console.log('Login OK desde botón para:', userCredential.user.email);
+                  // No necesitas hacer nada más aquí, onAuthStateChanged se encarga
+              })
+              .catch(error => {
+                  console.error('Error Login Botón:', error);
+                  alert('Error al iniciar sesión: ' + error.message);
+              });
+        });
+    } else {
+        console.error("Error: Falta el botón de login o los inputs en el HTML o en las variables JS.");
+    }
 
-// Acción para el botón "Salir"
-logoutButton.addEventListener('click', () => {
-  auth.signOut().catch(error => {
-      console.error('Error Logout:', error);
-      alert('Error al cerrar sesión.');
-  });
-});
-
-// --- FIN NUEVO CÓDIGO ---
+    if (logoutButton) {
+        logoutButton.addEventListener('click', () => {
+          // Intenta cerrar sesión
+          auth.signOut()
+              .then(() => {
+                 console.log('Logout OK desde botón.');
+                 // No necesitas hacer nada más aquí, onAuthStateChanged se encarga
+              })
+              .catch(error => {
+                 console.error('Error Logout Botón:', error);
+                 alert('Error al cerrar sesión.');
+              });
+        });
+    } else {
+        console.error("Error: Falta el botón de logout en el HTML o en la variable JS.");
+    }
+    // --- FIN Código para los Botones ---
   </script>
 </body>
 </html>
