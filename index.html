@@ -1398,17 +1398,7 @@ if (!unsubscribeFirestore) { // Para evitar iniciar múltiples listeners
         // Opcional: resetear calendario
         if (calendarWidgetElem) calendarWidgetElem.style.display = 'none';
       } 
-    // Fin del else (usuario desconectado)
-    }); // Fin del onAuthStateChanged
-    // --- FIN BLOQUE onAuthStateChanged ---
-
-// --- Código para los Botones de Login/Logout (ASEGÚRATE DE TENERLO) ---
-
-    // Estas variables ya deberían estar definidas más arriba con los getElementById
-    // const loginButton = document.getElementById('login-button');
-    // const logoutButton = document.getElementById('logout-button');
-    // const emailInput = document.getElementById('login-email');
-    // const passwordInput = document.getElementById('login-password');
+//aqui van 
 
     if (loginButton && emailInput && passwordInput) {
         loginButton.addEventListener('click', () => {
@@ -1431,7 +1421,6 @@ if (!unsubscribeFirestore) { // Para evitar iniciar múltiples listeners
     } else {
         console.error("Error: Falta el botón de login o los inputs en el HTML o en las variables JS.");
     }
-/*
     if (logoutButton) {
         logoutButton.addEventListener('click', () => {
           // Intenta cerrar sesión
