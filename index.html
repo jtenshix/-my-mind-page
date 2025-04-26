@@ -798,10 +798,7 @@
         }
         imageContainer.appendChild(img);
         // Evitar que el click se propague a la tarjeta y active la edición, etc.
-    event.stopPropagation();
-    // Alternar la clase 'zoomed' en el contenedor
-    event.currentTarget.classList.toggle('zoomed');
-});
+   
         imageContainer.addEventListener('click', (event) => {
         card.appendChild(imageContainer);
 
