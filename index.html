@@ -10,6 +10,57 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
   <style>
+    /* --- Estilos para el Menú Superior --- */
+#top-menu-bar {
+  background-color: #03254c; /* Un color oscuro, ajusta como quieras */
+  padding: 5px 15px;
+  position: sticky; /* O 'fixed' si quieres que siempre esté arriba */
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1010; /* Más alto que otros elementos fijos */
+  box-sizing: border-box;
+  display: flex; /* Para alinear el botón */
+  align-items: center;
+}
+
+#menu-toggle-button {
+  background: none;
+  border: none;
+  color: #fff; /* Color del ícono */
+  font-size: 28px; /* Tamaño del ícono */
+  cursor: pointer;
+  padding: 5px;
+  line-height: 1; /* Ajusta la altura */
+}
+
+#top-menu-options {
+  position: absolute; /* Se posiciona relativo a la barra */
+  top: 100%; /* Justo debajo de la barra */
+  left: 0;
+  background-color: #f8f9fa; /* Fondo claro */
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  min-width: 200px; /* Ancho mínimo */
+  z-index: 1011; /* Encima de la barra pero debajo del botón si se superponen */
+}
+
+#top-menu-options a {
+  display: block;
+  padding: 10px 15px;
+  color: #333;
+  text-decoration: none;
+  border-bottom: 1px solid #eee;
+}
+
+#top-menu-options a:last-child {
+  border-bottom: none;
+}
+
+#top-menu-options a:hover {
+  background-color: #e9ecef;
+}
+/* --- Fin Estilos Menú Superior --- */
     /* Estilos CSS (sin cambios respecto a tu versión original, excepto los botones) */
     .grid-stack-item,
     .grid-stack-item-content,
@@ -443,6 +494,17 @@
   </style>
 </head>
 <body>
+
+  <div id="top-menu-bar">
+    <button id="menu-toggle-button" title="Menú">☰</button>
+    <div id="top-menu-options" style="display: none;">
+      <a href="calendario_grande.html" target="_blank">Ver Calendario Grande</a>
+      </div>
+  </div>
+
+  <div id="auth-section" style="...">...</div>
+  <div class="container">...</div>
+  ...
   <div id="auth-section" style="padding: 15px; background-color: #f0f0f0; border-bottom: 1px solid #ccc; text-align: center; margin-bottom: 10px;">
     <div id="login-form">
       <input type="email" id="login-email" placeholder="Correo" style="padding: 8px; margin-right: 5px;">
@@ -1000,7 +1062,27 @@
           .catch(error => { console.error('Error Logout Botón:', error); alert('Error al cerrar sesión: ' + error.message); });
       });
     } else { console.error("Error crítico: Botón de logout no encontrado."); }
+    
     // --- FIN Código para los Botones ---
+    // --- Lógica para el Menú Superior ---
+const menuToggleButton = document.getElementById('menu-toggle-button');
+const topMenuOptions = document.getElementById('top-menu-options');
+
+if (menuToggleButton && topMenuOptions) {
+  menuToggleButton.addEventListener('click', (event) => {
+    event.stopPropagation(); // Evita que el click cierre el menú inmediatamente si se propaga
+    const isVisible = topMenuOptions.style.display === 'block';
+    topMenuOptions.style.display = isVisible ? 'none' : 'block';
+  });
+
+  // Opcional: Cerrar el menú si se hace click fuera de él
+  document.addEventListener('click', (event) => {
+    if (topMenuOptions.style.display === 'block' && !topMenuOptions.contains(event.target) && event.target !== menuToggleButton) {
+      topMenuOptions.style.display = 'none';
+    }
+  });
+}
+// --- Fin Lógica Menú Superior ---
   </script>
 </body>
 </html>
