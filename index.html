@@ -34,7 +34,8 @@
       z-index: 1010;
     }
 
-    #menu-toggle-button {
+    #calendar-link-button {
+       text-decoration: none;
       background-color: rgba(0, 0, 0, 0.5); /* Fondo semi-transparente */
       border: none;
       color: #fff; /* Color de las líneas SVG */
@@ -49,42 +50,11 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.3);
       transition: background-color 0.3s ease;
     }
-    #menu-toggle-button:hover {
+    #calendar-link-button:hover {
       background-color: rgba(0, 0, 0, 0.7);
     }
-    #menu-toggle-button svg {
+    #calendar-link-button svg {
       display: block; /* Buen comportamiento del SVG */
-    }
-
-    #top-menu-options {
-      position: absolute;
-      top: calc(100% + 5px); /* Debajo del botón */
-      left: 0;
-      background-color: #fff;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      min-width: 200px;
-      z-index: 1011;
-      overflow: hidden; /* Para bordes redondeados */
-      display: none; /* Inicialmente oculto */
-    }
-
-    #top-menu-options a {
-      display: block;
-      padding: 12px 18px;
-      color: #333;
-      text-decoration: none;
-      border-bottom: 1px solid #eee;
-      font-size: 15px;
-      transition: background-color 0.2s ease;
-      white-space: nowrap; /* Evita que el texto se parta */
-    }
-    #top-menu-options a:last-child {
-      border-bottom: none;
-    }
-    #top-menu-options a:hover {
-      background-color: #f0f0f0;
     }
 
     #auth-status-container {
@@ -532,16 +502,16 @@
 
   <div id="top-fixed-elements">
     <div id="menu-icon-container">
-      <button id="menu-toggle-button" title="Menú">
-        <svg width="24" height="24" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <line x1="6" y1="5" x2="6" y2="25" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-          <line x1="11" y1="5" x2="11" y2="25" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-          <line x1="16" y1="5" x2="16" y2="25" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-          <line x1="21" y1="5" x2="21" y2="25" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-          <line x1="26" y1="5" x2="26" y2="25" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-        </svg>
-      </button>
-      <div id="top-menu-options"> <a href="calendario_grande.html" >Ver Calendario Grande</a>
+  <a href="calendario_grande.html" id="calendar-link-button" title="Ver Calendario Grande">
+     <svg width="24" height="24" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+       <line x1="6" y1="5" x2="6" y2="25" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+       <line x1="11" y1="5" x2="11" y2="25" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+       <line x1="16" y1="5" x2="16" y2="25" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+       <line x1="21" y1="5" x2="21" y2="25" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+       <line x1="26" y1="5" x2="26" y2="25" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+     </svg>
+  </a>
+  </div>
         </div>
     </div>
 
