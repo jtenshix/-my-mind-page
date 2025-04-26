@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario Grande - Notas Oceánicas</title>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+
+    <style>
+        /* --- Estilos Generales y Minimalistas --- */
+        :root {
+            --color-background: #fdfdfa; /* Un blanco hueso */
+            --color-text: #333;
+            --color-primary: #4a90e2; /* Un azul suave */
+            --color-secondary: #777;
+            --color-border: #e0e0e0;
+            --color-highlight: #f0e68c; /* Amarillo pálido para hoy */
+            --color-assigned: #d1e7fd; /* Azul muy claro para días con notas */
+            --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: var(--font-main);
+            background-color: var(--color-background);
+            color: var(--color-text);
+            display: flex;
+            flex-direction: column; /* Para que el footer (si hubiera) quede abajo */
+            overflow: hidden; /* Evitar scroll general */
+        }
+
+        /* --- Contenedor Principal --- */
+        .calendar-container {
+            display: flex;
+            flex-grow: 1; /* Ocupa el espacio disponible */
+            height: 100%; /* Asegura que ocupe toda la altura */
+            overflow: hidden; /* Evita desbordes */
+        }
+
+        /* --- Sección del Calendario --- */
+        .calendar-section {
+            flex-grow: 1; /* Ocupa la mayor parte */
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            border-right: 1px solid var(--color-border);
+            overflow-y: auto; /* Scroll si el contenido es muy alto */
+        }
+
+        /* --- Cabecera del Calendario (Mes, Año, Navegación) --- */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 0 10px;
+        }
+        .calendar-header h2 {
+            margin: 0;
+            font-size: 1.8em;
+            font-weight: 300; /* Más ligero */
+            color: var(--color-primary);
+        }
+        .calendar-nav button {
+            background: none;
+            border: 1px solid var(--color-border);
+            color: var(--color-secondary);
+            font-size: 1.2em;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 8px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .calendar-nav button:hover {
+            background-color: var(--color-border);
+            color: var(--color-text);
+        }
+
+        /* --- Grid del Calendario --- */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr); /* 7 columnas iguales */
+            gap: 1px; /* Espacio muy fino, como líneas de cuaderno */
+            background-color: var(--color-border); /* Color de las líneas */
+            border: 1px solid var(--color-border);
+            flex-grow: 1; /* Ocupa el espacio restante en la sección */
+        }
+
+        /* Cabecera de Días (Lu, Ma, ...) */
+        .day-header {
+            background-color: #f8f8f8; /* Fondo ligeramente diferente */
+            padding: 10px 5px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: var(--color-secondary);
+        }
+
+        /* Celdas de Fecha */
+        .date-cell {
+            background-color: var(--color-background);
+            min-height: 100px; /* Altura mínima de celda */
+            padding: 8px;
+            box-sizing: border-box;
+            position: relative; /* Para posicionar el número del día */
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex; /* Para alinear el número */
+            flex-direction: column; /* Contenido apilado */
+            overflow: hidden; /* Evita que el contenido desborde feo */
+        }
+        .date-cell:hover {
+            background-color: #f5f5f5;
+        }
+        .date-cell.other-month {
+            background-color: #f9f9f9;
+            color: #bbb;
+            cursor: default;
+        }
+        .date-cell.other-month:hover {
+            background-color: #f9f9f9; /* No cambia al pasar el mouse */
+        }
+        .date-cell.today {
+            background-color: var(--color-highlight);
+        }
+        .date-cell.selected {
+            outline: 2px solid var(--color-primary);
+            outline-offset: -2px;
+        }
+
+        /* Número del día */
+        .day-number {
+            font-weight: 600;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            align-self: flex-start; /* Arriba a la izquierda */
+        }
+        .date-cell.other-month .day-number {
+            color: #ccc;
+        }
+
+        /* Indicador de notas asignadas (un punto sutil) */
+        .note-indicator {
+            width: 6px;
+            height: 6px;
+            background-color: var(--color-primary);
+            border-radius: 50%;
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+        }
+        /* O alternativa: fondo diferente para días con notas */
+        .date-cell.has-notes {
+             /* background-color: var(--color-assigned); */ /* Descomentar si prefieres fondo */
+        }
+         /* Contenedor para miniaturas o títulos de notas dentro de la celda (opcional) */
+        .cell-notes-preview {
+            font-size: 0.75em;
+            color: var(--color-secondary);
+            line-height: 1.2;
+            max-height: 60px; /* Limita altura de previews */
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .cell-notes-preview div {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 3px;
+        }
+         .cell-notes-preview img {
+            width: 15px; height: 15px; vertical-align: middle; margin-right: 3px;
+         }
+
+
+        /* --- Sección de Detalles de Notas (Sidebar) --- */
+        .notes-details-section {
+            width: 300px; /* Ancho fijo para la barra lateral */
+            flex-shrink: 0; /* No se encoge */
+            background-color: #f8f9fa;
+            padding: 20px;
+            overflow-y: auto; /* Scroll si hay muchas notas */
+            display: flex;
+            flex-direction: column;
+        }
+        .notes-details-section h3 {
+            margin: 0 0 15px 0;
+            font-size: 1.3em;
+            font-weight: 400;
+            color: var(--color-primary);
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 10px;
+        }
+        #notes-list {
+            flex-grow: 1;
+        }
+        .note-item {
+            background-color: #fff;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .note-item img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .note-item p {
+            margin: 0;
+            font-size: 0.95em;
+            line-height: 1.5;
+            color: var(--color-text);
+            word-wrap: break-word; /* Para que el texto largo se ajuste */
+        }
+        .note-item p a { /* Estilo para enlaces dentro de notas */
+             color: var(--color-primary);
+             text-decoration: underline;
+        }
+        .no-notes-message {
+            color: var(--color-secondary);
+            font-style: italic;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        /* --- Mensajes (Loading, No Logueado) --- */
+        .message-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2em;
+            color: var(--color-secondary);
+            z-index: 10; /* Encima del calendario */
+        }
+        .message-overlay.hidden {
+            display: none;
+        }
+
+        /* --- Responsividad --- */
+        @media (max-width: 768px) {
+            .calendar-container {
+                flex-direction: column; /* Apila calendario y notas */
+                 height: auto; /* Permite que crezca */
+                 overflow-y: auto; /* Scroll general */
+            }
+            .calendar-section {
+                border-right: none;
+                border-bottom: 1px solid var(--color-border);
+                padding: 15px;
+                overflow-y: visible; /* Quita scroll interno */
+            }
+            .notes-details-section {
+                width: 100%; /* Ocupa todo el ancho */
+                box-sizing: border-box;
+                height: auto; /* Altura automática */
+                max-height: 40vh; /* Limita altura máxima */
+                overflow-y: auto; /* Scroll si es necesario */
+            }
+            .calendar-header h2 { font-size: 1.5em; }
+            .date-cell { min-height: 80px; padding: 5px; }
+            .day-number { font-size: 0.8em; }
+            .note-indicator { width: 5px; height: 5px; bottom: 5px; right: 5px; }
+        }
+         @media (max-width: 480px) {
+             .calendar-header { flex-direction: column; gap: 10px; margin-bottom: 15px;}
+             .calendar-nav button { font-size: 1em; padding: 4px 8px; }
+             .day-header { font-size: 0.75em; padding: 8px 2px; }
+             .date-cell { min-height: 60px; }
+             .cell-notes-preview { display: none; } /* Ocultar previews en móviles pequeños */
+         }
+
+    </style>
+</head>
+<body>
+
+    <div class="calendar-container">
+        <div class="calendar-section">
+            <div class="calendar-header">
+                <h2 id="calendar-title">Mes Año</h2>
+                <div class="calendar-nav">
+                    <button id="prev-month">&lt;</button>
+                    <button id="next-month">&gt;</button>
+                </div>
+            </div>
+            <div class="calendar-grid-header" id="calendar-grid-header">
+                 </div>
+            <div class="calendar-grid" id="calendar-grid">
+                </div>
+        </div>
+
+        <div class="notes-details-section">
+            <h3 id="notes-title">Notas del Día</h3>
+            <div id="notes-list">
+                <p class="no-notes-message">Selecciona un día para ver las notas.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="message-overlay" class="message-overlay hidden">
+        <span id="message-text">Cargando...</span>
+    </div>
+
+    <script>
+        // --- Configuración de Firebase ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCHa373WgLLHsy8wZXK9zr_HVieQvlrhUs", // Reemplaza si es necesario
+            authDomain: "oasis-b036d.firebaseapp.com",
+            projectId: "oasis-b036d",
+            storageBucket: "oasis-b036d.appspot.com",
+            messagingSenderId: "141546637821",
+            appId: "1:141546637821:web:0a861aeb13831774ed3194",
+            measurementId: "G-HB2P17H5YL"
+        };
+        try {
+            firebase.initializeApp(firebaseConfig);
+        } catch (e) {
+            console.error("Error inicializando Firebase:", e);
+            showMessage("Error de conexión con la base de datos.", true);
+        }
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // --- Variables Globales ---
+        let currentYear, currentMonth;
+        let allAssignedNotes = {}; // Objeto para guardar notas: { "D/M/YYYY": [{id, data}, ...], ... }
+        let selectedDateCell = null; // Para rastrear la celda seleccionada
+
+        // --- Referencias a Elementos del DOM ---
+        const calendarTitle = document.getElementById('calendar-title');
+        const calendarGrid = document.getElementById('calendar-grid');
+        const calendarGridHeader = document.getElementById('calendar-grid-header');
+        const prevMonthButton = document.getElementById('prev-month');
+        const nextMonthButton = document.getElementById('next-month');
+        const notesTitle = document.getElementById('notes-title');
+        const notesList = document.getElementById('notes-list');
+        const messageOverlay = document.getElementById('message-overlay');
+        const messageText = document.getElementById('message-text');
+
+        // --- Funciones Utilitarias (Reutilizadas/Adaptadas) ---
+        function linkify(text) { // Misma función que en index.html
+             if (!text) return "";
+             const urlRegex = /(?<!href=["'])(https?:\/\/[^\s<>"']+)/g;
+             const replacedText = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+             return replacedText.replace(/\n/g, '<br>');
+        }
+
+        function getChileDate() { // Misma función que en index.html
+            try {
+                const opts = { timeZone: 'America/Santiago', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
+                const fmt = new Intl.DateTimeFormat('en-CA', opts);
+                const p = fmt.formatToParts(new Date()); const d = {}; p.forEach(({ type, value }) => d[type] = parseInt(value, 10));
+                return new Date(Date.UTC(d.year, d.month - 1, d.day, d.hour, d.minute, d.second));
+            } catch (e) { console.warn("Intl fallback", e); return new Date(); }
+        }
+
+        function getMonthName(monthIndex) { // Misma función que en index.html
+            const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            return months[monthIndex] || '';
+        }
+
+        // --- Funciones de UI ---
+        function showMessage(text, isError = false) {
+            messageText.textContent = text;
+            messageOverlay.classList.remove('hidden');
+            if (isError) messageText.style.color = 'red';
+            else messageText.style.color = 'var(--color-secondary)';
+        }
+
+        function hideMessage() {
+            messageOverlay.classList.add('hidden');
+        }
+
+        // --- Lógica Principal del Calendario ---
+
+        // 1. Fetch de todas las notas asignadas del usuario
+        async function fetchAllAssignedNotesForUser() {
+            if (!auth.currentUser) {
+                console.log("Usuario no logueado, no se pueden cargar notas.");
+                return false; // Indica que no se pudo cargar
+            }
+            console.log("Fetching all assigned notes for user:", auth.currentUser.uid); // Asumiendo que las notas están asociadas al UID o son globales
+            showMessage("Cargando notas...");
+            allAssignedNotes = {}; // Resetear
+
+            try {
+                // AJUSTAR ESTA CONSULTA SEGÚN TU ESTRUCTURA DE DATOS
+                // Si las notas son globales (no por usuario), quita el .where('userId', ...)
+                // Si las notas están en una subcolección de usuario, ajusta la ruta
+                const snapshot = await db.collection('notas')
+                    // .where('userId', '==', auth.currentUser.uid) // DESCOMENTAR si tienes un campo userId en tus notas
+                    .where('assignedDate', '!=', null) // Solo las que tienen fecha asignada
+                    .get();
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const noteId = doc.id;
+                    const dateStr = data.assignedDate; // Formato "D/M/YYYY"
+
+                    if (dateStr) {
+                        if (!allAssignedNotes[dateStr]) {
+                            allAssignedNotes[dateStr] = [];
+                        }
+                        allAssignedNotes[dateStr].push({ id: noteId, data: data });
+                    }
+                });
+                console.log("Assigned notes fetched and cached:", allAssignedNotes);
+                hideMessage();
+                return true; // Indica éxito
+            } catch (error) {
+                console.error("Error fetching assigned notes:", error);
+                showMessage("Error al cargar las notas asignadas.", true);
+                return false; // Indica fallo
+            }
+        }
+
+        // 2. Generar el HTML del Grid del Calendario
+        function generateLargeCalendar(year, month) {
+            currentYear = year;
+            currentMonth = month;
+            calendarTitle.textContent = `${getMonthName(month)} ${year}`;
+            calendarGrid.innerHTML = ''; // Limpiar grid anterior
+            calendarGridHeader.innerHTML = ''; // Limpiar cabecera de días
+
+            const today = getChileDate();
+            const todayDate = today.getDate();
+            const todayMonth = today.getMonth();
+            const todayYear = today.getFullYear();
+
+            // Generar cabecera de días (Do, Lu, ...)
+            const daysOfWeek = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá'];
+             daysOfWeek.forEach(day => {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'day-header';
+                dayElement.textContent = day;
+                calendarGridHeader.appendChild(dayElement);
+            });
+
+
+            const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0=Domingo
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+            let date = 1;
+            let nextMonthDate = 1;
+
+            // 6 semanas para un layout consistente
+            for (let i = 0; i < 42; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('date-cell');
+                const dayNumberSpan = document.createElement('span');
+                dayNumberSpan.classList.add('day-number');
+
+                let cellDate;
+                let cellMonth;
+                let cellYear;
+                let isCurrentMonth = false;
+
+                // Días del mes anterior
+                if (i < firstDayOfMonth) {
+                    cell.classList.add('other-month');
+                    const day = daysInPrevMonth - firstDayOfMonth + i + 1;
+                    dayNumberSpan.textContent = day;
+                    cellMonth = month === 0 ? 11 : month - 1;
+                    cellYear = month === 0 ? year - 1 : year;
+                    cellDate = day;
+                }
+                // Días del mes actual
+                else if (date <= daysInMonth) {
+                    dayNumberSpan.textContent = date;
+                    isCurrentMonth = true;
+                    cellMonth = month;
+                    cellYear = year;
+                    cellDate = date;
+
+                    // Marcar hoy
+                    if (date === todayDate && month === todayMonth && year === todayYear) {
+                        cell.classList.add('today');
+                    }
+                    date++;
+                }
+                // Días del mes siguiente
+                else {
+                    cell.classList.add('other-month');
+                    dayNumberSpan.textContent = nextMonthDate;
+                    cellMonth = month === 11 ? 0 : month + 1;
+                    cellYear = month === 11 ? year + 1 : year;
+                    cellDate = nextMonthDate;
+                    nextMonthDate++;
+                }
+
+                cell.appendChild(dayNumberSpan);
+
+                // Añadir indicador y listener solo si es del mes actual
+                if (isCurrentMonth) {
+                    const dateString = `${cellDate}/${cellMonth + 1}/${cellYear}`;
+                    const notesForDay = allAssignedNotes[dateString] || [];
+
+                    if (notesForDay.length > 0) {
+                        cell.classList.add('has-notes');
+                        // Añadir indicador visual (punto)
+                        const indicator = document.createElement('div');
+                        indicator.classList.add('note-indicator');
+                        cell.appendChild(indicator);
+
+                         // Opcional: Añadir previews dentro de la celda
+                         /*
+                         const previewContainer = document.createElement('div');
+                         previewContainer.classList.add('cell-notes-preview');
+                         notesForDay.slice(0, 2).forEach(note => { // Mostrar max 2 previews
+                             const previewDiv = document.createElement('div');
+                             if (note.data.url) { // Si es imagen
+                                 const imgIcon = document.createElement('img');
+                                 imgIcon.src = note.data.url; // O un icono genérico de imagen
+                                 imgIcon.alt = 'imagen';
+                                 previewDiv.appendChild(imgIcon);
+                             }
+                             previewDiv.appendChild(document.createTextNode(note.data.texto || note.data.nota || 'Nota'));
+                             previewContainer.appendChild(previewDiv);
+                         });
+                         cell.appendChild(previewContainer);
+                         */
+                    }
+
+                    // Guardar la fecha en el elemento para el listener
+                    cell.dataset.dateString = dateString;
+                    cell.dataset.fullDate = `${cellDate} de ${getMonthName(cellMonth)} de ${cellYear}`;
+
+                    cell.addEventListener('click', () => {
+                        // Deseleccionar celda anterior
+                        if (selectedDateCell) {
+                            selectedDateCell.classList.remove('selected');
+                        }
+                        // Seleccionar celda actual
+                        cell.classList.add('selected');
+                        selectedDateCell = cell;
+                        // Mostrar notas en la barra lateral
+                        displayNotesForDate(cell.dataset.dateString, cell.dataset.fullDate);
+                    });
+                }
+
+                calendarGrid.appendChild(cell);
+            }
+        }
+
+        // 3. Mostrar las Notas para una Fecha Seleccionada
+        function displayNotesForDate(dateString, fullDateString) {
+            notesTitle.textContent = `Notas del ${fullDateString}`;
+            notesList.innerHTML = ''; // Limpiar lista anterior
+            const notes = allAssignedNotes[dateString] || [];
+
+            if (notes.length === 0) {
+                notesList.innerHTML = '<p class="no-notes-message">No hay notas asignadas para este día.</p>';
+                return;
+            }
+
+            notes.forEach(noteInfo => {
+                const noteElement = document.createElement('div');
+                noteElement.classList.add('note-item');
+                const data = noteInfo.data;
+
+                // Si tiene imagen, mostrarla
+                if (data.url) {
+                    const img = document.createElement('img');
+                    img.src = data.url;
+                    img.alt = data.texto || 'Imagen de la nota';
+                    img.loading = 'lazy';
+                    img.onerror = () => { img.alt = 'Error al cargar imagen'; /* Podrías poner un placeholder */ };
+                    noteElement.appendChild(img);
+                }
+
+                // Mostrar texto (ya sea texto de imagen o nota de texto)
+                const textContent = data.url ? data.texto : data.nota;
+                if (textContent) {
+                    const textP = document.createElement('p');
+                    textP.innerHTML = linkify(textContent); // Usar linkify para los enlaces
+                    noteElement.appendChild(textP);
+                } else if (!data.url) {
+                     // Si es nota de texto pero está vacía (no debería pasar si se valida al guardar)
+                     const textP = document.createElement('p');
+                     textP.innerHTML = '<i>Nota vacía</i>';
+                     noteElement.appendChild(textP);
+                }
+
+                notesList.appendChild(noteElement);
+            });
+        }
+
+        // --- Inicialización y Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Listener de autenticación
+            auth.onAuthStateChanged(async user => {
+                if (user) {
+                    // Usuario logueado
+                    console.log("Usuario autenticado en calendario grande:", user.email);
+                    const notesLoaded = await fetchAllAssignedNotesForUser();
+                    if (notesLoaded) {
+                        const today = getChileDate();
+                        generateLargeCalendar(today.getFullYear(), today.getMonth());
+                    } else {
+                        // Mensaje de error ya mostrado por fetchAllAssignedNotesForUser
+                    }
+                } else {
+                    // Usuario no logueado
+                    console.log("Usuario no autenticado en calendario grande.");
+                    showMessage("Por favor, inicia sesión en la página principal para ver el calendario.", true);
+                    // Opcionalmente, ocultar el calendario
+                    calendarGrid.innerHTML = '';
+                    calendarGridHeader.innerHTML = '';
+                    notesList.innerHTML = '';
+                    calendarTitle.textContent = 'Calendario';
+                    notesTitle.textContent = 'Notas del Día';
+                }
+            });
+
+            // Listeners para navegación
+            prevMonthButton.addEventListener('click', () => {
+                currentMonth--;
+                if (currentMonth < 0) {
+                    currentMonth = 11;
+                    currentYear--;
+                }
+                generateLargeCalendar(currentYear, currentMonth);
+                // Limpiar detalles al cambiar de mes
+                notesTitle.textContent = 'Notas del Día';
+                notesList.innerHTML = '<p class="no-notes-message">Selecciona un día para ver las notas.</p>';
+                if(selectedDateCell) selectedDateCell.classList.remove('selected');
+                selectedDateCell = null;
+            });
+
+            nextMonthButton.addEventListener('click', () => {
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+                generateLargeCalendar(currentYear, currentMonth);
+                 // Limpiar detalles al cambiar de mes
+                notesTitle.textContent = 'Notas del Día';
+                notesList.innerHTML = '<p class="no-notes-message">Selecciona un día para ver las notas.</p>';
+                if(selectedDateCell) selectedDateCell.classList.remove('selected');
+                selectedDateCell = null;
+            });
+        });
+
+    </script>
+
+</body>
+</html>
+```
