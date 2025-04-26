@@ -1111,7 +1111,7 @@
           texto: texto || null, // Guardar null si no hay texto
           createdAt: firebase.firestore.FieldValue.serverTimestamp(), // Fecha de creación
           tipo: 'imagen', // Tipo de nota
-          w: 4, // Ancho inicial por defecto (ajustar según columnas base)
+          w: 2, // Ancho inicial por defecto (ajustar según columnas base)
           // x, y se asignarán automáticamente por Gridstack
         })
         .then((docRef) => {
@@ -1146,7 +1146,7 @@
           nota: nota,
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           tipo: 'texto',
-          w: 4, // Ancho inicial
+          w: 2, // Ancho inicial
           // x, y se asignarán automáticamente
         })
         .then((docRef) => {
