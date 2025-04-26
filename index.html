@@ -615,6 +615,26 @@
 
   <script>
     // --- Funciones Utilitarias ---
+    // --- Función para crear imagen de arrastre (punto de color) ---
+function createDragImage(color = '#FFCD05', size = 20) { // Amarillo por defecto, tamaño 20px
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+        // Dibuja el círculo
+        ctx.beginPath();
+        // arc(x_centro, y_centro, radio, angulo_inicio, angulo_fin)
+        ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI, false); 
+        ctx.fillStyle = color;
+        ctx.fill();
+    }
+    // Crea un objeto Image a partir del dibujo del canvas
+    const dragImage = new Image();
+    dragImage.src = canvas.toDataURL(); // Convierte el dibujo a una imagen PNG
+    return dragImage;
+}
+// --- Fin Función ---
     function linkify(text) {
       if (!text) return "";
       const urlRegex = /(?<!href=["'])(https?:\/\/[^\s<>"']+)/g;
@@ -856,9 +876,8 @@ imageContainer.addEventListener('click', () => {
       bubbleButton.style.display = notaData.assignedDate ? 'none' : 'inline-block'; // Oculto si ya tiene fecha
       bubbleButton.addEventListener('dragstart', (e) => {
         // Imagen fantasma transparente para el drag
-        var imgGhost = new Image();
-        imgGhost.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-        e.dataTransfer.setDragImage(imgGhost, 0, 0);
+        const yellowDotImage = createDragImage('#FFCD05', 20); // Crea la imagen del punto amarillo (20px)
+        e.dataTransfer.setDragImage(yellowDotImage, 10, 10);  // Usa la nueva imagen y la centra (10 = mitad de 20)
         e.dataTransfer.setData("application/note-id", noteId); // Pasar ID de la nota
         e.dataTransfer.effectAllowed = "move";
         if (typeof openCalendar === 'function') openCalendar(); // Abrir calendario pequeño al arrastrar
