@@ -547,8 +547,6 @@
 <body>
 
   <div id="top-fixed-elements">
-    <button id="menu-toggle-button">MENÚ</button> 
-<div id="top-menu-options" style="display:none;"> Contenido del menú... </div>
     <div id="menu-icon-container">
   <a href="calendario_grande.html" id="calendar-link-button" title="Ver Calendario Grande">
      <svg width="24" height="24" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1770,33 +1768,6 @@ imageContainer.addEventListener('click', () => {
           console.error("Error crítico: Botón de logout en #auth-status-container no encontrado.");
         }
     }); // Fin DOMContentLoaded para login/logout listeners
-
-    // --- Lógica para el Menú Superior (Actualizado) ---
-    document.addEventListener('DOMContentLoaded', () => {
-        const menuToggleButtonElement = getElement('menu-toggle-button');
-        const topMenuOptionsElement = getElement('top-menu-options');
-
-        if (menuToggleButtonElement && topMenuOptionsElement) {
-          menuToggleButtonElement.addEventListener('click', (event) => {
-            event.stopPropagation(); // Evita que el click en el botón cierre el menú
-            const isVisible = topMenuOptionsElement.style.display === 'block';
-            topMenuOptionsElement.style.display = isVisible ? 'none' : 'block';
-          });
-
-          // Cerrar el menú si se hace click fuera de él O del botón que lo abre
-          document.addEventListener('click', (event) => {
-            // Comprueba si el menú está visible Y si el click NO fue dentro del menú Y NO fue en el botón de toggle
-            if (topMenuOptionsElement.style.display === 'block' &&
-                !topMenuOptionsElement.contains(event.target) &&
-                !menuToggleButtonElement.contains(event.target)) {
-              topMenuOptionsElement.style.display = 'none';
-            }
-          });
-        } else {
-            console.error("Elementos del menú superior no encontrados.");
-        }
-    }); // Fin DOMContentLoaded para menú superior
-
   </script>
 </body>
 </html>
