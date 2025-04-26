@@ -932,7 +932,7 @@
                   }
                 }); // Fin forEach docChanges
 
-                // Limpia del grid/mapa notas que ya no existen en Firestore pero sí en pantalla (raro, pero seguro)
+                /* // Limpia del grid/mapa notas que ya no existen en Firestore pero sí en pantalla (raro, pero seguro)
                 displayedNotes.forEach((element, noteId) => {
                     if (!processedIds.has(noteId)) {
                         console.warn(`(Auth) Limpiando widget ${noteId} que ya no existe en snapshot.`);
@@ -943,6 +943,7 @@
                         needsCalendarUpdate = true;
                     }
                 });
+              */
 
                 // Actualiza calendario si es necesario Y está visible
                 if (needsCalendarUpdate && typeof generateCalendar === 'function' && calendarWidgetElem && calendarWidgetElem.style.display === 'block') {
