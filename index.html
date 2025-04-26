@@ -800,6 +800,11 @@
         // Evitar que el click se propague a la tarjeta y active la edición, etc.
    
         card.appendChild(imageContainer);
+        // --- INICIO CÓDIGO PARA ZOOM ---
+imageContainer.addEventListener('click', () => {
+    imageContainer.classList.toggle('zoomed');
+});
+// --- FIN CÓDIGO PARA ZOOM ---
 
         // Añadir texto si existe
         if (notaData.texto) {
