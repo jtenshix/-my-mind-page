@@ -649,6 +649,8 @@
     // --- Variables Globales y Configuración de Gridstack ---
     let grid = null; // Inicializar como null
     const displayedNotes = new Map();
+    let calendarWheelThrottleTimeout; // Para controlar el tiempo entre giros de rueda
+const CALENDAR_WHEEL_DELAY = 200; // Milisegundos de espera (ajusta si quieres)
     let currentCalendarMonth, currentCalendarYear;
     let assignedDatesCache = {};
     let notesDataCache = {};
@@ -1473,6 +1475,38 @@ imageContainer.addEventListener('click', () => {
         const { month, year } = initCalendarDate(); // Obtener mes/año actual
         generateCalendar(month, year); // Generar y luego mostrar
         calendarWidgetElem.style.display = 'block';
+        // --- INICIO: Listener Rueda Mouse para Calendario ---
+calendarWidgetElem.onwheel = (event) => {
+    event.preventDefault(); // Evita que la página entera haga scroll
+
+    // Aplicar throttle simple con setTimeout para no cambiar meses muy rápido
+    if (calendarWheelThrottleTimeout) {
+        return; // Si ya hay un timeout pendiente, no hacer nada
+    }
+    calendarWheelThrottleTimeout = setTimeout(() => {
+        calendarWheelThrottleTimeout = null; // Limpiar timeout para permitir el próximo cambio
+    }, CALENDAR_WHEEL_DELAY);
+
+    // Determinar nueva fecha basado en la dirección de la rueda
+    let newMonth = currentCalendarMonth;
+    let newYear = currentCalendarYear;
+
+    if (event.deltaY < 0) { // Rueda hacia arriba -> Mes siguiente
+       newMonth = (currentCalendarMonth === 11) ? 0 : currentCalendarMonth + 1;
+       newYear = (currentCalendarMonth === 11) ? currentCalendarYear + 1 : currentCalendarYear;
+       console.log("Rueda arriba - Mes Siguiente");
+    } else if (event.deltaY > 0) { // Rueda hacia abajo -> Mes anterior
+       newMonth = (currentCalendarMonth === 0) ? 11 : currentCalendarMonth - 1;
+       newYear = (currentCalendarMonth === 0) ? currentCalendarYear - 1 : currentCalendarYear;
+       console.log("Rueda abajo - Mes Anterior");
+    }
+
+    // Solo volver a generar el calendario si el mes o año realmente cambió
+    if (newMonth !== currentCalendarMonth || newYear !== currentCalendarYear) {
+         generateCalendar(newMonth, newYear);
+    }
+};
+// --- FIN: Listener Rueda Mouse para Calendario ---
       }
     }
     function hideCalendar() {
@@ -1480,6 +1514,9 @@ imageContainer.addEventListener('click', () => {
       if (!calendarWidgetElem) return;
       // Ocultar después de un breve retraso para permitir mover el mouse entre el icono y el widget
       calendarTimeout = setTimeout(() => {
+        if (calendarWidgetElem) {
+    calendarWidgetElem.onwheel = null; // Quita el listener de la rueda cuando se oculta
+}
         calendarWidgetElem.style.display = 'none';
       }, 300); // 300ms de retraso
     }
