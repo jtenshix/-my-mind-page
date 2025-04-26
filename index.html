@@ -678,18 +678,24 @@
 
             // --- Eventos de Gridstack para Guardar Posición ---
             if (grid) {
-                grid.on('change', function (event, items) {
-                    items.forEach(function (item) {
-                    const noteIdToSave = item.el?.getAttribute('data-note-id');
-                    // Solo guardar si la posición es válida y diferente de undefined
-                    if (noteIdToSave && typeof item.x === 'number' && typeof item.y === 'number') {
-                        console.log(`(Grid Change) Guardando pos para ${noteIdToSave}: x=${item.x}, y=${item.y}`);
-                        db.collection('notas').doc(noteIdToSave).update({ x: item.x, y: item.y })
-                        .catch(err => console.error(`Error guardando posición (${noteIdToSave}) desde 'change': ${err.message}`));
-                    } else if (noteIdToSave) {
-                        console.warn(`(Grid Change) Posición inválida para ${noteIdToSave}: x=${item.x}, y=${item.y}`);
-                    }
-                    });
+               grid.on('change', function (event, items) {
+    // Comprobar si items es un array antes de usar forEach
+    if (Array.isArray(items)) { 
+        items.forEach(function (item) { 
+            const noteIdToSave = item.el?.getAttribute('data-note-id');
+            if (noteIdToSave && typeof item.x === 'number' && typeof item.y === 'number') {
+                console.log(`(Grid Change) Guardando pos para <span class="math-inline">\{noteIdToSave\}\: x\=</span>{item.x}, y=${item.y}`);
+                db.collection('notas').doc(noteIdToSave).update({ x: item.x, y: item.y })
+                .catch(err => console.error(`Error guardando posición (${noteIdToSave}) desde 'change': ${err.message}`));
+            } else if (noteIdToSave) {
+                console.warn(`(Grid Change) Posición inválida para <span class="math-inline">\{noteIdToSave\}\: x\=</span>{item.x}, y=${item.y}`);
+            }
+        });
+    } else {
+        // Opcional: Informar si 'items' no es un array
+        console.warn('(Grid Change) Evento recibido pero "items" no es un array:', items);
+    }
+});
                 });
 
                 grid.on('dragstop', function (event, element) {
@@ -986,10 +992,43 @@ imageContainer.addEventListener('click', () => {
         saveEditButton.innerHTML = '⏳';
 
         db.collection('notas').doc(noteId).update(updateData)
-          .then(() => {
-            console.log("Nota actualizada en Firestore:", noteId);
-            // La UI se actualizará automáticamente por onSnapshot
-            // No es necesario restaurar botones aquí, onSnapshot lo hará
+          .then(() => {  // --- Pega esto DENTRO del .then() ---
+    console.log("Nota actualizada en Firestore:", noteId); // Mantenemos el log
+
+    // --- INICIO: Restaurar UI manualmente ---
+    targetElement.innerHTML = originalHTML; // Vuelve a poner el texto como estaba antes de editar
+           
+    menuActionsContainer.innerHTML = ''; // Limpia el botón Guardar/Cancelar
+    menuActionsContainer.appendChild(originalEditButton);
+    menuActionsContainer.appendChild(originalDeleteButton);
+           
+    // Obtener el texto que realmente se intentó guardar (necesario para la lógica siguiente)
+    // NOTA: 'newText' debe estar disponible en este scope. Revisando el código anterior, SÍ lo está.
+    const finalText = newText; 
+
+    // Si era nota de imagen y el texto final es vacío (o solo espacios), y habíamos creado el div, lo quitamos.
+    if (isImageNote && targetElement && (!finalText || finalText.trim() === '')) {
+         // Solo intentar remover si aún es hijo de la tarjeta (puede haber sido removido por otra lógica)
+         if(card.contains(targetElement)){ 
+             targetElement.remove(); 
+         }
+    // Si no es el caso anterior pero sí hay un elemento de texto, aplicar linkify al texto final.
+    } else if (targetElement && typeof linkify === 'function'){ 
+         targetElement.innerHTML = linkify(finalText); // Muestra el texto guardado, con links activos
+         // Re-asegurar target blank para los links que puedan haberse creado
+         Array.from(targetElement.getElementsByTagName('a')).forEach(link => {
+             link.setAttribute('target', '_blank');
+             link.setAttribute('rel', 'noopener noreferrer');
+         });
+    }
+           
+    // Forzar reajuste de altura por si acaso el contenido cambió
+    if (grid) {
+         grid.batchUpdate(); 
+         grid.commit();
+    }
+    // --- FIN: Restaurar UI manualmente ---
+    // --- HASTA AQUÍ ES LO QUE HAY QUE PEGAR ---                
           })
           .catch((error) => {
             console.error('Error al actualizar nota:', error);
