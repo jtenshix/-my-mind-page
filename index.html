@@ -1338,9 +1338,54 @@ imageContainer.addEventListener('click', () => {
       const prevButton = document.createElement('button');
       prevButton.innerHTML = '&lt;'; prevButton.title = "Mes Anterior";
       prevButton.onclick = () => generateCalendar(month === 0 ? 11 : month - 1, month === 0 ? year - 1 : year);
+      // --- INICIO: Cambiar mes ANTERIOR al pasar arrastrando ---
+prevButton.addEventListener('dragover', (e) => {
+    e.preventDefault(); // Permite que se siga detectando el arrastre sobre el botón
+    // Verificar que lo que se arrastra es una nota (usando el tipo de dato que definimos)
+    if (e.dataTransfer.types.includes('application/note-id')) {
+        // Aplicar throttle (retraso) para no cambiar meses como loco
+        // Reutilizamos las variables del throttle de la rueda
+        if (calendarWheelThrottleTimeout) { return; } 
+        calendarWheelThrottleTimeout = setTimeout(() => {
+            calendarWheelThrottleTimeout = null;
+        }, CALENDAR_WHEEL_DELAY + 100); // Un poco más de retraso para dragover
+
+        // Calcula y genera el mes anterior
+        console.log("DragOver Flecha Izquierda - Mes Anterior");
+        const newMonth = (currentCalendarMonth === 0) ? 11 : currentCalendarMonth - 1;
+        const newYear = (currentCalendarMonth === 0) ? currentCalendarYear - 1 : currentCalendarYear;
+        // Solo regenerar si realmente cambió para evitar bucles
+         if (newMonth !== currentCalendarMonth || newYear !== currentCalendarYear) {
+            generateCalendar(newMonth, newYear);
+        }
+    }
+});
+// --- FIN: Cambiar mes ANTERIOR al pasar arrastrando ---
       const nextButton = document.createElement('button');
       nextButton.innerHTML = '&gt;'; nextButton.title = "Mes Siguiente";
       nextButton.onclick = () => generateCalendar(month === 11 ? 0 : month + 1, month === 11 ? year + 1 : year);
+      // --- INICIO: Cambiar mes SIGUIENTE al pasar arrastrando ---
+nextButton.addEventListener('dragover', (e) => {
+    e.preventDefault(); // Permite que se siga detectando el arrastre sobre el botón
+    // Verificar que lo que se arrastra es una nota
+    if (e.dataTransfer.types.includes('application/note-id')) {
+        // Aplicar throttle (retraso)
+        if (calendarWheelThrottleTimeout) { return; }
+        calendarWheelThrottleTimeout = setTimeout(() => {
+            calendarWheelThrottleTimeout = null;
+        }, CALENDAR_WHEEL_DELAY + 100); // Un poco más de retraso
+
+        // Calcula y genera el mes siguiente
+        console.log("DragOver Flecha Derecha - Mes Siguiente");
+        const newMonth = (currentCalendarMonth === 11) ? 0 : currentCalendarMonth + 1;
+        const newYear = (currentCalendarMonth === 11) ? currentCalendarYear + 1 : currentCalendarYear;
+         // Solo regenerar si realmente cambió
+         if (newMonth !== currentCalendarMonth || newYear !== currentCalendarYear) {
+             generateCalendar(newMonth, newYear);
+         }
+    }
+});
+// --- FIN: Cambiar mes SIGUIENTE al pasar arrastrando ---
       const monthTitle = document.createElement('span');
       monthTitle.textContent = `${getMonthName(month)} ${year}`;
       header.appendChild(prevButton);
