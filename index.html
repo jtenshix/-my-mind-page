@@ -541,7 +541,7 @@
           <line x1="26" y1="5" x2="26" y2="25" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
         </svg>
       </button>
-      <div id="top-menu-options"> <a href="calendario_grande.html" target="_blank">Ver Calendario Grande</a>
+      <div id="top-menu-options"> <a href="calendario_grande.html" >Ver Calendario Grande</a>
         </div>
     </div>
 
@@ -1037,7 +1037,7 @@
     function hidePopups() {
       const addOpts = getElement('addNoteOptions');
       const inputArea = getElement('inputArea');
-      const blurBg = getElement('blur-background'); // Asumiendo que tiene id="blur-background" o usar querySelector
+      const blurBg = document.querySelector('.blur-background');  // Asumiendo que tiene id="blur-background" o usar querySelector
 
       if (addOpts) addOpts.style.display = 'none';
       if (inputArea) inputArea.style.display = 'none';
