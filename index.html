@@ -881,6 +881,18 @@ imageContainer.addEventListener('click', () => {
         e.dataTransfer.setData("application/note-id", noteId); // Pasar ID de la nota
         e.dataTransfer.effectAllowed = "move";
         if (typeof openCalendar === 'function') openCalendar(); // Abrir calendario pequeño al arrastrar
+        // --- INICIO: Resetear cursor SIEMPRE al final del drag ---
+const resetCursorOnEnd = () => {
+    const calWidget = getElement('calendarWidget'); // Busca el calendario
+    if (calWidget) { // Si existe (puede que se haya cerrado)
+        calWidget.style.cursor = ''; // Quita la mano cerrada
+    }
+    // Limpia este listener para que no se acumule en el botón cada vez que arrastras
+    bubbleButton.removeEventListener('dragend', resetCursorOnEnd); 
+};
+// Añade un listener que se ejecuta UNA VEZ cuando el drag termina (dragend)
+bubbleButton.addEventListener('dragend', resetCursorOnEnd);
+// --- FIN: Resetear cursor SIEMPRE ---
       });
       bubbleButton.addEventListener('click', (e) => { // También abrir al hacer click
           e.stopPropagation();
@@ -1580,6 +1592,7 @@ calendarWidgetElem.onwheel = (event) => {
       calendarTimeout = setTimeout(() => {
         if (calendarWidgetElem) {
     calendarWidgetElem.onwheel = null; // Quita el listener de la rueda cuando se oculta
+          calendarWidgetElem.style.cursor = ''; // Asegura quitar la mano si se cierra
 }
         calendarWidgetElem.style.display = 'none';
       }, 300); // 300ms de retraso
