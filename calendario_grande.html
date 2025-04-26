@@ -3,20 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendario Grande - Notas Oceánicas</title>
+    <title>Calendario Grande - Notas Oceánicas (Tema Océano)</title>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
 
     <style>
-        /* --- Estilos Generales y Minimalistas --- */
+        /* --- Estilos Generales y Tema Océano Profundo --- */
         :root {
-            --color-background: #fdfdfa; /* Un blanco hueso */
-            --color-text: #333;
-            --color-primary: #4a90e2; /* Un azul suave */
-            --color-secondary: #777;
-            --color-border: #e0e0e0;
-            --color-highlight: #f0e68c; /* Amarillo pálido para hoy */
+            /* Paleta Océano Profundo */
+            --color-background: #031d44; /* Azul muy oscuro principal */
+            --color-text: #ffffff;       /* Texto blanco */
+            --color-primary: #60a5fa;    /* Azul claro para acentos (links, indicadores) */
+            --color-secondary: #a0aec0;  /* Gris azulado claro para texto secundario */
+            --color-border: #1e3a8a;    /* Azul oscuro ligeramente más claro para bordes/líneas */
+            --color-highlight: #3b82f6;  /* Azul más brillante para 'hoy' */
+            --color-cell-bg: #04295a;   /* Fondo ligeramente diferente para celdas */
+            --color-cell-other: #021434; /* Fondo para días de otro mes */
+            --color-note-bg: rgba(96, 165, 250, 0.15); /* Fondo translúcido azul claro para notas */
+            --color-note-border: var(--color-primary);
+            --color-note-text: #e2e8f0;  /* Texto ligeramente grisáceo para notas */
+
             --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
@@ -26,43 +33,43 @@
             height: 100%;
             font-family: var(--font-main);
             background-color: var(--color-background);
-            color: var(--color-text);
-            display: flex; /* Usa flex para el layout general */
+            color: var(--color-text); /* Texto principal blanco */
+            display: flex;
             flex-direction: column;
-            overflow: hidden; /* Evitar scroll general del body */
+            overflow: hidden;
         }
 
-        /* --- Contenedor Principal del Calendario (ocupa toda la página) --- */
+        /* --- Contenedor Principal del Calendario --- */
         .calendar-container {
             display: flex;
-            flex-direction: column; /* Cabecera arriba, grid abajo */
-            flex-grow: 1; /* Ocupa el espacio vertical restante */
-            padding: 20px; /* Espacio alrededor del calendario */
+            flex-direction: column;
+            flex-grow: 1;
+            padding: 20px;
             box-sizing: border-box;
-            overflow: hidden; /* Evita desbordes */
+            overflow: hidden;
         }
 
-        /* --- Cabecera del Calendario (Mes, Año, Navegación) --- */
+        /* --- Cabecera del Calendario --- */
         .calendar-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px; /* Menos espacio que antes */
-            padding: 0 5px; /* Ajuste de padding */
-            flex-shrink: 0; /* No se encoge */
+            margin-bottom: 15px;
+            padding: 0 5px;
+            flex-shrink: 0;
         }
         .calendar-header h2 {
             margin: 0;
-            font-size: 1.7em; /* Ligeramente más pequeño */
+            font-size: 1.7em;
             font-weight: 300;
-            color: var(--color-primary);
+            color: var(--color-text); /* Título blanco */
         }
         .calendar-nav button {
             background: none;
             border: 1px solid var(--color-border);
-            color: var(--color-secondary);
+            color: var(--color-secondary); /* Color secundario para botones */
             font-size: 1.1em;
-            padding: 4px 10px; /* Ligeramente más pequeño */
+            padding: 4px 10px;
             border-radius: 4px;
             cursor: pointer;
             margin-left: 6px;
@@ -70,96 +77,113 @@
         }
         .calendar-nav button:hover {
             background-color: var(--color-border);
-            color: var(--color-text);
+            color: var(--color-text); /* Texto blanco al pasar el mouse */
         }
 
-        /* --- Contenedor para el Grid (incluye cabecera de días y celdas) --- */
+        /* --- Área del Grid (Cabecera de días + Grid de fechas) --- */
         .calendar-grid-area {
             display: flex;
             flex-direction: column;
-            flex-grow: 1; /* Ocupa el espacio restante */
-            overflow: hidden; /* Para que el grid no se desborde */
-            border: 1px solid var(--color-border); /* Borde alrededor de todo el grid */
+            flex-grow: 1;
+            overflow: hidden;
+            border: 1px solid var(--color-border); /* Borde general */
+            border-radius: 6px; /* Bordes redondeados */
         }
 
         /* --- Cabecera de Días (Do, Lu, Ma...) --- */
         .calendar-grid-header {
             display: grid;
-            grid-template-columns: repeat(7, 1fr); /* 7 columnas iguales */
-            background-color: #f8f8f8;
+            grid-template-columns: repeat(7, 1fr);
+            background-color: rgba(0, 0, 0, 0.2); /* Fondo oscuro translúcido */
             border-bottom: 1px solid var(--color-border);
-            flex-shrink: 0; /* No se encoge */
+            flex-shrink: 0;
+            border-top-left-radius: 5px; /* Redondeo superior */
+            border-top-right-radius: 5px;
         }
         .day-header {
-            padding: 8px 5px; /* Ajuste padding */
+            padding: 8px 5px;
             text-align: center;
             font-weight: 600;
-            font-size: 0.85em; /* Ligeramente más pequeño */
-            color: var(--color-secondary);
+            font-size: 0.85em;
+            color: var(--color-secondary); /* Texto secundario */
         }
 
         /* --- Grid Principal de Fechas --- */
         .calendar-grid {
             display: grid;
-            grid-template-columns: repeat(7, 1fr); /* 7 columnas */
-            /* Filas se ajustarán automáticamente, pero queremos que llenen el espacio */
-            grid-auto-rows: minmax(100px, 1fr); /* Altura mínima, pero permite crecer para llenar espacio */
-            gap: 1px; /* Espacio fino entre celdas */
-            background-color: var(--color-border); /* Color de las líneas de separación */
-            flex-grow: 1; /* Ocupa el espacio vertical restante */
-            overflow-y: auto; /* Scroll si las celdas crecen mucho */
+            grid-template-columns: repeat(7, 1fr);
+            grid-auto-rows: minmax(100px, 1fr);
+            gap: 1px;
+            background-color: var(--color-border); /* Líneas de separación */
+            flex-grow: 1;
+            overflow-y: auto; /* Scroll si es necesario */
+            border-bottom-left-radius: 5px; /* Redondeo inferior */
+            border-bottom-right-radius: 5px;
         }
 
         /* --- Celdas de Fecha --- */
         .date-cell {
-            background-color: var(--color-background);
-            padding: 6px; /* Menos padding interno */
+            background-color: var(--color-cell-bg); /* Fondo de celda */
+            padding: 6px;
             box-sizing: border-box;
             position: relative;
             display: flex;
-            flex-direction: column; /* Número arriba, contenido abajo */
-            overflow: hidden; /* Oculta contenido que desborda */
+            flex-direction: column;
+            overflow: hidden;
             transition: background-color 0.2s;
         }
         .date-cell.other-month {
-            background-color: #f9f9f9;
-            cursor: default;
+            background-color: var(--color-cell-other); /* Fondo más oscuro para otros meses */
         }
         .date-cell.other-month .day-number {
-            color: #ccc;
+            color: var(--color-secondary); /* Número más tenue */
+            opacity: 0.6;
         }
         .date-cell.today {
-            background-color: var(--color-highlight);
+            background-color: var(--color-highlight); /* Resaltado para hoy */
         }
-        /* Quitar hover y selección ya que no hay sidebar */
-        /* .date-cell:hover { background-color: #f5f5f5; } */
-        /* .date-cell.selected { outline: 2px solid var(--color-primary); outline-offset: -2px; } */
+        .date-cell.today .day-number {
+             color: var(--color-text); /* Asegurar que el número sea blanco en 'hoy' */
+             font-weight: bold;
+        }
 
         /* Número del día */
         .day-number {
             font-weight: 600;
-            font-size: 0.8em; /* Más pequeño */
+            font-size: 0.8em;
             margin-bottom: 4px;
             align-self: flex-start;
-            flex-shrink: 0; /* No se encoge */
+            flex-shrink: 0;
+            color: var(--color-text); /* Número blanco */
         }
 
         /* Contenedor para las notas dentro de la celda */
         .cell-notes-content {
-            flex-grow: 1; /* Ocupa espacio restante */
-            overflow-y: auto; /* Scroll si hay muchas notas */
-            /* Estilos para la barra de scroll si se desea */
+            flex-grow: 1;
+            overflow-y: auto;
             scrollbar-width: thin;
-            scrollbar-color: var(--color-border) transparent;
+            scrollbar-color: var(--color-border) transparent; /* Scrollbar oscuro */
         }
+         /* Estilo para la barra de scroll en Webkit (Chrome, Safari) */
+        .cell-notes-content::-webkit-scrollbar {
+            width: 5px;
+        }
+        .cell-notes-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .cell-notes-content::-webkit-scrollbar-thumb {
+            background-color: var(--color-border);
+            border-radius: 10px;
+        }
+
 
         /* Estilo para cada item de nota dentro de la celda */
         .note-preview-item {
             margin-bottom: 4px;
-            padding: 3px;
+            padding: 3px 5px; /* Ajuste padding */
             border-radius: 3px;
-            background-color: rgba(74, 144, 226, 0.1); /* Fondo muy sutil azulado */
-            border-left: 2px solid var(--color-primary); /* Línea lateral */
+            background-color: var(--color-note-bg); /* Fondo translúcido definido en :root */
+            border-left: 2px solid var(--color-note-border); /* Borde lateral */
         }
         .note-preview-item:last-child {
             margin-bottom: 0;
@@ -167,38 +191,35 @@
 
         /* Miniatura de imagen */
         .note-image-preview {
-            max-width: 100%; /* Que no se salga de la celda */
+            max-width: 100%;
             height: auto;
-            max-height: 40px; /* Altura máxima para la miniatura */
+            max-height: 40px;
             display: block;
             margin-bottom: 3px;
             border-radius: 2px;
-            object-fit: cover; /* Escala bien la imagen */
+            object-fit: cover;
+            border: 1px solid var(--color-border); /* Borde sutil para imágenes */
         }
-        .note-image-preview.error { /* Estilo si la imagen falla */
-             display: none; /* Ocultar imagen rota */
-             /* O mostrar un placeholder:
-             content: '⚠️'; font-size: 10px; color: red; display: block; text-align: center;
-             */
+        .note-image-preview.error {
+             display: none;
         }
-
 
         /* Texto de la nota */
         .note-text-preview {
-            font-size: 0.75em; /* Texto pequeño */
+            font-size: 0.75em;
             line-height: 1.3;
-            color: #555;
-            max-height: 40px; /* Limita altura del texto (aprox 3 líneas) */
+            color: var(--color-note-text); /* Color de texto para notas */
+            max-height: 40px;
             overflow: hidden;
-            text-overflow: ellipsis; /* Añade "..." si no cabe */
+            text-overflow: ellipsis;
             word-wrap: break-word;
         }
-         .note-text-preview a { /* Estilo para enlaces */
-            color: var(--color-primary);
+         .note-text-preview a {
+            color: var(--color-primary); /* Enlaces en azul claro */
             text-decoration: underline;
          }
          .note-text-preview a:hover {
-             color: #3a70c2;
+             filter: brightness(1.2); /* Hacer el enlace un poco más brillante al pasar el mouse */
          }
 
 
@@ -206,25 +227,30 @@
         .message-overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(255, 255, 255, 0.8);
+            /* Fondo oscuro translúcido para mensajes */
+            background-color: rgba(3, 29, 68, 0.85); /* --color-background con alpha */
             display: flex;
             justify-content: center;
             align-items: center;
             font-size: 1.2em;
-            color: var(--color-secondary);
+            color: var(--color-text); /* Texto blanco */
             z-index: 10;
         }
         .message-overlay.hidden {
             display: none;
         }
+         #message-text.error-message { /* Clase específica para errores */
+             color: #f87171; /* Rojo claro para errores */
+         }
 
-        /* --- Responsividad --- */
+
+        /* --- Responsividad (Ajustes menores pueden ser necesarios) --- */
         @media (max-width: 768px) {
             .calendar-container { padding: 10px; }
             .calendar-header h2 { font-size: 1.4em; }
             .calendar-nav button { font-size: 1em; padding: 3px 8px; }
             .day-header { font-size: 0.75em; padding: 6px 2px; }
-            .calendar-grid { grid-auto-rows: minmax(80px, 1fr); } /* Menor altura mínima */
+            .calendar-grid { grid-auto-rows: minmax(80px, 1fr); }
             .date-cell { padding: 4px; }
             .day-number { font-size: 0.7em; }
             .note-image-preview { max-height: 30px; }
@@ -235,12 +261,12 @@
              .calendar-header { flex-direction: column; gap: 8px; margin-bottom: 10px;}
              .calendar-nav button { font-size: 0.9em; padding: 3px 6px; }
              .day-header { font-size: 0.65em; padding: 5px 1px; font-weight: 500; }
-             .calendar-grid { grid-auto-rows: minmax(60px, 1fr); }
+             .calendar-grid { grid-auto-rows: minmax(70px, 1fr); } /* Aumentar altura mínima un poco */
              .date-cell { padding: 3px; }
              .day-number { font-size: 0.65em; }
-             .note-preview-item { padding: 2px; border-left-width: 1px; }
-             .note-image-preview { max-height: 20px; }
-             .note-text-preview { font-size: 0.65em; max-height: 25px; }
+             .note-preview-item { padding: 2px 4px; }
+             .note-image-preview { max-height: 25px; }
+             .note-text-preview { font-size: 0.65em; max-height: 28px; } /* Permitir un poco más de texto */
          }
 
     </style>
@@ -290,8 +316,7 @@
 
         // --- Variables Globales ---
         let currentYear, currentMonth;
-        let allAssignedNotes = {}; // Objeto para guardar notas: { "D/M/YYYY": [{id, data}, ...], ... }
-        // Ya no necesitamos selectedDateCell
+        let allAssignedNotes = {};
 
         // --- Referencias a Elementos del DOM ---
         const calendarTitle = document.getElementById('calendar-title');
@@ -299,15 +324,17 @@
         const calendarGridHeader = document.getElementById('calendar-grid-header');
         const prevMonthButton = document.getElementById('prev-month');
         const nextMonthButton = document.getElementById('next-month');
-        // Ya no necesitamos notesTitle ni notesList
         const messageOverlay = document.getElementById('message-overlay');
         const messageText = document.getElementById('message-text');
 
         // --- Funciones Utilitarias ---
         function linkify(text) {
              if (!text) return "";
-             const urlRegex = /(?<!href=["'])(https?:\/\/[^\s<>"']+)/g;
+             // Regex mejorada para evitar linkificar dentro de atributos href o src ya existentes
+             const urlRegex = /(?<!(?:href|src)=["'])(https?:\/\/[^\s<>"']+)/g;
              const replacedText = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+             // Reemplazar saltos de línea por <br>, pero solo si no están ya dentro de una etiqueta HTML
+             // (Esta parte es compleja, una versión simple es reemplazar todos)
              return replacedText.replace(/\n/g, '<br>');
         }
         function getChileDate() {
@@ -326,17 +353,18 @@
         // --- Funciones de UI ---
         function showMessage(text, isError = false) {
             messageText.textContent = text;
+            // Añadir clase de error si es necesario
+            messageText.classList.toggle('error-message', isError);
             messageOverlay.classList.remove('hidden');
-            if (isError) messageText.style.color = 'red';
-            else messageText.style.color = 'var(--color-secondary)';
         }
         function hideMessage() {
             messageOverlay.classList.add('hidden');
+            messageText.classList.remove('error-message'); // Limpiar clase de error
         }
 
         // --- Lógica Principal del Calendario ---
 
-        // 1. Fetch de todas las notas asignadas (sin cambios)
+        // 1. Fetch de todas las notas asignadas (sin cambios en lógica)
         async function fetchAllAssignedNotesForUser() {
             if (!auth.currentUser) {
                 console.log("Usuario no logueado, no se pueden cargar notas.");
@@ -361,11 +389,10 @@
                         if (!allAssignedNotes[dateStr]) {
                             allAssignedNotes[dateStr] = [];
                         }
-                        // Guardar solo datos relevantes para mostrar
                         allAssignedNotes[dateStr].push({
                             id: noteId,
                             url: data.url || null,
-                            text: data.texto || data.nota || null // Unificar texto
+                            text: data.texto || data.nota || null
                         });
                     }
                 });
@@ -379,26 +406,26 @@
             }
         }
 
-        // 2. Generar el HTML del Grid del Calendario (MODIFICADO)
+        // 2. Generar el HTML del Grid del Calendario (sin cambios en lógica, solo usa nuevos estilos)
         function generateLargeCalendar(year, month) {
             currentYear = year;
             currentMonth = month;
             calendarTitle.textContent = `${getMonthName(month)} ${year}`;
-            calendarGrid.innerHTML = ''; // Limpiar grid de fechas
-            calendarGridHeader.innerHTML = ''; // Limpiar cabecera de días
+            calendarGrid.innerHTML = '';
+            calendarGridHeader.innerHTML = '';
 
             const today = getChileDate();
             const todayDate = today.getDate();
             const todayMonth = today.getMonth();
             const todayYear = today.getFullYear();
 
-            // Generar cabecera de días (Do, Lu, Ma...) - Asegurando que esté en el contenedor correcto
+            // Generar cabecera de días
             const daysOfWeek = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá'];
              daysOfWeek.forEach(day => {
                 const dayElement = document.createElement('div');
                 dayElement.className = 'day-header';
                 dayElement.textContent = day;
-                calendarGridHeader.appendChild(dayElement); // Añadir a la cabecera
+                calendarGridHeader.appendChild(dayElement);
             });
 
             // Datos para calcular días
@@ -409,7 +436,7 @@
             let date = 1;
             let nextMonthDate = 1;
 
-            // Generar 42 celdas (6 semanas)
+            // Generar 42 celdas
             for (let i = 0; i < 42; i++) {
                 const cell = document.createElement('div');
                 cell.classList.add('date-cell');
@@ -420,14 +447,14 @@
                 let isCurrentMonth = false;
 
                 // Calcular fecha y si pertenece al mes actual
-                if (i < firstDayOfMonth) { // Mes anterior
+                if (i < firstDayOfMonth) {
                     cell.classList.add('other-month');
                     const day = daysInPrevMonth - firstDayOfMonth + i + 1;
                     dayNumberSpan.textContent = day;
                     cellMonth = month === 0 ? 11 : month - 1;
                     cellYear = month === 0 ? year - 1 : year;
                     cellDate = day;
-                } else if (date <= daysInMonth) { // Mes actual
+                } else if (date <= daysInMonth) {
                     dayNumberSpan.textContent = date;
                     isCurrentMonth = true;
                     cellMonth = month;
@@ -437,7 +464,7 @@
                         cell.classList.add('today');
                     }
                     date++;
-                } else { // Mes siguiente
+                } else {
                     cell.classList.add('other-month');
                     dayNumberSpan.textContent = nextMonthDate;
                     cellMonth = month === 11 ? 0 : month + 1;
@@ -446,9 +473,9 @@
                     nextMonthDate++;
                 }
 
-                cell.appendChild(dayNumberSpan); // Añadir número del día
+                cell.appendChild(dayNumberSpan);
 
-                // --- Mostrar Notas Dentro de la Celda (Solo para mes actual) ---
+                // Mostrar Notas Dentro de la Celda (Solo para mes actual)
                 if (isCurrentMonth) {
                     const dateString = `${cellDate}/${cellMonth + 1}/${cellYear}`;
                     const notesForDay = allAssignedNotes[dateString] || [];
@@ -461,28 +488,22 @@
                             const noteItemDiv = document.createElement('div');
                             noteItemDiv.classList.add('note-preview-item');
 
-                            // Añadir imagen si existe
                             if (note.url) {
                                 const imgPreview = document.createElement('img');
                                 imgPreview.classList.add('note-image-preview');
                                 imgPreview.src = note.url;
                                 imgPreview.alt = 'Vista previa';
                                 imgPreview.loading = 'lazy';
-                                imgPreview.onerror = () => {
-                                    console.warn(`Error cargando imagen preview: ${note.url}`);
-                                    imgPreview.classList.add('error'); // Añade clase para ocultar o estilizar
-                                };
+                                imgPreview.onerror = () => imgPreview.classList.add('error');
                                 noteItemDiv.appendChild(imgPreview);
                             }
 
-                            // Añadir texto si existe
                             if (note.text) {
-                                const textPreview = document.createElement('div'); // Usar div para mejor control de overflow
+                                const textPreview = document.createElement('div');
                                 textPreview.classList.add('note-text-preview');
-                                textPreview.innerHTML = linkify(note.text); // Procesar enlaces
+                                textPreview.innerHTML = linkify(note.text);
                                 noteItemDiv.appendChild(textPreview);
                             }
-                             // Si no hay ni imagen ni texto (raro), podrías poner un placeholder
                              else if (!note.url && !note.text) {
                                  const placeholder = document.createElement('div');
                                  placeholder.classList.add('note-text-preview');
@@ -490,23 +511,14 @@
                                  noteItemDiv.appendChild(placeholder);
                              }
 
-
                             notesContentDiv.appendChild(noteItemDiv);
                         });
-
-                        cell.appendChild(notesContentDiv); // Añadir contenedor de notas a la celda
+                        cell.appendChild(notesContentDiv);
                     }
-
-                    // Ya no necesitamos el listener para mostrar en sidebar
-                    // cell.dataset.dateString = dateString;
-                    // cell.dataset.fullDate = `${cellDate} de ${getMonthName(cellMonth)} de ${cellYear}`;
-                    // cell.addEventListener('click', () => { ... });
                 }
-
-                calendarGrid.appendChild(cell); // Añadir celda al grid principal
+                calendarGrid.appendChild(cell);
             }
         }
-
 
         // --- Inicialización y Event Listeners ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -527,16 +539,20 @@
                 }
             });
 
-            // Listeners para navegación (sin cambios en la lógica, solo llaman a generate)
+            // Listeners para navegación
             prevMonthButton.addEventListener('click', () => {
                 currentMonth--;
                 if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+                // Podríamos volver a fetchear notas si sospechamos que cambiaron,
+                // pero por ahora solo regeneramos con las notas cacheadas.
+                // Si se quiere actualizar siempre: await fetchAllAssignedNotesForUser();
                 generateLargeCalendar(currentYear, currentMonth);
             });
 
             nextMonthButton.addEventListener('click', () => {
                 currentMonth++;
                 if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+                // await fetchAllAssignedNotesForUser(); // Opcional: Refrescar notas al navegar
                 generateLargeCalendar(currentYear, currentMonth);
             });
         });
@@ -546,4 +562,3 @@
 </body>
 </html>
 ```
-
