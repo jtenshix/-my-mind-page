@@ -684,7 +684,7 @@
         items.forEach(function (item) { 
             const noteIdToSave = item.el?.getAttribute('data-note-id');
             if (noteIdToSave && typeof item.x === 'number' && typeof item.y === 'number') {
-                console.log(`(Grid Change) Guardando pos para <span class="math-inline">\{noteIdToSave\}\: x\=</span>{item.x}, y=${item.y}`);
+               console.log(`(Grid Change) Guardando pos para <span class="math-inline">\{noteIdToSave\}\: x\=</span>{item.x}, y=${item.y}`);
                 db.collection('notas').doc(noteIdToSave).update({ x: item.x, y: item.y })
                 .catch(err => console.error(`Error guardando posición (${noteIdToSave}) desde 'change': ${err.message}`));
             } else if (noteIdToSave) {
@@ -696,7 +696,7 @@
         console.warn('(Grid Change) Evento recibido pero "items" no es un array:', items);
     }
 });
-                });
+               
 
                 grid.on('dragstop', function (event, element) {
                     // El evento 'change' ya debería cubrir esto, pero se puede usar para logs adicionales
