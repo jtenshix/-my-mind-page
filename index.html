@@ -471,6 +471,19 @@
             overflow: hidden;
             text-overflow: ellipsis; /* Añade ... si es muy largo */
          }
+      .container {
+    /* Asegúrate que tenga padding lateral si quieres espacio en móviles */
+    padding-left: 5px;
+    padding-right: 5px;
+    box-sizing: border-box; /* Importante si añades padding */
+}
+#notaDisplay {
+   overflow-x: hidden; /* Previene scroll horizontal accidental */
+}
+/* Opcional: Añadir espacio extra debajo de cada nota en móvil */
+/* .grid-stack-item {
+    margin-bottom: 10px;
+} */
     }
 
     @media (max-width: 575.98px) { /* Ajustes para móviles pequeños */
@@ -1259,6 +1272,7 @@ bubbleButton.addEventListener('dragend', resetCursorOnEnd);
       if (!imageLinkInputElem || !db) return;
       let link = imageLinkInputElem.value.trim();
       const texto = imageNoteTextElem ? imageNoteTextElem.value.trim() : '';
+      const initialWidth = (grid && grid.getColumn() === 1) ? 1 : 2;
 
       // Validación simple de URL
       if (link && (link.startsWith('http://') || link.startsWith('https://'))) {
@@ -1269,7 +1283,7 @@ bubbleButton.addEventListener('dragend', resetCursorOnEnd);
           texto: texto || null, // Guardar null si no hay texto
           createdAt: firebase.firestore.FieldValue.serverTimestamp(), // Fecha de creación
           tipo: 'imagen', // Tipo de nota
-          w: 2, // Ancho inicial por defecto (ajustar según columnas base)
+          w: initialWidth,
           // x, y se asignarán automáticamente por Gridstack
         })
         .then((docRef) => {
@@ -1297,6 +1311,7 @@ bubbleButton.addEventListener('dragend', resetCursorOnEnd);
       if (!textNoteInputElem || !db) return;
       const nota = textNoteInputElem.value.trim();
 
+      const initialWidth = (grid && grid.getColumn() === 1) ? 1 : 2;
       if (nota) { // Solo guardar si hay texto
         if (saveTextNoteButtonElem) saveTextNoteButtonElem.disabled = true;
 
@@ -1304,7 +1319,7 @@ bubbleButton.addEventListener('dragend', resetCursorOnEnd);
           nota: nota,
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           tipo: 'texto',
-          w: 2, // Ancho inicial
+          w: initialWidth,
           // x, y se asignarán automáticamente
         })
         .then((docRef) => {
