@@ -783,10 +783,10 @@ const CALENDAR_WHEEL_DELAY = 200; // Milisegundos de espera (ajusta si quieres)
 
         // 1. Cambiar columnas y potencialmente float
         grid.column(newColumnCount, 'none'); // 'moveScale' intenta reposicionar y escalar
-       // grid.float(newColumnCount > 1); // Activar float solo si hay más de 1 columna
+       grid.float(newColumnCount > 1); // Activar float solo si hay más de 1 columna
 
         // 2. Ajustar anchos de widgets existentes
-       /* grid.engine.nodes.forEach(node => {
+        grid.engine.nodes.forEach(node => {
             const element = node.el;
             if (!element) return;
 
@@ -804,7 +804,7 @@ const CALENDAR_WHEEL_DELAY = 200; // Milisegundos de espera (ajusta si quieres)
                 grid.update(element, { w: newW });
                 // console.log(`Widget ${element.dataset.noteId} restaurado a w: ${newW}`); // Log opcional
             }
-        });*/
+        });
 
         // 3. Forzar un re-layout (puede ser útil después de muchos updates)
         grid.batchUpdate();
