@@ -474,6 +474,10 @@
     }
 
     @media (max-width: 575.98px) { /* Ajustes para móviles pequeños */
+      .note-content,
+.image-container {
+    touch-action: pan-y; /* Prioriza el scroll vertical en estas áreas */
+}
       #inputArea { width: 95%; }
       #addNoteOptions { flex-direction: column; gap: 15px; padding: 20px; }
       #addNoteOptions .card { width: 150px; }
