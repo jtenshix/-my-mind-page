@@ -782,7 +782,7 @@ const CALENDAR_WHEEL_DELAY = 200; // Milisegundos de espera (ajusta si quieres)
         currentColumnCount = newColumnCount; // Actualizar al nuevo número
 
         // 1. Cambiar columnas y potencialmente float
-        grid.column(newColumnCount, 'moveScale'); // 'moveScale' intenta reposicionar y escalar
+        grid.column(newColumnCount, 'none'); // 'moveScale' intenta reposicionar y escalar
        // grid.float(newColumnCount > 1); // Activar float solo si hay más de 1 columna
 
         // 2. Ajustar anchos de widgets existentes
