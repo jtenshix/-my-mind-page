@@ -718,9 +718,6 @@ const CALENDAR_WHEEL_DELAY = 200; // Milisegundos de espera (ajusta si quieres)
         items.forEach(function (item) { 
             const noteIdToSave = item.el?.getAttribute('data-note-id');
             if (noteIdToSave && typeof item.x === 'number' && typeof item.y === 'number') {
-               console.log(`(Grid Change) Guardando pos para <span class="math-inline">\{noteIdToSave\}\: x\=</span>{item.x}, y=${item.y}`);
-                db.collection('notas').doc(noteIdToSave).update({ x: item.x, y: item.y })
-                .catch(err => console.error(`Error guardando posición (${noteIdToSave}) desde 'change': ${err.message}`));
             } else if (noteIdToSave) {
                 console.warn(`(Grid Change) Posición inválida para <span class="math-inline">\{noteIdToSave\}\: x\=</span>{item.x}, y=${item.y}`);
             }
@@ -737,6 +734,25 @@ const CALENDAR_WHEEL_DELAY = 200; // Milisegundos de espera (ajusta si quieres)
                     if (node) {
                         const noteId = node.el?.getAttribute('data-note-id') || node.id;
                         console.log(`(Grid DragStop) Nota ${noteId} soltada en x=${node.x}, y=${node.y}`);
+                      // --- Bloque de Guardado en DragStop ---
+            const newX = node.x; // Obtener X final
+            const newY = node.y; // Obtener Y final
+            console.log(`(Grid DragStop) Intentando guardar para <span class="math-inline">\{noteId\}\: x\=</span>{newX}, y=${newY}`); // Log
+
+            if (noteId && typeof newX === 'number' && typeof newY === 'number') {
+                db.collection('notas').doc(noteId).update({ x: newX, y: newY })
+                  .then(() => {
+                      console.log(`(Grid DragStop) Posición para ${noteId} guardada OK.`);
+                  })
+                  .catch(err => {
+                      console.error(`(Grid DragStop) ERROR guardando posición (${noteId}): ${err.message}`);
+                      // Si sigue fallando, podría ser la cuota aún, o un error diferente
+                      alert(`No se pudo guardar la posición final de la nota ${noteId}. ¿Problema de cuota aún?`);
+                  });
+            } else {
+                console.warn(`(Grid DragStop) No se guardó posición para <span class="math-inline">\{noteId\}\: Datos inválidos \(x\=</span>{newX}, y=${newY})`);
+            }
+            // --- Fin Bloque de Guardado ---
                     }
                 });
             } else {
