@@ -1943,7 +1943,7 @@ calendarWidgetElem.onwheel = (event) => {
           console.error("Error crítico: Elementos de login en #auth-status-container no encontrados.");
         }
 
-        if (logoutButtonElement) {
+        if (logoutButtonElement) { 
           logoutButtonElement.addEventListener('click', () => {
             console.log("Intentando cerrar sesión...");
             logoutButtonElement.disabled = true; // Deshabilitar mientras cierra
