@@ -134,13 +134,15 @@
       box-sizing: border-box; /* Incluye padding en el cálculo de altura */
     }
 
-    #notaDisplay {
-      flex-grow: 1; /* Ocupa el espacio disponible en .container */
-      width: 100%;
-      overflow-y: auto; /* Scroll SOLO en el área de notas */
-      position: relative; /* Contexto para gridstack */
-    }
-    /* --- Fin Estilos Contenedor Principal y Grid --- */
+   #notaDisplay {
+  flex-grow: 1; /* Ocupa el espacio disponible en .container */
+  width: 100%;
+  height: 100%; /* Ocupa la altura del #zoom-container */
+  overflow-y: auto; /* Scroll SOLO en el área de notas */
+  overflow-x: auto; /* Permite scroll horizontal si el contenido es mayor */
+  position: relative; /* Contexto para gridstack */
+}
+/* --- Fin Estilos Contenedor Principal y Grid --- */
 
 
     /* --- Estilos Gridstack y Notas (Mayormente sin cambios) --- */
