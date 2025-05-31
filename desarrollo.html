@@ -3,185 +3,173 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pizarra Digital Creativa</title>
+  <title>Pizarra Digital Pro</title>
   <style>
-    :root {
-      --bg: #f9f9f9;
-      --toolbar-bg: #fff;
-      --canvas-bg: repeating-linear-gradient(
-        0deg,
-        #fdfdfd,
-        #fdfdfd 29px,
-        #e0e0e0 30px
-      ),
-      repeating-linear-gradient(
-        90deg,
-        #fdfdfd,
-        #fdfdfd 29px,
-        #e0e0e0 30px
-      );
-      --btn: #eaeaea;
-      --btn-active: #c5c5c5;
-      --border-radius: 8px;
-    }
-
     * {
+      margin: 0;
+      padding: 0;
       box-sizing: border-box;
     }
 
-    body, html {
-      margin: 0;
-      padding: 0;
+    html, body {
       height: 100%;
       font-family: 'Segoe UI', sans-serif;
-      background-color: var(--bg);
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
     }
 
     .tabs {
       display: flex;
-      background-color: #ddd;
+      background-color: #ececec;
       border-bottom: 1px solid #ccc;
     }
 
     .tab-button {
-      padding: 10px 16px;
-      border: none;
-      background: none;
+      padding: 12px 20px;
       cursor: pointer;
+      background-color: #e2e2e2;
+      border: none;
+      border-right: 1px solid #ccc;
     }
 
     .tab-button.active {
-      background-color: var(--btn-active);
+      background-color: #d0d0d0;
+      font-weight: bold;
     }
 
-    .toolbar {
-      background-color: var(--toolbar-bg);
-      padding: 10px;
+    .main {
+      flex: 1;
       display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      border-bottom: 1px solid #ccc;
-    }
-
-    .toolbar button {
-      padding: 8px 10px;
-      background-color: var(--btn);
-      border: 1px solid #bbb;
-      border-radius: var(--border-radius);
-      cursor: pointer;
-    }
-
-    .toolbar button.active {
-      background-color: var(--btn-active);
+      position: relative;
+      overflow: hidden;
     }
 
     .canvas-container {
       flex-grow: 1;
       position: relative;
-      height: 100%;
-      width: 100%;
     }
 
     canvas {
+      background-image: radial-gradient(#ccc 1px, transparent 0);
+      background-size: 20px 20px;
       width: 100%;
       height: 100%;
-      background: var(--canvas-bg);
       display: block;
-      cursor: crosshair;
     }
 
-    .container {
+    .toolbar {
+      width: 80px;
+      background-color: #f0f0f0;
+      border-left: 1px solid #ccc;
       display: flex;
       flex-direction: column;
-      height: 100%;
-    }
-
-    .floating-note {
-      position: absolute;
-      background: #fff;
-      padding: 6px 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      cursor: move;
-    }
-
-    .checkbox-note {
-      display: flex;
       align-items: center;
+      padding-top: 10px;
+    }
+
+    .tool-button {
+      margin: 6px;
+      padding: 10px;
+      background-color: #fff;
+      border: 1px solid #aaa;
+      border-radius: 4px;
+      width: 50px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .tool-button.active {
+      background-color: #bbb;
+    }
+
+    .tool-button:hover {
+      background-color: #ddd;
+    }
+
+    .save-controls {
+      margin-top: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
       gap: 5px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="tabs">
-      <button class="tab-button active">Animate</button>
-      <button class="tab-button">Desarrollo</button>
-      <button class="tab-button">SC Music</button>
+  <div class="tabs">
+    <button class="tab-button active" data-tab="animate">Animate</button>
+    <button class="tab-button" data-tab="development">Desarrollo</button>
+    <button class="tab-button" data-tab="music">SC Music</button>
+  </div>
+  <div class="main">
+    <div class="canvas-container">
+      <canvas id="drawing-canvas"></canvas>
     </div>
     <div class="toolbar">
-      <button id="select-tool">🔲 Selección</button>
-      <button id="pencil-tool">✏️ Lápiz</button>
-      <button id="line-tool">📏 Línea</button>
-      <button id="arrow-tool">➡️ Flecha</button>
-      <button id="circle-tool">⚪ Círculo</button>
-      <button id="rectangle-tool">⬛ Rectángulo</button>
-      <button id="text-tool">🔤 Texto</button>
-      <button id="checkbox-tool">☑️ Tarea</button>
-      <button id="clear-btn">🧹 Limpiar</button>
-      <button id="save-btn">💾 Guardar</button>
-      <button id="export-btn">📤 Exportar</button>
-      <input type="file" id="import-input" style="display:none" />
-      <button id="import-btn">📥 Importar</button>
-    </div>
-    <div class="canvas-container">
-      <canvas id="canvas"></canvas>
+      <button class="tool-button active" id="select-tool">Sel</button>
+      <button class="tool-button" id="pencil-tool">✏️</button>
+      <button class="tool-button" id="line-tool">/</button>
+      <button class="tool-button" id="arrow-tool">➡️</button>
+      <button class="tool-button" id="circle-tool">⚪</button>
+      <button class="tool-button" id="rectangle-tool">▭</button>
+      <button class="tool-button" id="text-tool">A</button>
+      <button class="tool-button" id="checkbox-tool">☑️</button>
+
+      <div class="save-controls">
+        <button class="tool-button" id="clear-all">🗑️</button>
+        <button class="tool-button" id="save-project">💾</button>
+        <button class="tool-button" id="export-project">📤</button>
+        <input type="file" id="import-project-input" accept=".json" style="display: none;">
+        <button class="tool-button" id="import-project">📥</button>
+      </div>
     </div>
   </div>
+
   <script>
-    const canvas = document.getElementById('canvas');
+    const canvas = document.getElementById('drawing-canvas');
     const ctx = canvas.getContext('2d');
-    let tool = 'select';
+    canvas.width = window.innerWidth - 80;
+    canvas.height = window.innerHeight - 42;
+
     let isDrawing = false;
-    let startX, startY;
+    let currentTool = 'select';
+    let startX = 0, startY = 0;
 
     function resizeCanvas() {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
+      canvas.width = window.innerWidth - 80;
+      canvas.height = window.innerHeight - 42;
     }
 
     window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
 
-    function clearCanvas() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
+    document.querySelectorAll('.tool-button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tool-button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentTool = btn.id.replace('-tool', '');
+      });
+    });
 
-    canvas.addEventListener('mousedown', (e) => {
+    canvas.addEventListener('mousedown', e => {
       isDrawing = true;
       const rect = canvas.getBoundingClientRect();
       startX = e.clientX - rect.left;
       startY = e.clientY - rect.top;
-
-      if (tool === 'text' || tool === 'checkbox') {
-        createNote(e.clientX, e.clientY, tool);
-        isDrawing = false;
-      }
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
     });
 
-    canvas.addEventListener('mousemove', (e) => {
-      if (!isDrawing || tool !== 'pencil') return;
+    canvas.addEventListener('mousemove', e => {
+      if (!isDrawing || currentTool !== 'pencil') return;
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = '#333';
       ctx.lineTo(x, y);
       ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(x, y);
     });
 
     canvas.addEventListener('mouseup', () => {
@@ -189,65 +177,34 @@
       ctx.beginPath();
     });
 
-    document.querySelectorAll('.toolbar button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        tool = btn.id.replace('-tool', '');
-        document.querySelectorAll('.toolbar button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-      });
+    document.getElementById('clear-all').addEventListener('click', () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
     });
 
-    document.getElementById('clear-btn').onclick = () => clearCanvas();
+    document.getElementById('save-project').addEventListener('click', () => {
+      const data = canvas.toDataURL('image/png');
+      localStorage.setItem('pizarra-save', data);
+      alert('Guardado localmente');
+    });
 
-    function createNote(x, y, type) {
-      const note = document.createElement('div');
-      note.classList.add('floating-note');
-      note.style.left = `${x - 80}px`;
-      note.style.top = `${y - 30}px`;
-
-      if (type === 'text') {
-        note.contentEditable = true;
-        note.innerText = 'Escribe algo...';
-      } else if (type === 'checkbox') {
-        note.classList.add('checkbox-note');
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        const label = document.createElement('span');
-        label.contentEditable = true;
-        label.innerText = 'Tarea';
-        note.appendChild(cb);
-        note.appendChild(label);
-      }
-
-      document.body.appendChild(note);
-    }
-
-    document.getElementById('save-btn').onclick = () => {
-      const data = canvas.toDataURL();
-      localStorage.setItem('pizarraData', data);
-      alert('Guardado en localStorage');
-    };
-
-    document.getElementById('export-btn').onclick = () => {
+    document.getElementById('export-project').addEventListener('click', () => {
+      const data = canvas.toDataURL('image/png');
       const link = document.createElement('a');
+      link.href = data;
       link.download = 'pizarra.png';
-      link.href = canvas.toDataURL();
       link.click();
-    };
+    });
 
-    document.getElementById('import-btn').onclick = () => {
-      document.getElementById('import-input').click();
-    };
+    document.getElementById('import-project').addEventListener('click', () => {
+      document.getElementById('import-project-input').click();
+    });
 
-    document.getElementById('import-input').addEventListener('change', (e) => {
+    document.getElementById('import-project-input').addEventListener('change', e => {
       const file = e.target.files[0];
-      if (!file) return;
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = event => {
         const img = new Image();
-        img.onload = () => {
-          ctx.drawImage(img, 0, 0);
-        };
+        img.onload = () => ctx.drawImage(img, 0, 0);
         img.src = event.target.result;
       };
       reader.readAsDataURL(file);
