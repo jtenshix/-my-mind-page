@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pizarra Digital Pro</title>
   <style>
     * {
@@ -132,13 +132,11 @@
   <script>
     const canvas = document.getElementById('drawing-canvas');
     const ctx = canvas.getContext('2d');
-
-    // Inicializa la variable shapes
     let shapes = [];
-
     let isDrawing = false;
     let currentTool = 'select';
-    let startX = 0, startY = 0;
+    let startX, startY;
+    let currentTab = 'animate';
 
     function resizeCanvas() {
       canvas.width = window.innerWidth - 80;
@@ -149,7 +147,9 @@
     function redrawCanvas() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       shapes.forEach(shape => {
-        drawShape(shape);
+        if (shape.tab === currentTab) {
+          drawShape(shape);
+        }
       });
     }
 
@@ -191,6 +191,15 @@
 
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
+
+    document.querySelectorAll('.tab-button').forEach(button => {
+      button.addEventListener('click', function() {
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+        currentTab = this.getAttribute('data-tab');
+        redrawCanvas();
+      });
+    });
 
     document.querySelectorAll('.tool-button').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -263,19 +272,19 @@
           endX: endX,
           endY: endY,
           color: '#000',
-          lineWidth: 2
+          lineWidth: 2,
+          tab: currentTab
         });
       }
     });
 
     document.getElementById('clear-all').addEventListener('click', () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      shapes = [];
+      shapes = shapes.filter(shape => shape.tab !== currentTab);
+      redrawCanvas();
     });
 
     document.getElementById('save-project').addEventListener('click', () => {
-      const data = canvas.toDataURL('image/png');
-      localStorage.setItem('pizarra-save', data);
+      localStorage.setItem('pizarra-save', JSON.stringify(shapes));
       alert('Guardado localmente');
     });
 
@@ -299,7 +308,6 @@
         img.onload = () => {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(img, 0, 0);
-          shapes = [];
         };
         img.src = event.target.result;
       };
