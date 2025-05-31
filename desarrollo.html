@@ -132,16 +132,60 @@
   <script>
     const canvas = document.getElementById('drawing-canvas');
     const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth - 80;
-    canvas.height = window.innerHeight - 42;
+    resizeCanvas();
 
     let isDrawing = false;
     let currentTool = 'select';
     let startX = 0, startY = 0;
+    let shapes = [];
 
     function resizeCanvas() {
       canvas.width = window.innerWidth - 80;
       canvas.height = window.innerHeight - 42;
+      redrawCanvas();
+    }
+
+    function redrawCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      shapes.forEach(shape => {
+        drawShape(shape);
+      });
+    }
+
+    function drawShape(shape) {
+      ctx.beginPath();
+      ctx.strokeStyle = shape.color || '#000';
+      ctx.lineWidth = shape.lineWidth || 2;
+
+      switch (shape.type) {
+        case 'line':
+          ctx.moveTo(shape.startX, shape.startY);
+          ctx.lineTo(shape.endX, shape.endY);
+          break;
+        case 'arrow':
+          drawArrow(shape.startX, shape.startY, shape.endX, shape.endY);
+          break;
+        case 'circle':
+          const radius = Math.sqrt(Math.pow(shape.endX - shape.startX, 2) + Math.pow(shape.endY - shape.startY, 2));
+          ctx.arc(shape.startX, shape.startY, radius, 0, Math.PI * 2);
+          break;
+        case 'rectangle':
+          ctx.rect(shape.startX, shape.startY, shape.endX - shape.startX, shape.endY - shape.startY);
+          break;
+      }
+      ctx.stroke();
+    }
+
+    function drawArrow(fromX, fromY, toX, toY) {
+      const headLength = 10;
+      const angle = Math.atan2(toY - fromY, toX - fromX);
+
+      ctx.moveTo(fromX, fromY);
+      ctx.lineTo(toX, toY);
+      ctx.moveTo(toX, toY);
+      ctx.lineTo(toX - headLength * Math.cos(angle - Math.PI / 6), toY - headLength * Math.sin(angle - Math.PI / 6));
+      ctx.moveTo(toX, toY);
+      ctx.lineTo(toX - headLength * Math.cos(angle + Math.PI / 6), toY - headLength * Math.sin(angle + Math.PI / 6));
     }
 
     window.addEventListener('resize', resizeCanvas);
@@ -154,31 +198,75 @@
       });
     });
 
-    canvas.addEventListener('mousedown', e => {
-      isDrawing = true;
+    canvas.addEventListener('mousedown', (e) => {
       const rect = canvas.getBoundingClientRect();
       startX = e.clientX - rect.left;
       startY = e.clientY - rect.top;
-      ctx.beginPath();
-      ctx.moveTo(startX, startY);
+      isDrawing = true;
     });
 
-    canvas.addEventListener('mousemove', e => {
-      if (!isDrawing || currentTool !== 'pencil') return;
+    canvas.addEventListener('mousemove', (e) => {
+      if (!isDrawing) return;
       const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      ctx.lineTo(x, y);
-      ctx.stroke();
+      const currentX = e.clientX - rect.left;
+      const currentY = e.clientY - rect.top;
+
+      redrawCanvas();
+      ctx.beginPath();
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+
+      switch (currentTool) {
+        case 'pencil':
+          ctx.lineTo(currentX, currentY);
+          ctx.stroke();
+          break;
+        case 'line':
+        case 'arrow':
+          redrawCanvas();
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(currentX, currentY);
+          if (currentTool === 'arrow') {
+            drawArrow(startX, startY, currentX, currentY);
+          }
+          ctx.stroke();
+          break;
+        case 'circle':
+          const radius = Math.sqrt(Math.pow(currentX - startX, 2) + Math.pow(currentY - startY, 2));
+          ctx.arc(startX, startY, radius, 0, Math.PI * 2);
+          ctx.stroke();
+          break;
+        case 'rectangle':
+          ctx.rect(startX, startY, currentX - startX, currentY - startY);
+          ctx.stroke();
+          break;
+      }
     });
 
-    canvas.addEventListener('mouseup', () => {
+    canvas.addEventListener('mouseup', (e) => {
+      if (!isDrawing) return;
       isDrawing = false;
-      ctx.beginPath();
+
+      const rect = canvas.getBoundingClientRect();
+      const endX = e.clientX - rect.left;
+      const endY = e.clientY - rect.top;
+
+      if (currentTool !== 'pencil') {
+        shapes.push({
+          type: currentTool,
+          startX: startX,
+          startY: startY,
+          endX: endX,
+          endY: endY,
+          color: '#000',
+          lineWidth: 2
+        });
+      }
     });
 
     document.getElementById('clear-all').addEventListener('click', () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      shapes = [];
     });
 
     document.getElementById('save-project').addEventListener('click', () => {
@@ -199,12 +287,16 @@
       document.getElementById('import-project-input').click();
     });
 
-    document.getElementById('import-project-input').addEventListener('change', e => {
+    document.getElementById('import-project-input').addEventListener('change', (e) => {
       const file = e.target.files[0];
       const reader = new FileReader();
-      reader.onload = event => {
+      reader.onload = (event) => {
         const img = new Image();
-        img.onload = () => ctx.drawImage(img, 0, 0);
+        img.onload = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+          shapes = []; // Clear previous shapes
+        };
         img.src = event.target.result;
       };
       reader.readAsDataURL(file);
