@@ -132,12 +132,13 @@
   <script>
     const canvas = document.getElementById('drawing-canvas');
     const ctx = canvas.getContext('2d');
-    resizeCanvas();
+
+    // Inicializa la variable shapes
+    let shapes = [];
 
     let isDrawing = false;
     let currentTool = 'select';
     let startX = 0, startY = 0;
-    let shapes = [];
 
     function resizeCanvas() {
       canvas.width = window.innerWidth - 80;
@@ -189,6 +190,7 @@
     }
 
     window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
     document.querySelectorAll('.tool-button').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -232,11 +234,13 @@
           ctx.stroke();
           break;
         case 'circle':
+          redrawCanvas();
           const radius = Math.sqrt(Math.pow(currentX - startX, 2) + Math.pow(currentY - startY, 2));
           ctx.arc(startX, startY, radius, 0, Math.PI * 2);
           ctx.stroke();
           break;
         case 'rectangle':
+          redrawCanvas();
           ctx.rect(startX, startY, currentX - startX, currentY - startY);
           ctx.stroke();
           break;
@@ -295,7 +299,7 @@
         img.onload = () => {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(img, 0, 0);
-          shapes = []; // Clear previous shapes
+          shapes = [];
         };
         img.src = event.target.result;
       };
