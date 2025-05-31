@@ -3,62 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Nueva Ventana</title>
-    <link rel="stylesheet" href="estilos_nueva_ventana.css"> 
+    <title>Pizarra Creativa</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+        body, html {
             margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .toolbar {
             background-color: #f0f0f0;
-            color: #333;
+            padding: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
         }
-        .content-wrapper {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            text-align: center;
-            max-width: 600px;
-            width: 90%;
+
+        .toolbar button {
+            padding: 8px 12px;
+            background-color: #ddd;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
         }
-        h1 {
-            color: #006994;
-            margin-bottom: 20px;
+
+        .toolbar button.active {
+            background-color: #bbb;
         }
-        p {
-            font-size: 1.1em;
-            line-height: 1.6;
+
+        .canvas-container {
+            flex-grow: 1;
+            position: relative;
         }
-        .back-button {
-            display: inline-block;
-            margin-top: 25px;
+
+        canvas {
+            background-color: white;
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: crosshair;
+        }
+
+        .tabs {
+            display: flex;
+            background-color: #eee;
+        }
+
+        .tab-button {
             padding: 10px 20px;
-            background-color: #006994;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
+            background-color: #ddd;
+            border: none;
+            cursor: pointer;
         }
-        .back-button:hover {
-            background-color: #005577;
+
+        .tab-button.active {
+            background-color: #bbb;
         }
     </style>
 </head>
 <body>
-    <div class="content-wrapper">
-        <h1>¡Hola desde mi nueva ventana!</h1>
-        <p>Este es el contenido de tu nueva ventana. Puedes añadir lo que necesites aquí.</p>
-        <p>Por ejemplo, si fuera una página de configuración o una galería de imágenes.</p>
-        <a href="index.html" class="back-button">Volver a Notas Oceánicas</a>
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-button active" data-tab="animate">Animate</button>
+            <button class="tab-button" data-tab="development">Desarrollo</button>
+            <button class="tab-button" data-tab="music">SC Music</button>
+        </div>
+        <div class="toolbar">
+            <button id="draw-toggle">Modo Dibujo</button>
+            <button id="select-tool" class="active">Selección</button>
+            <button id="pencil-tool">Lápiz</button>
+            <button id="line-tool">Línea</button>
+            <button id="arrow-tool">Flecha</button>
+            <button id="circle-tool">Círculo</button>
+            <button id="rectangle-tool">Rectángulo</button>
+            <button id="text-tool">Texto</button>
+            <button id="checkbox-tool">Tarea</button>
+            <button id="clear-all">Borrar Todo</button>
+            <button id="save-project">Guardar</button>
+            <button id="export-project">Exportar</button>
+            <input type="file" id="import-project-input" accept=".json" style="display: none;">
+            <button id="import-project">Importar</button>
+        </div>
+        <div class="canvas-container">
+            <canvas id="drawing-canvas"></canvas>
+        </div>
     </div>
-
     <script>
-        // Por ejemplo, un script para cargar datos o interactuar con elementos
-        console.log("Mi nueva ventana cargada.");
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('drawing-canvas');
+            const ctx = canvas.getContext('2d');
+            const drawToggle = document.getElementById('draw-toggle');
+            const pencilTool = document.getElementById('pencil-tool');
+            const selectTool = document.getElementById('select-tool');
+            const clearAll = document.getElementById('clear-all');
+            const saveProject = document.getElementById('save-project');
+            const exportProject = document.getElementById('export-project');
+            const importProject = document.getElementById('import-project');
+            const importProjectInput = document.getElementById('import-project-input');
+
+            // Ajustar el tamaño del canvas al contenedor
+            function resizeCanvas() {
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+            }
+
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            // Variables para el dibujo
+            let isDrawing = false;
+            let currentTool = 'select';
+            let startX, startY;
+
+            // Eventos para el dibujo
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+
+            function startDrawing(e) {
+                isDrawing = true;
+                const rect = canvas.getBoundingClientRect();
+                startX = e.clientX - rect.left;
+                startY = e.clientY - rect.top;
+                draw(e);
+            }
+
+            function draw(e) {
+                if (!isDrawing) return;
+
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = '#000';
+
+                if (currentTool === 'pencil') {
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                }
+            }
+
+            function stopDrawing() {
+                isDrawing = false;
+                ctx.beginPath();
+            }
+
+            // Cambiar herramientas
+            pencilTool.addEventListener('click', function() {
+                currentTool = 'pencil';
+                updateActiveToolButton(pencilTool);
+            });
+
+            selectTool.addEventListener('click', function() {
+                currentTool = 'select';
+                updateActiveToolButton(selectTool);
+            });
+
+            function updateActiveToolButton(activeButton) {
+                document.querySelectorAll('.toolbar button').forEach(button => {
+                    button.classList.remove('active');
+                });
+                activeButton.classList.add('active');
+            }
+
+            // Limpiar el canvas
+            clearAll.addEventListener('click', function() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            });
+
+            // Guardar proyecto
+            saveProject.addEventListener('click', function() {
+                const projectData = canvas.toDataURL('image/png');
+                localStorage.setItem('canvasProject', projectData);
+                alert('Proyecto guardado en localStorage');
+            });
+
+            // Exportar proyecto
+            exportProject.addEventListener('click', function() {
+                const data = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = data;
+                link.download = 'pizarra-creativa.png';
+                link.click();
+            });
+
+            // Importar proyecto
+            importProject.addEventListener('click', function() {
+                importProjectInput.click();
+            });
+
+            importProjectInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0);
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // Cambiar entre pestañas
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        });
     </script>
 </body>
 </html>
