@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Nueva Ventana</title>
+    <link rel="stylesheet" href="estilos_nueva_ventana.css"> 
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .content-wrapper {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+        }
+        h1 {
+            color: #006994;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+        .back-button {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 10px 20px;
+            background-color: #006994;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .back-button:hover {
+            background-color: #005577;
+        }
+    </style>
+</head>
+<body>
+    <div class="content-wrapper">
+        <h1>¡Hola desde mi nueva ventana!</h1>
+        <p>Este es el contenido de tu nueva ventana. Puedes añadir lo que necesites aquí.</p>
+        <p>Por ejemplo, si fuera una página de configuración o una galería de imágenes.</p>
+        <a href="index.html" class="back-button">Volver a Notas Oceánicas</a>
+    </div>
+
+    <script>
+        // Por ejemplo, un script para cargar datos o interactuar con elementos
+        console.log("Mi nueva ventana cargada.");
+    </script>
+</body>
+</html>
