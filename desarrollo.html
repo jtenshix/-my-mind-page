@@ -1,236 +1,249 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pizarra Creativa</title>
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pizarra Creativa Mejorada</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+    }
 
-        .container {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
+    .container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
 
-        .toolbar {
-            background-color: #f0f0f0;
-            padding: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-        }
+    .tabs {
+      display: flex;
+      background-color: #ececec;
+      border-bottom: 1px solid #ccc;
+    }
 
-        .toolbar button {
-            padding: 8px 12px;
-            background-color: #ddd;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
+    .tab-button {
+      padding: 10px 20px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-weight: bold;
+      color: #444;
+      transition: background-color 0.2s;
+    }
 
-        .toolbar button.active {
-            background-color: #bbb;
-        }
+    .tab-button.active {
+      background-color: #ddd;
+      color: #000;
+    }
 
-        .canvas-container {
-            flex-grow: 1;
-            position: relative;
-        }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      background-color: #fff;
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+      gap: 8px;
+    }
 
-        canvas {
-            background-color: white;
-            position: absolute;
-            top: 0;
-            left: 0;
-            cursor: crosshair;
-        }
+    .toolbar button {
+      padding: 8px 12px;
+      background-color: #e0e0e0;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
 
-        .tabs {
-            display: flex;
-            background-color: #eee;
-        }
+    .toolbar button:hover {
+      background-color: #d0d0d0;
+    }
 
-        .tab-button {
-            padding: 10px 20px;
-            background-color: #ddd;
-            border: none;
-            cursor: pointer;
-        }
+    .toolbar button.active {
+      background-color: #b0b0b0;
+      color: white;
+    }
 
-        .tab-button.active {
-            background-color: #bbb;
-        }
-    </style>
+    .canvas-container {
+      flex-grow: 1;
+      position: relative;
+      background-color: #fff;
+    }
+
+    canvas, .overlay-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: transparent;
+    }
+
+    .note, .checkbox {
+      position: absolute;
+      background-color: #fffdd0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 8px;
+      cursor: move;
+      resize: both;
+      overflow: auto;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .note textarea {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: transparent;
+      resize: none;
+      font-size: 14px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="tabs">
-            <button class="tab-button active" data-tab="animate">Animate</button>
-            <button class="tab-button" data-tab="development">Desarrollo</button>
-            <button class="tab-button" data-tab="music">SC Music</button>
-        </div>
-        <div class="toolbar">
-            <button id="draw-toggle">Modo Dibujo</button>
-            <button id="select-tool" class="active">Selección</button>
-            <button id="pencil-tool">Lápiz</button>
-            <button id="line-tool">Línea</button>
-            <button id="arrow-tool">Flecha</button>
-            <button id="circle-tool">Círculo</button>
-            <button id="rectangle-tool">Rectángulo</button>
-            <button id="text-tool">Texto</button>
-            <button id="checkbox-tool">Tarea</button>
-            <button id="clear-all">Borrar Todo</button>
-            <button id="save-project">Guardar</button>
-            <button id="export-project">Exportar</button>
-            <input type="file" id="import-project-input" accept=".json" style="display: none;">
-            <button id="import-project">Importar</button>
-        </div>
-        <div class="canvas-container">
-            <canvas id="drawing-canvas"></canvas>
-        </div>
+  <div class="container">
+    <div class="tabs">
+      <button class="tab-button active" data-tab="animate">Animate</button>
+      <button class="tab-button" data-tab="development">Desarrollo</button>
+      <button class="tab-button" data-tab="music">SC Music</button>
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const canvas = document.getElementById('drawing-canvas');
-            const ctx = canvas.getContext('2d');
-            const drawToggle = document.getElementById('draw-toggle');
-            const pencilTool = document.getElementById('pencil-tool');
-            const selectTool = document.getElementById('select-tool');
-            const clearAll = document.getElementById('clear-all');
-            const saveProject = document.getElementById('save-project');
-            const exportProject = document.getElementById('export-project');
-            const importProject = document.getElementById('import-project');
-            const importProjectInput = document.getElementById('import-project-input');
+    <div class="toolbar">
+      <button id="draw-toggle">Modo Dibujo</button>
+      <button id="select-tool" class="active">Selección</button>
+      <button id="pencil-tool">Lápiz</button>
+      <button id="note-tool">Nota</button>
+      <button id="checkbox-tool">Tarea</button>
+      <button id="clear-all">Borrar Todo</button>
+      <button id="save-project">Guardar</button>
+      <button id="export-project">Exportar</button>
+      <input type="file" id="import-project-input" accept=".json" style="display: none;">
+      <button id="import-project">Importar</button>
+    </div>
+    <div class="canvas-container" id="canvas-container">
+      <canvas id="drawing-canvas"></canvas>
+      <canvas id="overlay-canvas" class="overlay-canvas" style="display:none;"></canvas>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('drawing-canvas');
+    const overlayCanvas = document.getElementById('overlay-canvas');
+    const container = document.getElementById('canvas-container');
+    const ctx = canvas.getContext('2d');
+    const overlayCtx = overlayCanvas.getContext('2d');
 
-            // Ajustar el tamaño del canvas al contenedor
-            function resizeCanvas() {
-                canvas.width = canvas.offsetWidth;
-                canvas.height = canvas.offsetHeight;
-            }
+    function resizeCanvas() {
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+      overlayCanvas.width = container.clientWidth;
+      overlayCanvas.height = container.clientHeight;
+    }
 
-            window.addEventListener('resize', resizeCanvas);
-            resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
-            // Variables para el dibujo
-            let isDrawing = false;
-            let currentTool = 'select';
-            let startX, startY;
+    let isDrawing = false;
+    let currentTool = 'select';
+    let activeCanvas = ctx;
 
-            // Eventos para el dibujo
-            canvas.addEventListener('mousedown', startDrawing);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('mouseout', stopDrawing);
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
 
-            function startDrawing(e) {
-                isDrawing = true;
-                const rect = canvas.getBoundingClientRect();
-                startX = e.clientX - rect.left;
-                startY = e.clientY - rect.top;
-                draw(e);
-            }
+    overlayCanvas.addEventListener('mousedown', startDrawing);
+    overlayCanvas.addEventListener('mousemove', draw);
+    overlayCanvas.addEventListener('mouseup', stopDrawing);
 
-            function draw(e) {
-                if (!isDrawing) return;
+    function startDrawing(e) {
+      if (currentTool !== 'pencil') return;
+      isDrawing = true;
+      const pos = getCursorPosition(e);
+      activeCanvas.beginPath();
+      activeCanvas.moveTo(pos.x, pos.y);
+    }
 
-                const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
+    function draw(e) {
+      if (!isDrawing || currentTool !== 'pencil') return;
+      const pos = getCursorPosition(e);
+      activeCanvas.lineTo(pos.x, pos.y);
+      activeCanvas.strokeStyle = '#000';
+      activeCanvas.lineWidth = 2;
+      activeCanvas.lineCap = 'round';
+      activeCanvas.stroke();
+    }
 
-                ctx.lineWidth = 2;
-                ctx.lineCap = 'round';
-                ctx.strokeStyle = '#000';
+    function stopDrawing() {
+      if (!isDrawing) return;
+      isDrawing = false;
+      activeCanvas.closePath();
+    }
 
-                if (currentTool === 'pencil') {
-                    ctx.lineTo(x, y);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(x, y);
-                }
-            }
+    function getCursorPosition(e) {
+      const rect = activeCanvas.canvas.getBoundingClientRect();
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    }
 
-            function stopDrawing() {
-                isDrawing = false;
-                ctx.beginPath();
-            }
+    document.getElementById('draw-toggle').addEventListener('click', () => {
+      const isVisible = overlayCanvas.style.display === 'block';
+      overlayCanvas.style.display = isVisible ? 'none' : 'block';
+      activeCanvas = isVisible ? ctx : overlayCtx;
+    });
 
-            // Cambiar herramientas
-            pencilTool.addEventListener('click', function() {
-                currentTool = 'pencil';
-                updateActiveToolButton(pencilTool);
-            });
+    document.getElementById('pencil-tool').addEventListener('click', () => setTool('pencil'));
+    document.getElementById('select-tool').addEventListener('click', () => setTool('select'));
 
-            selectTool.addEventListener('click', function() {
-                currentTool = 'select';
-                updateActiveToolButton(selectTool);
-            });
+    function setTool(tool) {
+      currentTool = tool;
+      document.querySelectorAll('.toolbar button').forEach(btn => btn.classList.remove('active'));
+      if (tool === 'pencil') document.getElementById('pencil-tool').classList.add('active');
+      if (tool === 'select') document.getElementById('select-tool').classList.add('active');
+    }
 
-            function updateActiveToolButton(activeButton) {
-                document.querySelectorAll('.toolbar button').forEach(button => {
-                    button.classList.remove('active');
-                });
-                activeButton.classList.add('active');
-            }
+    document.getElementById('note-tool').addEventListener('click', () => {
+      const note = document.createElement('div');
+      note.className = 'note';
+      note.style.left = '100px';
+      note.style.top = '100px';
+      note.style.width = '150px';
+      note.style.height = '100px';
+      note.innerHTML = '<textarea>Nota...</textarea>';
+      makeDraggable(note);
+      container.appendChild(note);
+    });
 
-            // Limpiar el canvas
-            clearAll.addEventListener('click', function() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            });
+    document.getElementById('checkbox-tool').addEventListener('click', () => {
+      const checkbox = document.createElement('div');
+      checkbox.className = 'checkbox';
+      checkbox.style.left = '100px';
+      checkbox.style.top = '200px';
+      checkbox.innerHTML = '<label><input type="checkbox"> Tarea</label>';
+      makeDraggable(checkbox);
+      container.appendChild(checkbox);
+    });
 
-            // Guardar proyecto
-            saveProject.addEventListener('click', function() {
-                const projectData = canvas.toDataURL('image/png');
-                localStorage.setItem('canvasProject', projectData);
-                alert('Proyecto guardado en localStorage');
-            });
-
-            // Exportar proyecto
-            exportProject.addEventListener('click', function() {
-                const data = canvas.toDataURL('image/png');
-                const link = document.createElement('a');
-                link.href = data;
-                link.download = 'pizarra-creativa.png';
-                link.click();
-            });
-
-            // Importar proyecto
-            importProject.addEventListener('click', function() {
-                importProjectInput.click();
-            });
-
-            importProjectInput.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const img = new Image();
-                    img.onload = function() {
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        ctx.drawImage(img, 0, 0);
-                    };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            });
-
-            // Cambiar entre pestañas
-            const tabButtons = document.querySelectorAll('.tab-button');
-            tabButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
-        });
-    </script>
+    function makeDraggable(el) {
+      let offsetX, offsetY;
+      el.onmousedown = function(e) {
+        offsetX = e.clientX - el.offsetLeft;
+        offsetY = e.clientY - el.offsetTop;
+        document.onmousemove = function(e) {
+          el.style.left = (e.clientX - offsetX) + 'px';
+          el.style.top = (e.clientY - offsetY) + 'px';
+        }
+        document.onmouseup = function() {
+          document.onmousemove = null;
+          document.onmouseup = null;
+        }
+      }
+    }
+  </script>
 </body>
 </html>
