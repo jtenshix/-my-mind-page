@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Notas Oceánicas - Polaroid</title>
-  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstSatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/gridstack@8.3.0/dist/gridstack-all.js"></script>
@@ -32,7 +32,46 @@
       top: 15px;
       left: 15px;
       z-index: 1010;
+      display: flex; 
+      gap: 10px;
     }
+
+    #dev-link-button {
+    text-decoration: none; /* Quita el subrayado del enlace */
+    background-color: rgba(0, 0, 0, 0.5); /* Fondo semi-transparente */
+    border: none;
+    color: #fff; /* Color del texto/ícono */
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%; /* Botón redondo */
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    transition: background-color 0.3s ease;
+    font-size: 24px; /* Tamaño del ícono o texto dentro del botón */
+}
+
+#dev-link-button:hover {
+    background-color: rgba(0, 0, 0, 0.7); /* Cambio de color al pasar el mouse */
+}
+
+/* Ajustes en media queries para el nuevo botón si es necesario */
+@media (max-width: 575.98px) {
+    #menu-icon-container {
+        top: 10px;
+        left: 10px;
+        gap: 8px; /* Un poco menos de espacio en móviles */
+    }
+    #dev-link-button {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+        padding: 6px;
+    }
+}
 
     #calendar-link-button {
        text-decoration: none;
@@ -586,6 +625,8 @@
        <line x1="26" y1="5" x2="26" y2="25" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
      </svg>
   </a>
+       <a href="desarrollo.html" id="dev-link-button" title="Ir a página de Desarrollo">
+            💡 </a>
   </div>
         </div>
     </div>
