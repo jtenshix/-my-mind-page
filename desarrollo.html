@@ -10,25 +10,21 @@
       padding: 0;
       box-sizing: border-box;
     }
-
     html, body {
       height: 100%;
       font-family: 'Segoe UI', sans-serif;
       background-color: #f0f0f0;
     }
-
     body {
       display: flex;
       flex-direction: column;
     }
-
     .tabs {
       display: flex;
       background-color: #0078d7;
       color: white;
       border-bottom: 1px solid #ccc;
     }
-
     .tab-button {
       padding: 12px 20px;
       cursor: pointer;
@@ -37,23 +33,19 @@
       border-right: 1px solid #005a9e;
       color: white;
     }
-
     .tab-button.active {
       background-color: #106ebe;
       font-weight: bold;
     }
-
     .tab-button:hover {
       background-color: #106ebe;
     }
-
     .main {
       flex: 1;
       display: flex;
       position: relative;
       overflow: hidden;
     }
-
     .canvas-container {
       flex-grow: 1;
       position: relative;
@@ -62,15 +54,16 @@
       border: 1px solid #ccc;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
-
     canvas {
       background-image: radial-gradient(#ccc 1px, transparent 1px);
       background-size: 10px 10px;
       width: 100%;
       height: 100%;
       display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
     }
-
     .toolbar {
       width: 60px;
       background-color: #f5f5f5;
@@ -81,7 +74,6 @@
       padding-top: 10px;
       box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
     }
-
     .tool-button {
       margin: 8px;
       padding: 10px;
@@ -97,16 +89,13 @@
       font-size: 16px;
       box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
     }
-
     .tool-button.active {
       background-color: #d9d9d9;
       border-color: #999;
     }
-
     .tool-button:hover:not(.active) {
       background-color: #e9e9e9;
     }
-
     .save-controls {
       margin-top: auto;
       padding: 10px;
@@ -114,7 +103,6 @@
       flex-direction: column;
       gap: 5px;
     }
-
     .sticky-note {
       position: absolute;
       background-color: #fffacd;
@@ -126,23 +114,19 @@
       z-index: 5;
       border: 1px solid #d4d4d4;
     }
-
     .sticky-note-header {
       display: flex;
       justify-content: space-between;
       margin-bottom: 5px;
       color: #333;
     }
-
     .sticky-note-close {
       cursor: pointer;
       color: #666;
     }
-
     .sticky-note-close:hover {
       color: #000;
     }
-
     textarea {
       width: 100%;
       height: 60px;
@@ -162,6 +146,7 @@
   <div class="main">
     <div class="canvas-container" id="canvas-container">
       <canvas id="drawing-canvas"></canvas>
+      <canvas id="preview-canvas"></canvas>
     </div>
     <div class="toolbar">
       <button class="tool-button active" id="select-tool" title="Seleccionar">🖱️</button>
@@ -178,24 +163,31 @@
       </div>
     </div>
   </div>
-
   <script>
     const canvas = document.getElementById('drawing-canvas');
+    const previewCanvas = document.getElementById('preview-canvas');
     const ctx = canvas.getContext('2d');
+    const previewCtx = previewCanvas.getContext('2d');
     const canvasContainer = document.getElementById('canvas-container');
     const addNoteBtn = document.getElementById('add-note');
     const tabs = document.querySelectorAll('.tab-button');
     const toolButtons = document.querySelectorAll('.tool-button');
+    const clearAllBtn = document.getElementById('clear-all');
+    const saveProjectBtn = document.getElementById('save-project');
+
     let isDrawing = false;
     let currentTool = 'select';
     let startX, startY;
     let currentTab = 'animate';
     let shapes = [];
     let stickyNotes = [];
+    let currentPath = [];
 
     function resizeCanvas() {
       canvas.width = canvasContainer.clientWidth;
       canvas.height = canvasContainer.clientHeight;
+      previewCanvas.width = canvasContainer.clientWidth;
+      previewCanvas.height = canvasContainer.clientHeight;
       redrawCanvas();
     }
 
@@ -210,7 +202,6 @@
       ctx.beginPath();
       ctx.strokeStyle = shape.color || '#000';
       ctx.lineWidth = shape.lineWidth || 2;
-
       switch (shape.type) {
         case 'line':
           ctx.moveTo(shape.startX, shape.startY);
@@ -231,6 +222,16 @@
           ctx.fillStyle = shape.color || '#000';
           ctx.fillText(shape.text, shape.startX, shape.startY);
           break;
+        case 'pencil':
+          if (shape.path.length > 0) {
+            ctx.beginPath();
+            ctx.moveTo(shape.path[0].x, shape.path[0].y);
+            for (let i = 1; i < shape.path.length; i++) {
+              ctx.lineTo(shape.path[i].x, shape.path[i].y);
+            }
+            ctx.stroke();
+          }
+          break;
       }
       ctx.stroke();
     }
@@ -238,7 +239,6 @@
     function drawArrow(fromX, fromY, toX, toY) {
       const headLength = 10;
       const angle = Math.atan2(toY - fromY, toX - fromX);
-
       ctx.moveTo(fromX, fromY);
       ctx.lineTo(toX, toY);
       ctx.moveTo(toX, toY);
@@ -254,6 +254,7 @@
       note.id = noteId;
       note.style.left = x + 'px';
       note.style.top = y + 'px';
+      note.dataset.tab = currentTab;
       note.innerHTML = `
         <div class="sticky-note-header">
           <span>Nota</span>
@@ -261,23 +262,34 @@
         </div>
         <textarea style="width: 100%; height: 60px; border: none; resize: none; background: transparent;"></textarea>
       `;
-      note.dataset.tab = currentTab;
       makeDraggable(note);
       canvasContainer.appendChild(note);
-      stickyNotes.push({ id: noteId, element: note });
+      stickyNotes.push({
+        id: noteId,
+        element: note,
+        x: x,
+        y: y,
+        text: '',
+        tab: currentTab
+      });
+      note.querySelector('textarea').addEventListener('input', (e) => {
+        const noteObj = stickyNotes.find(n => n.id === noteId);
+        if (noteObj) noteObj.text = e.target.value;
+      });
     }
 
     function removeStickyNote(id) {
-      const note = document.getElementById(id);
-      if (note) {
-        stickyNotes = stickyNotes.filter(n => n.id !== id);
-        note.remove();
+      const noteIndex = stickyNotes.findIndex(n => n.id === id);
+      if (noteIndex !== -1) {
+        const note = document.getElementById(id);
+        if (note) note.remove();
+        stickyNotes.splice(noteIndex, 1);
       }
     }
 
     function renderStickyNotes() {
       stickyNotes.forEach(note => {
-        note.element.style.display = note.element.dataset.tab === currentTab ? 'block' : 'none';
+        note.element.style.display = note.tab === currentTab ? 'block' : 'none';
       });
     }
 
@@ -295,6 +307,11 @@
         if (isDragging) {
           element.style.left = (e.clientX - offsetX) + 'px';
           element.style.top = (e.clientY - offsetY) + 'px';
+          const noteObj = stickyNotes.find(n => n.id === element.id);
+          if (noteObj) {
+            noteObj.x = e.clientX - offsetX;
+            noteObj.y = e.clientY - offsetY;
+          }
         }
       }
 
@@ -321,20 +338,55 @@
       }
     }
 
-    window.addEventListener('mousemove', function(e) {
-      if (isDraggingNote && draggedNote) {
-        draggedNote.style.left = (e.clientX - offsetX) + 'px';
-        draggedNote.style.top = (e.clientY - offsetY) + 'px';
-      }
-    });
+    function saveProject() {
+      const project = {
+        shapes: shapes,
+        stickyNotes: stickyNotes.map(note => ({
+          id: note.id,
+          x: note.x,
+          y: note.y,
+          text: note.element.querySelector('textarea').value,
+          tab: note.tab
+        }))
+      };
+      localStorage.setItem('pizarraProject', JSON.stringify(project));
+      alert('Proyecto guardado correctamente.');
+    }
 
-    window.addEventListener('mouseup', function() {
-      isDraggingNote = false;
-      draggedNote = null;
-    });
+    function loadProject() {
+      const savedProject = localStorage.getItem('pizarraProject');
+      if (savedProject) {
+        const project = JSON.parse(savedProject);
+        shapes = project.shapes || [];
+        stickyNotes.forEach(note => {
+          const element = document.getElementById(note.id);
+          if (element) element.remove();
+        });
+        stickyNotes = [];
+        project.stickyNotes.forEach(note => {
+          addStickyNote(note.x, note.y);
+          const noteElement = document.getElementById(note.id);
+          if (noteElement) {
+            noteElement.querySelector('textarea').value = note.text;
+          }
+        });
+        redrawCanvas();
+        renderStickyNotes();
+      }
+    }
+
+    function clearAll() {
+      if (confirm('¿Estás seguro de que quieres limpiar todo?')) {
+        shapes = shapes.filter(shape => shape.tab !== currentTab);
+        stickyNotes = stickyNotes.filter(note => note.tab !== currentTab);
+        document.querySelectorAll('.sticky-note').forEach(note => {
+          if (note.dataset.tab === currentTab) note.remove();
+        });
+        redrawCanvas();
+      }
+    }
 
     window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
 
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
@@ -358,9 +410,14 @@
       const rect = canvas.getBoundingClientRect();
       startX = e.clientX - rect.left;
       startY = e.clientY - rect.top;
-
       if (currentTool === 'text-tool') {
         addText(startX, startY);
+      } else if (currentTool === 'pencil') {
+        isDrawing = true;
+        currentPath = [{ x: startX, y: startY }];
+        previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+        previewCtx.beginPath();
+        previewCtx.moveTo(startX, startY);
       } else {
         isDrawing = true;
       }
@@ -372,51 +429,56 @@
       const currentX = e.clientX - rect.left;
       const currentY = e.clientY - rect.top;
 
-      redrawCanvas();
-      ctx.beginPath();
-      ctx.strokeStyle = '#000';
-      ctx.lineWidth = 2;
-
-      switch (currentTool) {
-        case 'pencil':
-          ctx.lineTo(currentX, currentY);
-          ctx.stroke();
-          break;
-        case 'line':
-        case 'arrow':
-          redrawCanvas();
-          ctx.moveTo(startX, startY);
-          ctx.lineTo(currentX, currentY);
-          if (currentTool === 'arrow') {
-            drawArrow(startX, startY, currentX, currentY);
-          }
-          ctx.stroke();
-          break;
-        case 'circle':
-          redrawCanvas();
-          const radius = Math.sqrt(Math.pow(currentX - startX, 2) + Math.pow(currentY - startY, 2));
-          ctx.arc(startX, startY, radius, 0, Math.PI * 2);
-          ctx.stroke();
-          break;
-        case 'rectangle':
-          redrawCanvas();
-          ctx.rect(startX, startY, currentX - startX, currentY - startY);
-          ctx.stroke();
-          break;
+      if (currentTool === 'pencil') {
+        currentPath.push({ x: currentX, y: currentY });
+        previewCtx.lineTo(currentX, currentY);
+        previewCtx.strokeStyle = '#000';
+        previewCtx.lineWidth = 2;
+        previewCtx.stroke();
+      } else if (currentTool !== 'select' && currentTool !== 'text-tool') {
+        previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+        previewCtx.beginPath();
+        previewCtx.strokeStyle = '#000';
+        previewCtx.lineWidth = 2;
+        switch (currentTool) {
+          case 'line':
+            previewCtx.moveTo(startX, startY);
+            previewCtx.lineTo(currentX, currentY);
+            break;
+          case 'arrow':
+            drawArrow(startX, startY, currentX, currentY, previewCtx);
+            break;
+          case 'circle':
+            const radius = Math.sqrt(Math.pow(currentX - startX, 2) + Math.pow(currentY - startY, 2));
+            previewCtx.arc(startX, startY, radius, 0, Math.PI * 2);
+            break;
+          case 'rectangle':
+            previewCtx.rect(startX, startY, currentX - startX, currentY - startY);
+            break;
+        }
+        previewCtx.stroke();
       }
     });
 
     canvas.addEventListener('mouseup', (e) => {
       if (!isDrawing || currentTool === 'text-tool') return;
       isDrawing = false;
-
       const rect = canvas.getBoundingClientRect();
       const endX = e.clientX - rect.left;
       const endY = e.clientY - rect.top;
 
-      if (currentTool !== 'pencil') {
+      if (currentTool === 'pencil') {
         shapes.push({
-          type: currentTool.replace('-tool', ''),
+          type: 'pencil',
+          path: currentPath,
+          color: '#000',
+          lineWidth: 2,
+          tab: currentTab
+        });
+        previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+      } else {
+        shapes.push({
+          type: currentTool,
           startX: startX,
           startY: startY,
           endX: endX,
@@ -426,12 +488,21 @@
           tab: currentTab
         });
       }
+      previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
       redrawCanvas();
     });
 
     addNoteBtn.addEventListener('click', e => {
       const rect = canvas.getBoundingClientRect();
       addStickyNote(rect.left + 50, rect.top + 50);
+    });
+
+    clearAllBtn.addEventListener('click', clearAll);
+    saveProjectBtn.addEventListener('click', saveProject);
+
+    window.addEventListener('load', () => {
+      resizeCanvas();
+      loadProject();
     });
   </script>
 </body>
