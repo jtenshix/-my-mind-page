@@ -206,6 +206,7 @@
         case 'line':
           ctx.moveTo(shape.startX, shape.startY);
           ctx.lineTo(shape.endX, shape.endY);
+          ctx.stroke();
           break;
         case 'arrow':
           drawArrow(shape.startX, shape.startY, shape.endX, shape.endY);
@@ -213,9 +214,11 @@
         case 'circle':
           const radius = Math.sqrt(Math.pow(shape.endX - shape.startX, 2) + Math.pow(shape.endY - shape.startY, 2));
           ctx.arc(shape.startX, shape.startY, radius, 0, Math.PI * 2);
+          ctx.stroke();
           break;
         case 'rectangle':
           ctx.rect(shape.startX, shape.startY, shape.endX - shape.startX, shape.endY - shape.startY);
+          ctx.stroke();
           break;
         case 'text':
           ctx.font = shape.font || '16px Arial';
@@ -233,18 +236,19 @@
           }
           break;
       }
-      ctx.stroke();
     }
 
-    function drawArrow(fromX, fromY, toX, toY) {
+    function drawArrow(fromX, fromY, toX, toY, context = ctx) {
       const headLength = 10;
       const angle = Math.atan2(toY - fromY, toX - fromX);
-      ctx.moveTo(fromX, fromY);
-      ctx.lineTo(toX, toY);
-      ctx.moveTo(toX, toY);
-      ctx.lineTo(toX - headLength * Math.cos(angle - Math.PI / 6), toY - headLength * Math.sin(angle - Math.PI / 6));
-      ctx.moveTo(toX, toY);
-      ctx.lineTo(toX - headLength * Math.cos(angle + Math.PI / 6), toY - headLength * Math.sin(angle + Math.PI / 6));
+      context.beginPath();
+      context.moveTo(fromX, fromY);
+      context.lineTo(toX, toY);
+      context.moveTo(toX, toY);
+      context.lineTo(toX - headLength * Math.cos(angle - Math.PI / 6), toY - headLength * Math.sin(angle - Math.PI / 6));
+      context.moveTo(toX, toY);
+      context.lineTo(toX - headLength * Math.cos(angle + Math.PI / 6), toY - headLength * Math.sin(angle + Math.PI / 6));
+      context.stroke();
     }
 
     function addStickyNote(x, y) {
@@ -376,11 +380,15 @@
     }
 
     function clearAll() {
-      if (confirm('¿Estás seguro de que quieres limpiar todo?')) {
+      if (confirm('¿Estás seguro de que quieres limpiar todo en esta pestaña?')) {
         shapes = shapes.filter(shape => shape.tab !== currentTab);
-        stickyNotes = stickyNotes.filter(note => note.tab !== currentTab);
-        document.querySelectorAll('.sticky-note').forEach(note => {
-          if (note.dataset.tab === currentTab) note.remove();
+        stickyNotes = stickyNotes.filter(note => {
+          if (note.tab === currentTab) {
+            const element = document.getElementById(note.id);
+            if (element) element.remove();
+            return false;
+          }
+          return true;
         });
         redrawCanvas();
       }
@@ -418,7 +426,9 @@
         previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
         previewCtx.beginPath();
         previewCtx.moveTo(startX, startY);
-      } else {
+        previewCtx.strokeStyle = '#000';
+        previewCtx.lineWidth = 2;
+      } else if (currentTool !== 'select') {
         isDrawing = true;
       }
     });
@@ -432,8 +442,6 @@
       if (currentTool === 'pencil') {
         currentPath.push({ x: currentX, y: currentY });
         previewCtx.lineTo(currentX, currentY);
-        previewCtx.strokeStyle = '#000';
-        previewCtx.lineWidth = 2;
         previewCtx.stroke();
       } else if (currentTool !== 'select' && currentTool !== 'text-tool') {
         previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
