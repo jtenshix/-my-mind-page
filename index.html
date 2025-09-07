@@ -930,180 +930,158 @@ let resizeTimer;
     // --- Listener para auto-resize de textareas ---
     // Se asignan listeners cuando se crean los elementos o se muestran los modales
 
-    // --- Función para Crear/Actualizar Notas en el Grid ---
-    function mostrarNotaEnPantalla(doc) {
-      const notaData = doc.data();
-      const noteId = doc.id;
+   // --- Función para Crear/Actualizar Notas en el Grid ---
+function mostrarNotaEnPantalla(doc) {
+      const notaData = doc.data();
+      const noteId = doc.id;
 
-      // Validar datos mínimos
-      if (!notaData || (!notaData.url && !notaData.nota)) {
-          console.warn(`Datos inválidos o incompletos para nota ${noteId}, no se mostrará.`);
-          return null;
-      }
+      // Validar datos mínimos
+      if (!notaData || (!notaData.url && !notaData.nota)) {
+          console.warn(`Datos inválidos o incompletos para nota ${noteId}, no se mostrará.`);
+          return null;
+      }
 
-      let gridItem = document.createElement('div');
-      gridItem.classList.add('grid-stack-item');
-      gridItem.setAttribute('data-note-id', noteId);
-      gridItem.setAttribute('data-note-type', notaData.tipo || (notaData.url ? 'imagen' : 'texto')); // Asegurar tipo
+      let gridItem = document.createElement('div');
+      gridItem.classList.add('grid-stack-item');
+      gridItem.setAttribute('data-note-id', noteId);
+      gridItem.setAttribute('data-note-type', notaData.tipo || (notaData.url ? 'imagen' : 'texto')); // Asegurar tipo
 
-      const content = document.createElement('div');
-      content.classList.add('grid-stack-item-content');
+      const content = document.createElement('div');
+      content.classList.add('grid-stack-item-content');
 
-      let card;
-      let noteContentElement = null; // Elemento para el texto
+      let card;
+      let noteContentElement = null; // Elemento para el texto
 
-      // Crear tarjeta de imagen
-      if (notaData.url) {
-        card = document.createElement('div');
-        card.classList.add('card-wrapper');
+      // Crear tarjeta de imagen
+      if (notaData.url) {
+        card = document.createElement('div');
+        card.classList.add('card-wrapper');
 
-        const imageContainer = document.createElement('div');
-        imageContainer.classList.add('image-container');
-        const img = document.createElement('img');
-        img.classList.add('note-image');
-        img.src = notaData.url;
-        img.alt = notaData.texto || 'Imagen de la nota';
-        img.loading = 'lazy'; // Carga diferida
-        img.onerror = () => { // Fallback si la imagen no carga
-          imageContainer.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; height:100%; background-color:#eee; color:red; text-align:center; padding:10px; font-size: 12px;">⚠️<br/>Error al<br/>cargar</div>`;
-    
+        const imageContainer = document.createElement('div');
+        imageContainer.classList.add('image-container');
+        const img = document.createElement('img');
+        img.classList.add('note-image');
+        img.src = notaData.url;
+        img.alt = notaData.texto || 'Imagen de la nota';
+        img.loading = 'lazy'; // Carga diferida
+        img.onerror = () => { // Fallback si la imagen no carga
+          imageContainer.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; height:100%; background-color:#eee; color:red; text-align:center; padding:10px; font-size: 12px;">⚠️<br/>Error al<br/>cargar imagen</div>`;
+          if (grid) grid.batchUpdate(); grid.commit();
+        };
+        img.onload = () => { // Reajustar altura cuando la imagen cargue
+            if (grid) grid.batchUpdate(); grid.commit();
+        }
+        imageContainer.appendChild(img);
+    
+        card.appendChild(imageContainer);
 
-          // Forzar reajuste de altura si la imagen falla (puede ser necesario)
-          if (grid) grid.batchUpdate(); grid.commit();
-        };
-        img.onload = () => { // Reajustar altura cuando la imagen cargue
-             if (grid) grid.batchUpdate(); grid.commit();
-        }
-        imageContainer.appendChild(img);
-        // Evitar que el click se propague a la tarjeta y active la edición, etc.
-   
-        card.appendChild(imageContainer);
-        // --- INICIO CÓDIGO PARA ZOOM ---
-imageContainer.addEventListener('click', () => {
-    imageContainer.classList.toggle('zoomed');
-});
-// --- FIN CÓDIGO PARA ZOOM ---
+        imageContainer.addEventListener('click', () => {
+          imageContainer.classList.toggle('zoomed');
+        });
 
-        // Añadir texto si existe
-        if (notaData.texto) {
-          noteContentElement = document.createElement('div');
-          noteContentElement.classList.add('note-content');
-          noteContentElement.innerHTML = linkify(notaData.texto);
-          card.appendChild(noteContentElement);
-        }
-      }
-      // Crear tarjeta de texto
-      else if (notaData.nota) {
-        card = document.createElement('div');
-        card.classList.add('text-card');
-        noteContentElement = document.createElement('div');
-        noteContentElement.classList.add('note-content');
-        noteContentElement.innerHTML = linkify(notaData.nota);
-        card.appendChild(noteContentElement);
-      } else {
-        // No debería llegar aquí por la validación inicial, pero por si acaso
-        return null;
-      }
+        if (notaData.texto) {
+          noteContentElement = document.createElement('div');
+          noteContentElement.classList.add('note-content');
+          noteContentElement.innerHTML = linkify(notaData.texto);
+          card.appendChild(noteContentElement);
+        }
+      }
+      // Crear tarjeta de texto
+      else if (notaData.nota) {
+        card = document.createElement('div');
+        card.classList.add('text-card');
+        noteContentElement = document.createElement('div');
+        noteContentElement.classList.add('note-content');
+        noteContentElement.innerHTML = linkify(notaData.nota);
+        card.appendChild(noteContentElement);
+      } else {
+        return null;
+      }
 
-      // Asegurar que los enlaces en el contenido se abran en nueva pestaña
-      if (noteContentElement) {
-        Array.from(noteContentElement.getElementsByTagName('a')).forEach(link => {
-          link.setAttribute('target', '_blank');
-          link.setAttribute('rel', 'noopener noreferrer');
-        });
-      }
+      // Asegurar que los enlaces en el contenido se abran en nueva pestaña
+      if (noteContentElement) {
+        Array.from(noteContentElement.getElementsByTagName('a')).forEach(link => {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener noreferrer');
+        });
+      }
 
-      // Crear la barra de menú inferior de la nota
-      const menuBar = document.createElement('div');
-      menuBar.classList.add('menu-bar');
+      // Crear la barra de menú inferior de la nota
+      const menuBar = document.createElement('div');
+      menuBar.classList.add('menu-bar');
 
-      // Botón de burbuja para arrastrar al calendario
-      const bubbleButton = document.createElement('button');
-      bubbleButton.classList.add('menu-icon', 'bubble-icon');
-      bubbleButton.innerHTML = '●';
-      bubbleButton.setAttribute('draggable', 'true');
-      bubbleButton.id = `bubble-${noteId}`;
-      bubbleButton.title = "Arrastrar al calendario";
-      bubbleButton.style.display = notaData.assignedDate ? 'none' : 'inline-block'; // Oculto si ya tiene fecha
-      bubbleButton.addEventListener('dragstart', (e) => {
-        // Imagen fantasma transparente para el drag
-        const yellowDotImage = createDragImage('#FFCD05', 20); // Crea la imagen del punto amarillo (20px)
-        e.dataTransfer.setDragImage(yellowDotImage, 10, 10);  // Usa la nueva imagen y la centra (10 = mitad de 20)
-        e.dataTransfer.setData("application/note-id", noteId); // Pasar ID de la nota
-        e.dataTransfer.effectAllowed = "move";
-        if (typeof openCalendar === 'function') openCalendar(); // Abrir calendario pequeño al arrastrar
-        // --- INICIO: Resetear cursor SIEMPRE al final del drag ---
-const resetCursorOnEnd = () => {
-    const calWidget = getElement('calendarWidget'); // Busca el calendario
-    if (calWidget) { // Si existe (puede que se haya cerrado)
-        calWidget.style.cursor = ''; // Quita la mano cerrada
-    }
-    // Limpia este listener para que no se acumule en el botón cada vez que arrastras
-    bubbleButton.removeEventListener('dragend', resetCursorOnEnd); 
-};
-// Añade un listener que se ejecuta UNA VEZ cuando el drag termina (dragend)
-bubbleButton.addEventListener('dragend', resetCursorOnEnd);
-// --- FIN: Resetear cursor SIEMPRE ---
-      });
-      bubbleButton.addEventListener('click', (e) => { // También abrir al hacer click
-          e.stopPropagation();
-          if (typeof openCalendar === 'function') openCalendar();
-      });
+      // Botón de burbuja para arrastrar al calendario
+      const bubbleButton = document.createElement('button');
+      bubbleButton.classList.add('menu-icon', 'bubble-icon');
+      bubbleButton.innerHTML = '●';
+      bubbleButton.setAttribute('draggable', 'true');
+      bubbleButton.id = `bubble-${noteId}`;
+      bubbleButton.title = "Arrastrar al calendario";
+      bubbleButton.style.display = notaData.assignedDate ? 'none' : 'inline-block'; // Oculto si ya tiene fecha
+      bubbleButton.addEventListener('dragstart', (e) => {
+        const yellowDotImage = createDragImage('#FFCD05', 20);
+        e.dataTransfer.setDragImage(yellowDotImage, 10, 10);
+        e.dataTransfer.setData("application/note-id", noteId);
+        e.dataTransfer.effectAllowed = "move";
+        if (typeof openCalendar === 'function') openCalendar();
+        const resetCursorOnEnd = () => {
+          const calWidget = getElement('calendarWidget');
+          if (calWidget) {
+              calWidget.style.cursor = '';
+          }
+          bubbleButton.removeEventListener('dragend', resetCursorOnEnd);
+        };
+        bubbleButton.addEventListener('dragend', resetCursorOnEnd);
+      });
+      bubbleButton.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (typeof openCalendar === 'function') openCalendar();
+      });
 
-      // Contenedor para botones de acción (editar, eliminar)
-      const menuActions = document.createElement('div');
-      menuActions.classList.add('menu-actions');
+      const menuActions = document.createElement('div');
+      menuActions.classList.add('menu-actions');
 
-      // Botón Editar
-      const editButton = document.createElement('button');
-      editButton.classList.add('menu-icon'); editButton.innerHTML = '✎'; editButton.title = "Editar";
-      editButton.onclick = (e) => {
-        e.stopPropagation(); // Evitar que el click se propague al item de gridstack
-        if (typeof editNoteContent === 'function') {
-          editNoteContent(card, noteId, notaData, menuActions, editButton, deleteButton);
-        } else { console.error("Función editNoteContent no encontrada"); }
-      };
+      const editButton = document.createElement('button');
+      editButton.classList.add('menu-icon'); editButton.innerHTML = '✎'; editButton.title = "Editar";
+      editButton.onclick = (e) => {
+        e.stopPropagation();
+        if (typeof editNoteContent === 'function') {
+          editNoteContent(card, noteId, notaData, menuActions, editButton, deleteButton);
+        } else { console.error("Función editNoteContent no encontrada"); }
+      };
 
-      // Botón Eliminar
-      const deleteButton = document.createElement('button');
-      deleteButton.classList.add('menu-icon'); deleteButton.innerHTML = '✖'; deleteButton.title = "Eliminar";
-      deleteButton.onclick = (e) => {
-        e.stopPropagation();
-        if (typeof deleteNote === 'function') {
-          if (confirm(`¿Seguro que quieres eliminar esta nota?`)) {
-            deleteNote(noteId, gridItem); // Pasar el elemento del grid para posible animación
-          }
-        } else { console.error("Función deleteNote no encontrada"); alert("Error interno al eliminar."); }
-      };
+      const deleteButton = document.createElement('button');
+      deleteButton.classList.add('menu-icon'); deleteButton.innerHTML = '✖'; deleteButton.title = "Eliminar";
+      deleteButton.onclick = (e) => {
+        e.stopPropagation();
+        if (typeof deleteNote === 'function') {
+          if (confirm(`¿Seguro que quieres eliminar esta nota?`)) {
+            deleteNote(noteId, gridItem);
+          }
+        } else { console.error("Función deleteNote no encontrada"); alert("Error interno al eliminar."); }
+      };
 
-      // Añadir botones a la barra de menú
-      menuActions.appendChild(editButton);
-      menuActions.appendChild(deleteButton);
-      menuBar.appendChild(bubbleButton); // Burbuja a la izquierda
-      menuBar.appendChild(menuActions); // Acciones a la derecha
+      menuActions.appendChild(editButton);
+      menuActions.appendChild(deleteButton);
+      menuBar.appendChild(bubbleButton);
+      menuBar.appendChild(menuActions);
 
-      // Añadir barra de menú a la tarjeta y tarjeta al contenido del grid item
-      card.appendChild(menuBar);
-      content.appendChild(card);
-      gridItem.appendChild(content);
+      card.appendChild(menuBar);
+      content.appendChild(card);
+      gridItem.appendChild(content);
 
-      // Definir posición y tamaño para Gridstack
-      const pos = {
-        x: typeof notaData.x === 'number' ? notaData.x : undefined, // Usar undefined si no hay posición guardada
-        y: typeof notaData.y === 'number' ? notaData.y : undefined,
-        w: notaData.w || 4, // Ancho por defecto (ajustar según columnas base)
-        // h: 'auto' // Dejar que Gridstack calcule la altura basado en contenido
-        // O un valor fijo si prefieres: h: notaData.h || 3,
-        id: noteId, // ID único para Gridstack
-        autoPosition: (typeof notaData.x !== 'number' || typeof notaData.y !== 'number') // Auto-posicionar si no hay coords
-      };
+      const pos = {
+        x: typeof notaData.x === 'number' ? notaData.x : undefined,
+        y: typeof notaData.y === 'number' ? notaData.y : undefined,
+        w: notaData.w || 4,
+        id: noteId,
+        autoPosition: (typeof notaData.x !== 'number' || typeof notaData.y !== 'number')
+      };
 
-      gridItem.docData = notaData; // Guardar los datos actuales en el elemento
+      gridItem.docData = notaData;
 
-      // Devolver el elemento y su configuración de posición
-      return { element: gridItem, position: pos };
-    } // --- Fin de mostrarNotaEnPantalla ---
-
+      return { element: gridItem, position: pos };
+}
     // --- Función para Editar Contenido de Notas ---
     function editNoteContent(card, noteId, notaData, menuActionsContainer, originalEditButton, originalDeleteButton) {
       let targetElement = card.querySelector('.note-content');
