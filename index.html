@@ -1371,46 +1371,57 @@ bubbleButton.addEventListener('dragend', resetCursorOnEnd);
 
 
     // --- Funciones para Guardar Nuevas Notas ---
-    function guardarLinkDeImagen() {
-      const imageLinkInputElem = getElement('imageLink');
-      const imageNoteTextElem = getElement('imageNoteText');
-      const saveImageLinkButtonElem = getElement('saveImageLink');
+// --- Funciones para Guardar Nuevas Notas ---
+function guardarLinkDeImagen() {
+  const imageLinkInputElem = getElement('imageLink');
+  const imageNoteTextElem = getElement('imageNoteText');
+  const saveImageLinkButtonElem = getElement('saveImageLink');
 
-      if (!imageLinkInputElem || !db) return;
-      let link = imageLinkInputElem.value.trim();
-      const texto = imageNoteTextElem ? imageNoteTextElem.value.trim() : '';
-      const initialWidth = (grid && grid.getColumn() === 1) ? 1 : 2;
+  if (!imageLinkInputElem || !db) return;
+  let link = imageLinkInputElem.value.trim();
+  const texto = imageNoteTextElem ? imageNoteTextElem.value.trim() : '';
+  const initialWidth = (grid && grid.getColumn() === 1) ? 1 : 2;
 
-      // Validación simple de URL
-      if (link && (link.startsWith('http://') || link.startsWith('https://'))) {
-        if (saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = true; // Deshabilitar botón
-
-        db.collection('notas').add({
-          url: link,
-          texto: texto || null, // Guardar null si no hay texto
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(), // Fecha de creación
-          tipo: 'imagen', // Tipo de nota
-          w: initialWidth,
-          // x, y se asignarán automáticamente por Gridstack
-        })
-        .then((docRef) => {
-          console.log("Imagen guardada con ID:", docRef.id);
-          hidePopups(); // Cerrar modal
-        })
-        .catch((error) => {
-          console.error('Error al guardar link:', error);
-          alert("Error al guardar imagen: " + error.message);
-        })
-        .finally(() => {
-          // Volver a habilitar el botón independientemente del resultado
-          if (saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = false;
-        });
-      } else {
-        alert("Introduce un link válido (que empiece con http:// o https://).");
-        imageLinkInputElem.focus();
-      }
+  // --- CAMBIOS CLAVE AQUÍ: Lógica para convertir el link de Drive ---
+  let finalLink = link;
+  const regex = /(?:https?:\/\/)?(?:www\.)?drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
+  const match = link.match(regex);
+  
+  if (match && match[1]) {
+    const fileId = match[1];
+    finalLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
+    console.log("Enlace de Google Drive transformado a descarga directa:", finalLink);
+  } else {
+    // Si no es un enlace de Drive, validarlo como una URL normal
+    if (!(finalLink.startsWith('http://') || finalLink.startsWith('https://'))) {
+      alert("Introduce un link válido (que empiece con http:// o https://).");
+      imageLinkInputElem.focus();
+      return;
     }
+  }
 
+  // Deshabilitar botón mientras guarda
+  if (saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = true;
+
+  db.collection('notas').add({
+    url: finalLink, // <- ¡Ahora se guarda el enlace de descarga directa!
+    texto: texto || null,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    tipo: 'imagen',
+    w: initialWidth,
+  })
+  .then((docRef) => {
+    console.log("Imagen guardada con ID:", docRef.id);
+    hidePopups();
+  })
+  .catch((error) => {
+    console.error('Error al guardar link:', error);
+    alert("Error al guardar imagen: " + error.message);
+  })
+  .finally(() => {
+    if (saveImageLinkButtonElem) saveImageLinkButtonElem.disabled = false;
+  });
+}
     function guardarNotaTexto() {
       const textNoteInputElem = getElement('textNote');
       const saveTextNoteButtonElem = getElement('saveTextNote');
