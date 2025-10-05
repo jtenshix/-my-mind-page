@@ -1,341 +1,82 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Tenshi — Media Console</title>
-<style>
-  :root{
-    --bg:#0f2027; --panel:#000b; --ink:#f5f5f5; --acc:#ffcc70;
-    --disc:#18a558; --mov:#d9534f; --news:#3b82f6; --gal:#a855f7; /* NEW gallery */
-    --card:#111; --bd:#222; --gap:12px; --cell:130px; --thumbBg:#0e141a;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Arial,sans-serif;}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Utilidad – Convertidor + Atajos</title>
 
-  .topbar{
-    position:sticky; top:0; z-index:10;
-    display:flex; justify-content:space-between; align-items:center;
-    padding:14px 20px; background:#0b151c; border-bottom:1px solid #101c24;
-    box-shadow:0 2px 16px #0006;
-  }
-  .brand{font-weight:800; letter-spacing:.3px; font-size:18px}
-  .brand b{color:var(--acc)}
-  .tag{font-size:12px; opacity:.85}
+  <style>
+    /* ====== Demo base opcional (puedes borrar todo este bloque si no lo necesitas) ====== */
+    :root { color-scheme: dark; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: #0b0f13;
+      color: #eaeef2;
+      min-height: 100dvh;
+    }
+    .wrap {
+      max-width: 1100px;
+      margin: 40px auto 80px;
+      padding: 0 18px;
+    }
+    h1 { font-size: 22px; margin: 0 0 18px; color: #f7f7f7; }
+    .card {
+      background: #0f141a;
+      border: 1px solid #1c2430;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      padding: 18px;
+    }
+    /* ====== FIN demo base ====== */
 
-  .wrap{max-width:1100px;margin:22px auto;padding:0 16px}
-  .card{background:var(--panel);border:1px solid #222;border-radius:14px;box-shadow:0 10px 30px #0008;padding:18px}
-  label{font-size:13px}
-  input{width:100%; padding:10px 12px; border-radius:10px; border:none; background:var(--card); color:var(--ink); font-size:14px;}
-  .btn{border:none;border-radius:10px;background:var(--acc);color:#222;padding:9px 14px;cursor:pointer;transition:.2s}
-  .btn:active{transform:translateY(1px)}
-  button:disabled{opacity:.45; cursor:not-allowed; filter:grayscale(20%);}
-
-  .row{display:grid;gap:10px;margin:10px 0}
-  .btns{display:flex;flex-wrap:wrap;gap:8px}
-  .btn-row{margin-top:18px}
-
-  .grid2{display:grid; grid-template-columns: 1.25fr .95fr; gap:16px;}
-  @media (max-width:900px){ .grid2{grid-template-columns: 1fr} }
-
-  /* chips */
-  .chips{display:flex;gap:10px;flex-wrap:wrap}
-  .chip{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:2px solid transparent;border-radius:999px;padding:7px 12px;cursor:pointer;user-select:none}
-  .dot{width:12px;height:12px;border-radius:999px}
-  .chip[data-cat="discografia"] .dot{background:var(--disc)}
-  .chip[data-cat="movie"] .dot{background:var(--mov)}
-  .chip[data-cat="news"] .dot{background:var(--news)}
-  .chip[data-cat="gallery"] .dot{background:var(--gal)}        /* NEW */
-  .chip.active[data-cat="discografia"]{border-color:var(--disc)}
-  .chip.active[data-cat="movie"]{border-color:var(--mov)}
-  .chip.active[data-cat="news"]{border-color:var(--news)}
-  .chip.active[data-cat="gallery"]{border-color:var(--gal)}     /* NEW */
-
-  .chipN{background:var(--card); border:2px solid #23303a; color:#dfe6eb}
-  .chipN.active{border-color:#4fb3ff; box-shadow:0 0 0 2px #4fb3ff22 inset}
-
-  /* panel derecho */
-  .right{background:#0b1116; border:1px solid var(--bd); border-radius:12px; padding:12px}
-  .right h2{margin:0 0 10px; font-size:16px; opacity:.85}
-
-  /* Mapita: N1 2x2 + N2..N5 1x1 */
-  .mini-news{
-    display:grid;
-    grid-template-columns: repeat(4, var(--cell));
-    grid-auto-rows: var(--cell);
-    gap: var(--gap);
-    align-items: stretch;
-    grid-template-areas:
-      "n1 n1 n2 n3"
-      "n1 n1 n4 n5";
-  }
-  .tile{
-    position:relative;
-    width:100%; height:100%;
-    border-radius:12px; background:#0d1319; border:1px solid #2a2f33;
-    padding:10px; overflow:hidden; display:flex;
-  }
-  .tile[data-k="n1"]{ grid-area:n1; }
-  .tile[data-k="n2"]{ grid-area:n2; }
-  .tile[data-k="n3"]{ grid-area:n3; }
-  .tile[data-k="n4"]{ grid-area:n4; }
-  .tile[data-k="n5"]{ grid-area:n5; }
-
-  .thumb{
-    width:100%; height:100%;
-    background:var(--thumbBg); border-radius:10px; border:1px solid #1d2730;
-    background-size:cover; background-position:center;
-    box-shadow: inset 0 0 0 1px #0003;
-  }
-
-  /* Badges */
-  .badge{
-    position:absolute; top:8px; left:8px; z-index:1;
-    font-size:12px; background:#0008; padding:3px 8px; border-radius:999px; border:1px solid #fff2;
-  }
-  .lbl{
-    position:absolute; bottom:8px; right:8px; z-index:1;
-    font-size:11px; background:#0008; padding:3px 8px; border-radius:999px; border:1px solid #fff2;
-  }
-  .lbl.muted{opacity:.55}
-
-  /* === Marcos de color (más brillantes) === */
-  .tile.sel-discografia{
-    box-shadow:
-      inset 0 0 0 3px color-mix(in hsl, var(--disc) 80%, white),
-      0 0 18px 2px color-mix(in hsl, var(--disc) 55%, transparent);
-  }
-  .tile.sel-movie{
-    box-shadow:
-      inset 0 0 0 3px color-mix(in hsl, var(--mov) 80%, white),
-      0 0 18px 2px color-mix(in hsl, var(--mov) 55%, transparent);
-  }
-  .tile.sel-news{
-    box-shadow:
-      inset 0 0 0 3px color-mix(in hsl, var(--news) 80%, white),
-      0 0 18px 2px color-mix(in hsl, var(--news) 55%, transparent);
-  }
-  .tile.sel-gallery{ /* NEW */
-    box-shadow:
-      inset 0 0 0 3px color-mix(in hsl, var(--gal) 80%, white),
-      0 0 18px 2px color-mix(in hsl, var(--gal) 55%, transparent);
-  }
-
-  /* Marcos blancos permanentes para inputs */
-  #inLink, #outUrl, #inTitulo{
-    border: 2px solid #ffffff2b; outline: none;
-  }
-  #inLink:focus, #outUrl:focus, #inTitulo:focus{
-    border-color: #ffffff66; box-shadow: 0 0 0 3px #ffffff10;
-  }
-  #inLink::placeholder, #outUrl::placeholder, #inTitulo::placeholder{
-    color: #cfd8dcaa;
-  }
-</style>
+    /* ====== BOTÓN A TU SITIO (fijo arriba a la derecha) ====== */
+    .site-button {
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 9999;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border: none;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #e0c27b, #f7e2a6);
+      color: #111;
+      font-weight: 700;
+      font-size: 14px;
+      text-decoration: none;
+      box-shadow: 0 6px 20px rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,0,0,.08);
+      transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+    }
+    .site-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 28px rgba(0,0,0,.45), inset 0 0 0 1px rgba(0,0,0,.1);
+      filter: saturate(1.1);
+    }
+    .site-button:active { transform: translateY(0); }
+    .site-button .dot {
+      width: 8px; height: 8px; border-radius: 50%; background: #111;
+    }
+  </style>
 </head>
 <body>
-  <div class="topbar">
-    <div class="brand"><b>Tenshi</b></div>
-    <div class="tag">Media Console</div>
-  </div>
 
+  <!-- Contenido de tu app (ejemplo de marco) -->
   <div class="wrap">
-    <div class="card grid2">
-      <!-- Columna izquierda -->
-      <div>
-        <div class="row">
-          <label>Link de Google Drive</label>
-          <input id="inLink" placeholder="https://drive.google.com/file/d/ID/view... o solo el ID">
-          <div class="btns">
-            <button class="btn" id="btnConv">Convertir</button>
-            <button class="btn" id="btnCopyUrl">Copiar URL</button>
-          </div>
-        </div>
-
-        <div class="row">
-          <label>URL directa (resultado)</label>
-          <input id="outUrl" readonly>
-        </div>
-
-        <div class="row">
-          <label>Contenido</label>
-          <div class="chips" id="chipsDest">
-            <div class="chip" data-cat="discografia"><span class="dot"></span>Discografía</div>
-            <div class="chip" data-cat="movie"><span class="dot"></span>Movie</div>
-            <div class="chip" data-cat="news"><span class="dot"></span>News</div>
-            <div class="chip" data-cat="gallery"><span class="dot"></span>Gallery</div> <!-- NEW -->
-          </div>
-        </div>
-
-        <div class="row">
-          <label>Selecciona CLAVE (N1–N5)</label>
-          <div class="chips" id="chipsN">
-            <div class="chip chipN" data-n="n1">N1</div>
-            <div class="chip chipN" data-n="n2">N2</div>
-            <div class="chip chipN" data-n="n3">N3</div>
-            <div class="chip chipN" data-n="n4">N4</div>
-            <div class="chip chipN" data-n="n5">N5</div>
-          </div>
-        </div>
-
-        <div class="row">
-          <label>Título</label>
-          <input id="inTitulo" placeholder="Ej: nueva noticia">
-        </div>
-
-        <div class="btn-row">
-          <button class="btn" id="btnGen" disabled>Generar & Copiar</button>
-        </div>
-      </div>
-
-      <!-- Columna derecha: mapita -->
-      <div class="right">
-        <h2>Preview N1–N5</h2>
-        <div class="mini-news" id="miniNews">
-          <div class="tile" data-k="n1"><span class="badge">N1</span><span class="lbl"></span><div class="thumb"></div></div>
-          <div class="tile" data-k="n2"><span class="badge">N2</span><span class="lbl"></span><div class="thumb"></div></div>
-          <div class="tile" data-k="n3"><span class="badge">N3</span><span class="lbl"></span><div class="thumb"></div></div>
-          <div class="tile" data-k="n4"><span class="badge">N4</span><span class="lbl"></span><div class="thumb"></div></div>
-          <div class="tile" data-k="n5"><span class="badge">N5</span><span class="lbl"></span><div class="thumb"></div></div>
-        </div>
-      </div>
+    <div class="card">
+      <h1>Tu herramienta</h1>
+      <p>Coloca aquí tu interfaz actual. El botón flotante ya está arriba a la derecha.</p>
     </div>
   </div>
 
-<script>
-  const $ = s => document.querySelector(s);
-  const $$ = s => Array.from(document.querySelectorAll(s));
+  <!-- Botón flotante a tu sitio -->
+  <a class="site-button"
+     href="https://jtenshix.github.io/J-tenshi-music"
+     target="_blank" rel="noopener noreferrer" title="Abrir sitio J-tenshi">
+    <span class="dot"></span> Ir al sitio
+  </a>
 
-  function getDriveId(raw){
-    if(!raw) return null;
-    const s = raw.trim();
-    const solo = s.match(/^[A-Za-z0-9_-]{25,}$/); if(solo) return solo[0];
-    try{
-      const u = new URL(s);
-      const m1 = u.pathname.match(/\/file\/d\/([A-Za-z0-9_-]{10,})/); if(m1) return m1[1];
-      const m2 = u.pathname.match(/\/d\/([A-Za-z0-9_-]{10,})/); if(m2) return m2[1];
-      const q  = u.searchParams.get('id'); if(q && /^[A-Za-z0-9_-]{10,}$/.test(q)) return q;
-    }catch{}
-    const any = s.match(/[-\w]{25,}/); return any ? any[0] : null;
-  }
-  function candidates(id){
-    return [
-      `https://lh3.googleusercontent.com/d/${id}`,
-      `https://drive.google.com/uc?export=view&id=${id}`,
-      `https://drive.google.com/thumbnail?id=${id}`,
-      `https://drive.google.com/uc?export=download&id=${id}`
-    ];
-  }
-  function tryLoad(urls, ok){
-    if(!urls.length) return ok(null);
-    const u = urls[0]; const img = new Image();
-    img.onload = ()=>ok(u);
-    img.onerror = ()=>tryLoad(urls.slice(1), ok);
-    img.src = u + (u.includes('?')?'&':'?')+'cb='+Date.now();
-  }
-
-  const saved = { n1:null, n2:null, n3:null, n4:null, n5:null };
-  let destinoSel = localStorage.getItem('tenshi_dest') || 'discografia';
-  let currentN = 'n1';
-  let currentPreviewUrl = '';
-
-  function validateReady(){
-    $('#btnGen').disabled = $('#inTitulo').value.trim().length === 0;
-  }
-  $('#inTitulo').addEventListener('input', validateReady);
-  document.addEventListener('DOMContentLoaded', validateReady);
-
-  function renderDestChips(){
-    $$('#chipsDest .chip').forEach(c=>{
-      c.classList.toggle('active', c.dataset.cat===destinoSel);
-      c.onclick = ()=>{ destinoSel=c.dataset.cat; localStorage.setItem('tenshi_dest',destinoSel); renderDestChips(); paintMap(); };
-    });
-  }
-  renderDestChips();
-
-  function renderNChips(){
-    $$('#chipsN .chipN').forEach(c=>{
-      c.classList.toggle('active', c.dataset.n===currentN);
-      c.onclick = ()=>{ currentN=c.dataset.n; renderNChips(); paintMap(); };
-    });
-  }
-  renderNChips();
-
-  function paintMap() {
-    $$('.mini-news .tile').forEach(tile => {
-      const k = tile.dataset.k;
-      const isCurrent = (k === currentN);
-      const thumb = tile.querySelector('.thumb');
-
-      tile.classList.remove('sel-discografia','sel-movie','sel-news','sel-gallery');
-
-      // preview solo en N actual
-      thumb.style.backgroundImage = isCurrent && currentPreviewUrl ? `url('${currentPreviewUrl}')` : 'none';
-
-      // borde según categoría solo en el N actual
-      if (isCurrent) {
-        if (destinoSel === 'discografia') tile.classList.add('sel-discografia');
-        if (destinoSel === 'movie')       tile.classList.add('sel-movie');
-        if (destinoSel === 'news')        tile.classList.add('sel-news');
-        if (destinoSel === 'gallery')     tile.classList.add('sel-gallery');   // NEW
-      }
-
-      // etiqueta de lo último guardado
-      const lbl = tile.querySelector('.lbl');
-      lbl.textContent = saved[k] ? saved[k] : '';
-      lbl.classList.toggle('muted', !!saved[k] && !isCurrent);
-    });
-  }
-  paintMap();
-
-  $('#btnConv').onclick = ()=>{
-    $('#outUrl').value = '';
-    currentPreviewUrl = '';
-    const id = getDriveId($('#inLink').value);
-    if(!id){ alert('❌ Link/ID de Drive no válido'); return; }
-    tryLoad(candidates(id), url=>{
-      const use = url || candidates(id)[0];
-      $('#outUrl').value = use;
-      currentPreviewUrl = use;
-      paintMap();
-    });
-  };
-  $('#btnCopyUrl').onclick = async()=>{
-    try{
-      await navigator.clipboard.writeText($('#outUrl').value);
-      alert('URL copiada ✅');
-    }catch{
-      const ta = document.createElement('textarea');
-      ta.value = $('#outUrl').value; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
-      alert('URL copiada ✅');
-    }
-  };
-
-  $('#btnGen').onclick = async()=>{
-    const titulo = $('#inTitulo').value.trim();
-    if(!titulo){
-      alert('Primero escribe un título.');
-      $('#inTitulo').focus();
-      return;
-    }
-    const imagen = $('#outUrl').value.trim();
-    if(!imagen){ alert('Convierte el link para obtener la URL de imagen.'); return; }
-
-    const obj = { imagen, destino: destinoSel, titulo };
-    const frag = `"${currentN}": ${JSON.stringify(obj, null, 2)}${currentN !== 'n5' ? ',' : ''}`;
-
-    try{
-      await navigator.clipboard.writeText(frag);
-      alert('Fragmento JSON copiado ✅');
-    }catch{
-      const ta = document.createElement('textarea');
-      ta.value = frag; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
-      alert('Fragmento JSON copiado ✅');
-    }
-
-    saved[currentN] = destinoSel;
-    paintMap();
-  };
-</script>
 </body>
 </html>
