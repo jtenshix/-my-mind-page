@@ -8,13 +8,20 @@
   :root{
     --bg:#0f2027; --panel:#000b; --ink:#f5f5f5; --acc:#ffcc70;
     --disc:#18a558; --mov:#d9534f; --news:#3b82f6; --card:#111; --bd:#222;
+    --gap:10px;            /* separación del grid */
+    --square:130px;        /* tamaño del cuadrado mini en el mapita */
+    --thumbBg:#0e141a;     /* fondo detrás de la miniatura */
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Arial,sans-serif;}
 
   /* Topbar */
-  .topbar{position:sticky; top:0; z-index:10; display:flex; justify-content:space-between; align-items:center;
-    padding:14px 20px; background:#0b151c; border-bottom:1px solid #101c24; box-shadow:0 2px 16px #0006;}
+  .topbar{
+    position:sticky; top:0; z-index:10;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 20px; background:#0b151c; border-bottom:1px solid #101c24;
+    box-shadow:0 2px 16px #0006;
+  }
   .brand{font-weight:800; letter-spacing:.3px; font-size:18px}
   .brand b{color:var(--acc)}
   .tag{font-size:12px; opacity:.85}
@@ -26,6 +33,7 @@
   .btn{border:none;border-radius:10px;background:var(--acc);color:#222;padding:9px 14px;cursor:pointer}
   .row{display:grid;gap:10px;margin:10px 0}
   .btns{display:flex;flex-wrap:wrap;gap:8px}
+  .btn-row{margin-top:18px}
 
   /* layout 2 columnas */
   .grid2{display:grid; grid-template-columns: 1.25fr .95fr; gap:16px;}
@@ -41,7 +49,6 @@
   .chip.active[data-cat="discografia"]{border-color:var(--disc)}
   .chip.active[data-cat="movie"]{border-color:var(--mov)}
   .chip.active[data-cat="news"]{border-color:var(--news)}
-  /* chips de N */
   .chipN{background:var(--card); border:2px solid #23303a; color:#dfe6eb}
   .chipN.active{border-color:#4fb3ff; box-shadow:0 0 0 2px #4fb3ff22 inset}
 
@@ -49,28 +56,60 @@
   .right{background:#0b1116; border:1px solid var(--bd); border-radius:12px; padding:12px}
   .right h2{margin:0 0 10px; font-size:16px; opacity:.85}
 
-  /* Mapita N1–N5 */
-  .mini-news{display:grid; grid-template-columns: 2fr 1fr 1fr; grid-template-rows: 1fr 1fr; gap:10px; height:260px;}
-  .mini-news .tile{
-    position:relative; border-radius:12px; background:#161b20; border:1px solid #2a2f33;
-    display:flex; align-items:center; justify-content:center; color:#dfe6eb; font-weight:600;
-    overflow:hidden; background-size:cover; background-position:center; background-repeat:no-repeat;
+  /* === Mapita N1–N5 (mismo grouping que tu web) ===
+     - Col A (2fr) + Col B y C (1fr)
+     - Filas de altura fija (--square). N1 ocupa 2 filas; los demás 1
+     - Cada tile contiene un .thumb cuadrado (o alto completo si es N1)
+  */
+  .mini-news{
+    display:grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-auto-rows: var(--square);
+    gap: var(--gap);
+    align-items: stretch;
   }
-  .mini-news .tile.big{ grid-column:1/2; grid-row:1/3; }
-  .tile.has-bg::after{content:""; position:absolute; inset:0; background:linear-gradient(180deg,#00000033, #00000066);}
-  .badge{position:absolute; top:8px; left:8px; z-index:1; font-size:12px; background:#0008; padding:3px 8px; border-radius:999px; border:1px solid #fff2;}
-  .lbl{position:absolute; bottom:8px; right:8px; z-index:1; font-size:11px; background:#0008; padding:3px 8px; border-radius:999px; border:1px solid #fff2;}
+  .tile{
+    position:relative;
+    border-radius:12px;
+    background:#0d1319;           /* tarjeta */
+    border:1px solid #2a2f33;
+    padding:10px;                 /* borde interno como en tu UI */
+    overflow:hidden;
+    display:flex;                 /* centramos el thumb */
+  }
+  .tile.big{grid-row: span 2;}    /* N1 ocupa dos filas */
+  .tile.small{grid-row: span 1;}
+
+  .thumb{
+    width:100%;
+    background:var(--thumbBg);
+    border-radius:10px;
+    border:1px solid #1d2730;
+    background-size:cover;
+    background-position:center;
+    box-shadow: inset 0 0 0 1px #0003;
+  }
+  .tile.small .thumb{ aspect-ratio: 1 / 1; } /* cuadrados perfectos */
+  .tile.big   .thumb{ height:100%; }          /* alto completo en el panel grande */
+
+  /* Badges */
+  .badge{
+    position:absolute; top:8px; left:8px; z-index:1;
+    font-size:12px; background:#0008; padding:3px 8px; border-radius:999px; border:1px solid #fff2;
+  }
+  .lbl{
+    position:absolute; bottom:8px; right:8px; z-index:1;
+    font-size:11px; background:#0008; padding:3px 8px; border-radius:999px; border:1px solid #fff2;
+  }
   .lbl.muted{opacity:.55}
+
+  /* solo el N seleccionado se resalta con borde */
   .tile.sel-discografia{ box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--disc) 70%, white); }
   .tile.sel-movie{        box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--mov) 70%, white); }
   .tile.sel-news{         box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--news) 70%, white); }
-
-  /* botón separado */
-  .btn-row{margin-top:18px}
 </style>
 </head>
 <body>
-  <!-- Topbar -->
   <div class="topbar">
     <div class="brand"><b>Tenshi</b></div>
     <div class="tag">Media Console</div>
@@ -124,15 +163,15 @@
         </div>
       </div>
 
-      <!-- Columna derecha: visual -->
+      <!-- Columna derecha: mapita -->
       <div class="right">
         <h2>Preview N1–N5</h2>
         <div class="mini-news" id="miniNews">
-          <div class="tile big" data-k="n1"><span class="badge">N1</span><span class="lbl"></span></div>
-          <div class="tile" data-k="n2"><span class="badge">N2</span><span class="lbl"></span></div>
-          <div class="tile" data-k="n3"><span class="badge">N3</span><span class="lbl"></span></div>
-          <div class="tile" data-k="n4"><span class="badge">N4</span><span class="lbl"></span></div>
-          <div class="tile" data-k="n5"><span class="badge">N5</span><span class="lbl"></span></div>
+          <div class="tile big"   data-k="n1"><span class="badge">N1</span><span class="lbl"></span><div class="thumb"></div></div>
+          <div class="tile small" data-k="n2"><span class="badge">N2</span><span class="lbl"></span><div class="thumb"></div></div>
+          <div class="tile small" data-k="n3"><span class="badge">N3</span><span class="lbl"></span><div class="thumb"></div></div>
+          <div class="tile small" data-k="n4"><span class="badge">N4</span><span class="lbl"></span><div class="thumb"></div></div>
+          <div class="tile small" data-k="n5"><span class="badge">N5</span><span class="lbl"></span><div class="thumb"></div></div>
         </div>
       </div>
     </div>
@@ -142,7 +181,7 @@
   const $ = s => document.querySelector(s);
   const $$ = s => Array.from(document.querySelectorAll(s));
 
-  // === Obtener ID de Drive (robusto)
+  // Obtener ID de Drive (robusto)
   function getDriveId(raw){
     if(!raw) return null;
     const s = raw.trim();
@@ -171,13 +210,13 @@
     img.src = u + (u.includes('?')?'&':'?')+'cb='+Date.now();
   }
 
-  // === Estado ===
+  // Estado
   const saved = { n1:null, n2:null, n3:null, n4:null, n5:null };
   let destinoSel = localStorage.getItem('tenshi_dest') || 'discografia';
   let currentN = 'n1';
   let currentPreviewUrl = '';
 
-  // Chips DESTINO -> “Contenido”
+  // Chips DESTINO
   function renderDestChips(){
     $$('#chipsDest .chip').forEach(c=>{
       c.classList.toggle('active', c.dataset.cat===destinoSel);
@@ -195,33 +234,30 @@
   }
   renderNChips();
 
-  // Pintar mapita (preview temporal en N actual; borde por contenido)
+  // Pintar mapita (usa .thumb para el preview)
   function paintMap() {
     $$('.mini-news .tile').forEach(tile => {
       const k = tile.dataset.k;
-      const isBig = tile.classList.contains('big');
       const isCurrent = (k === currentN);
+      const thumb = tile.querySelector('.thumb');
 
-      tile.className = 'tile' + (isBig ? ' big' : '');
-      tile.style.backgroundImage = 'none';
-      tile.classList.remove('has-bg');
+      // reset estilos de tile
+      tile.classList.remove('sel-discografia','sel-movie','sel-news');
 
-      if (isCurrent && currentPreviewUrl) {
-        tile.style.backgroundImage = `url('${currentPreviewUrl}')`;
-        tile.classList.add('has-bg');
-      }
+      // preview solo en el N actual
+      thumb.style.backgroundImage = isCurrent && currentPreviewUrl ? `url('${currentPreviewUrl}')` : 'none';
 
+      // borde por categoría solo en el N actual
       if (isCurrent) {
         if (destinoSel === 'discografia') tile.classList.add('sel-discografia');
         if (destinoSel === 'movie')       tile.classList.add('sel-movie');
         if (destinoSel === 'news')        tile.classList.add('sel-news');
       }
 
-      const lblText = saved[k] ? saved[k] : '';
-      tile.innerHTML = `
-        <span class="badge">${k.toUpperCase()}</span>
-        <span class="lbl ${saved[k] && !isCurrent ? 'muted' : ''}">${lblText}</span>
-      `;
+      // etiqueta (lo último guardado) — se muestra tenue cuando no es el actual
+      const lbl = tile.querySelector('.lbl');
+      lbl.textContent = saved[k] ? saved[k] : '';
+      lbl.classList.toggle('muted', !!saved[k] && !isCurrent);
     });
   }
   paintMap();
@@ -250,7 +286,7 @@
     }
   };
 
-  // Generar & Copiar (N5 sin coma) — copia al portapapeles sin mostrar textarea
+  // Generar & Copiar (N5 sin coma) — copia al portapapeles
   $('#btnGen').onclick = async()=>{
     const imagen = $('#outUrl').value.trim();
     if(!imagen){ alert('Convierte primero el link para obtener la URL.'); return; }
