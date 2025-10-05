@@ -8,9 +8,9 @@
   :root{
     --bg:#0f2027; --panel:#000b; --ink:#f5f5f5; --acc:#ffcc70;
     --disc:#18a558; --mov:#d9534f; --news:#3b82f6; --card:#111; --bd:#222;
-    --gap:12px;            /* separación del grid */
-    --square:130px;        /* lado del cuadrado (ajusta si quieres) */
-    --thumbBg:#0e141a;     /* fondo detrás de la miniatura */
+    --gap:12px;
+    --cell:130px;           /* << tamaño de cada cuadrito */
+    --thumbBg:#0e141a;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Arial,sans-serif;}
@@ -56,14 +56,14 @@
   .right{background:#0b1116; border:1px solid var(--bd); border-radius:12px; padding:12px}
   .right h2{margin:0 0 10px; font-size:16px; opacity:.85}
 
-  /* === Mapita N1–N5 — distribución EXACTA de tu web ===
+  /* === Mapita N1–N5 — EXACTO a tu web, y 100% CUADRADO ===
      n1 n1 n2 n3
      n1 n1 n4 n5
-  */
+     (celdas de tamaño fijo --cell)                                      */
   .mini-news{
     display:grid;
-    grid-template-columns: repeat(4, 1fr); /* ¡4 columnas! */
-    grid-auto-rows: var(--square);         /* cada fila cuadrada */
+    grid-template-columns: repeat(4, var(--cell)); /* columnas fijas */
+    grid-auto-rows: var(--cell);                  /* filas fijas (cuadrado) */
     gap: var(--gap);
     align-items: stretch;
     grid-template-areas:
@@ -73,14 +73,14 @@
 
   .tile{
     position:relative;
+    width:100%; height:100%;             /* ocupa toda la celda cuadrada */
     border-radius:12px;
     background:#0d1319;
     border:1px solid #2a2f33;
-    padding:10px;
+    padding:10px;                         /* padding interno sin romper cuadrado */
     overflow:hidden;
     display:flex;
   }
-
   /* asignación a sus áreas */
   .tile[data-k="n1"]{ grid-area: n1; }
   .tile[data-k="n2"]{ grid-area: n2; }
@@ -89,14 +89,13 @@
   .tile[data-k="n5"]{ grid-area: n5; }
 
   .thumb{
-    width:100%;
+    width:100%; height:100%;             /* llena el cuadrado */
     background:var(--thumbBg);
     border-radius:10px;
     border:1px solid #1d2730;
     background-size:cover;
     background-position:center;
     box-shadow: inset 0 0 0 1px #0003;
-    aspect-ratio: 1 / 1; /* TODOS cuadrados (N1 incluido) */
   }
 
   /* Badges */
@@ -110,7 +109,7 @@
   }
   .lbl.muted{opacity:.55}
 
-  /* Resalte solo del N seleccionado */
+  /* Resalte del N seleccionado */
   .tile.sel-discografia{ box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--disc) 70%, white); }
   .tile.sel-movie{        box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--mov) 70%, white); }
   .tile.sel-news{         box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--news) 70%, white); }
@@ -292,7 +291,7 @@
     }
   };
 
-  // Generar & Copiar (N5 sin coma) — copia al portapapeles
+  // Generar & Copiar (N5 sin coma)
   $('#btnGen').onclick = async()=>{
     const imagen = $('#outUrl').value.trim();
     if(!imagen){ alert('Convierte primero el link para obtener la URL.'); return; }
