@@ -15,7 +15,6 @@
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Arial,sans-serif;}
 
-  /* Topbar */
   .topbar{
     position:sticky; top:0; z-index:10;
     display:flex; justify-content:space-between; align-items:center;
@@ -32,18 +31,15 @@
   input{width:100%; padding:10px 12px; border-radius:10px; border:none; background:var(--card); color:var(--ink); font-size:14px;}
   .btn{border:none;border-radius:10px;background:var(--acc);color:#222;padding:9px 14px;cursor:pointer;transition:.2s}
   .btn:active{transform:translateY(1px)}
-  /* estado deshabilitado (cuando no hay título) */
   button:disabled{opacity:.45; cursor:not-allowed; filter:grayscale(20%);}
 
   .row{display:grid;gap:10px;margin:10px 0}
   .btns{display:flex;flex-wrap:wrap;gap:8px}
   .btn-row{margin-top:18px}
 
-  /* layout 2 columnas */
   .grid2{display:grid; grid-template-columns: 1.25fr .95fr; gap:16px;}
   @media (max-width:900px){ .grid2{grid-template-columns: 1fr} }
 
-  /* chips */
   .chips{display:flex;gap:10px;flex-wrap:wrap}
   .chip{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:2px solid transparent;border-radius:999px;padding:7px 12px;cursor:pointer;user-select:none}
   .dot{width:12px;height:12px;border-radius:999px}
@@ -56,18 +52,14 @@
   .chipN{background:var(--card); border:2px solid #23303a; color:#dfe6eb}
   .chipN.active{border-color:#4fb3ff; box-shadow:0 0 0 2px #4fb3ff22 inset}
 
-  /* panel derecho */
   .right{background:#0b1116; border:1px solid var(--bd); border-radius:12px; padding:12px}
   .right h2{margin:0 0 10px; font-size:16px; opacity:.85}
 
-  /* === Mapita N1–N5 — EXACTO a tu web, todo CUADRADO ===
-     n1 n1 n2 n3
-     n1 n1 n4 n5
-  */
+  /* Mapita (2x2 para N1) + 4 celdas */
   .mini-news{
     display:grid;
-    grid-template-columns: repeat(4, var(--cell)); /* columnas fijas cuadradas */
-    grid-auto-rows: var(--cell);                  /* filas fijas cuadradas */
+    grid-template-columns: repeat(4, var(--cell));
+    grid-auto-rows: var(--cell);
     gap: var(--gap);
     align-items: stretch;
     grid-template-areas:
@@ -93,7 +85,6 @@
     box-shadow: inset 0 0 0 1px #0003;
   }
 
-  /* Badges */
   .badge{
     position:absolute; top:8px; left:8px; z-index:1;
     font-size:12px; background:#0008; padding:3px 8px; border-radius:999px; border:1px solid #fff2;
@@ -104,19 +95,16 @@
   }
   .lbl.muted{opacity:.55}
 
-  /* Resalte del N seleccionado */
   .tile.sel-discografia{ box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--disc) 70%, white); }
   .tile.sel-movie{        box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--mov) 70%, white); }
   .tile.sel-news{         box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--news) 70%, white); }
 
-  /* ===== Marcos blancos permanentes para los 3 inputs ===== */
+  /* Marcos blancos permanentes */
   #inLink, #outUrl, #inTitulo{
-    border: 2px solid #ffffff2b;   /* marco siempre visible */
-    outline: none;
+    border: 2px solid #ffffff2b; outline: none;
   }
   #inLink:focus, #outUrl:focus, #inTitulo:focus{
-    border-color: #ffffff66;       /* más brillante al enfocar */
-    box-shadow: 0 0 0 3px #ffffff10;
+    border-color: #ffffff66; box-shadow: 0 0 0 3px #ffffff10;
   }
   #inLink::placeholder, #outUrl::placeholder, #inTitulo::placeholder{
     color: #cfd8dcaa;
@@ -168,7 +156,7 @@
         </div>
 
         <div class="row">
-          <label>Título (opcional)</label>
+          <label>Título</label>
           <input id="inTitulo" placeholder="Ej: nueva noticia">
         </div>
 
@@ -195,7 +183,6 @@
   const $ = s => document.querySelector(s);
   const $$ = s => Array.from(document.querySelectorAll(s));
 
-  // Obtener ID de Drive (robusto)
   function getDriveId(raw){
     if(!raw) return null;
     const s = raw.trim();
@@ -224,13 +211,11 @@
     img.src = u + (u.includes('?')?'&':'?')+'cb='+Date.now();
   }
 
-  // Estado
   const saved = { n1:null, n2:null, n3:null, n4:null, n5:null };
   let destinoSel = localStorage.getItem('tenshi_dest') || 'discografia';
   let currentN = 'n1';
   let currentPreviewUrl = '';
 
-  // ===== Título obligatorio: habilita/deshabilita botón =====
   function validateReady(){
     const ok = $('#inTitulo').value.trim().length > 0;
     $('#btnGen').disabled = !ok;
@@ -238,7 +223,6 @@
   $('#inTitulo').addEventListener('input', validateReady);
   document.addEventListener('DOMContentLoaded', validateReady);
 
-  // Chips DESTINO
   function renderDestChips(){
     $$('#chipsDest .chip').forEach(c=>{
       c.classList.toggle('active', c.dataset.cat===destinoSel);
@@ -247,7 +231,6 @@
   }
   renderDestChips();
 
-  // Chips N
   function renderNChips(){
     $$('#chipsN .chipN').forEach(c=>{
       c.classList.toggle('active', c.dataset.n===currentN);
@@ -256,7 +239,6 @@
   }
   renderNChips();
 
-  // Pintar mapita (usa .thumb para el preview)
   function paintMap() {
     $$('.mini-news .tile').forEach(tile => {
       const k = tile.dataset.k;
@@ -265,17 +247,14 @@
 
       tile.classList.remove('sel-discografia','sel-movie','sel-news');
 
-      // preview solo en el N actual
       thumb.style.backgroundImage = isCurrent && currentPreviewUrl ? `url('${currentPreviewUrl}')` : 'none';
 
-      // borde por categoría solo en el N actual
       if (isCurrent) {
         if (destinoSel === 'discografia') tile.classList.add('sel-discografia');
         if (destinoSel === 'movie')       tile.classList.add('sel-movie');
         if (destinoSel === 'news')        tile.classList.add('sel-news');
       }
 
-      // etiqueta de lo último guardado
       const lbl = tile.querySelector('.lbl');
       lbl.textContent = saved[k] ? saved[k] : '';
       lbl.classList.toggle('muted', !!saved[k] && !isCurrent);
@@ -283,7 +262,6 @@
   }
   paintMap();
 
-  // Convertir
   $('#btnConv').onclick = ()=>{
     $('#outUrl').value = '';
     currentPreviewUrl = '';
@@ -307,11 +285,10 @@
     }
   };
 
-  // Generar & Copiar (N5 sin coma) — con título obligatorio
   $('#btnGen').onclick = async()=>{
     const titulo = $('#inTitulo').value.trim();
     if(!titulo){
-      alert('Primero escribe un nombre/título para la noticia.');
+      alert('Primero escribe un título.');
       $('#inTitulo').focus();
       return;
     }
