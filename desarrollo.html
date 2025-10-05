@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Convertidor Drive → JSON (solo destino)</title>
+<title>Drive → JSON (N1–N5 con coma automática)</title>
 <style>
   body{font-family:system-ui,Arial;background:#0f2027;color:#f5f5f5;margin:0;min-height:100vh;display:grid;place-items:center}
   .card{background:#000b;border:1px solid #222;padding:22px;border-radius:14px;width:min(92vw,760px);box-shadow:0 10px 30px #0008}
   h1{margin:0 0 12px;color:#ffcc70;font-size:20px}
   label{font-size:13px;opacity:.9}
-  input,textarea{width:100%;padding:10px 12px;border-radius:10px;border:none;background:#111;color:#fff;font-size:14px}
+  input,select,textarea{width:100%;padding:10px 12px;border-radius:10px;border:none;background:#111;color:#fff;font-size:14px}
   textarea{height:90px;resize:none}
   .row{display:grid;gap:10px;margin:8px 0}
   .btns{display:flex;flex-wrap:wrap;gap:8px}
@@ -29,7 +29,7 @@
 </head>
 <body>
 <div class="card">
-  <h1>🔗 Drive → URL de imagen → JSON (destino)</h1>
+  <h1>🔗 Drive → URL de imagen → JSON (auto-coma por N)</h1>
 
   <div class="row">
     <label>Link (o ID) de Google Drive</label>
@@ -47,7 +47,7 @@
   </div>
 
   <div class="row">
-    <label>Selecciona DESTINO (adónde navegará la tarjeta)</label>
+    <label>Selecciona DESTINO</label>
     <div class="chips" id="chips">
       <div class="chip" data-cat="discografia"><span class="dot"></span>Discografía</div>
       <div class="chip" data-cat="movie"><span class="dot"></span>Movie</div>
@@ -56,36 +56,40 @@
     <small>Se guarda como <code>"destino": "discografia|movie|news"</code>. Tu web lo mapea con <code>SECTION_MAP</code>.</small>
   </div>
 
-  <div class="row" style="grid-template-columns:1fr 140px;gap:10px">
+  <div class="row" style="grid-template-columns:1fr 160px;gap:10px">
     <div>
       <label>Título (opcional)</label>
-      <input id="inTitulo" placeholder="Ej: nueva cancion">
+      <input id="inTitulo" placeholder="Ej: nueva noticia">
     </div>
     <div>
-      <label>Clave (n1, n2...)</label>
-      <input id="inClave" value="n1">
+      <label>Clave (elige una)</label>
+      <select id="selClave">
+        <option value="n1">n1</option>
+        <option value="n2">n2</option>
+        <option value="n3">n3</option>
+        <option value="n4">n4</option>
+        <option value="n5" selected>n5 (último → sin coma)</option>
+      </select>
     </div>
   </div>
 
   <div class="row">
     <div class="btns">
-      <button id="btnGen">Generar JSON</button>
-      <button id="btnCopy">Copiar (sin coma)</button>
-      <button id="btnCopyComma">Copiar (con coma)</button>
+      <button id="btnGen">Generar & Copiar</button>
     </div>
     <label>Fragmento para pegar dentro de <code>"news": { ... }</code></label>
     <textarea id="outJson" readonly></textarea>
   </div>
 
-  <small>Atajo mental: **imagen** (la URL convertida) + **destino** (apodo). Fin. No necesitas “con link”.</small>
+  <small>Regla: si eliges **n5** → sin coma. Si eliges **n1–n4** → con coma.</small>
 </div>
 
 <script>
-  // --- Helpers ---
+  // ---- Helpers ----
   const $ = s => document.querySelector(s);
   const $$ = s => Array.from(document.querySelectorAll(s));
 
-  // ID de Drive ultrarobusto
+  // Extraer ID de Drive (robusto)
   function getDriveId(raw){
     if(!raw) return null;
     const s = raw.trim();
@@ -115,7 +119,7 @@
   }
   function copy(el){ el.select(); document.execCommand('copy'); }
 
-  // --- UI chips destino ---
+  // ---- Chips de destino ----
   let destino = localStorage.getItem('tenshi_dest') || 'discografia';
   function renderChips(){
     $$('#chips .chip').forEach(c=>{
@@ -125,7 +129,7 @@
   }
   renderChips();
 
-  // --- Convertir ---
+  // ---- Convertir link ----
   $('#btnConv').onclick = ()=>{
     $('#preview').innerHTML = ''; $('#outUrl').value = '';
     const id = getDriveId($('#inLink').value);
@@ -138,21 +142,23 @@
   };
   $('#btnCopyUrl').onclick = ()=>copy($('#outUrl'));
 
-  // --- Generar JSON (solo destino) ---
-  function buildJson(addComma=false){
+  // ---- Generar & Copiar JSON (coma automática según N) ----
+  $('#btnGen').onclick = ()=>{
     const imagen = $('#outUrl').value.trim();
     if(!imagen){ alert('Convierte primero el link para obtener la URL.'); return; }
-    const clave  = ($('#inClave').value.trim()||'n1');
+    const clave  = $('#selClave').value; // n1..n5
     const titulo = $('#inTitulo').value.trim();
+
     const obj = { imagen, destino };
     if(titulo) obj.titulo = titulo;
-    const frag = `"${clave}": ${JSON.stringify(obj, null, 2)}${addComma?',':''}`;
+
+    // Regla: si clave === n5 → SIN coma; si no → CON coma
+    const addComma = (clave !== 'n5');
+    const frag = `"${clave}": ${JSON.stringify(obj, null, 2)}${addComma ? ',' : ''}`;
+
     $('#outJson').value = frag;
-    return frag;
-  }
-  $('#btnGen').onclick = ()=>buildJson(false);
-  $('#btnCopy').onclick = ()=>{ if(buildJson(false)) copy($('#outJson')); };
-  $('#btnCopyComma').onclick = ()=>{ if(buildJson(true))  copy($('#outJson')); };
+    copy($('#outJson'));
+  };
 </script>
 </body>
 </html>
