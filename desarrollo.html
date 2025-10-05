@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Drive → Imagen → JSON (mapita N1–N5, fix)</title>
+<title>Drive → Imagen → JSON (mapita N1–N5, chips y preview limpio)</title>
 <style>
   :root{
     --bg:#0f2027; --panel:#000b; --ink:#f5f5f5; --muted:#b7c1c7; --acc:#ffcc70;
@@ -16,7 +16,7 @@
   h1{margin:0 0 12px; font-size:20px; color:var(--acc)}
   h2{margin:0 0 10px; font-size:16px; color:var(--muted)}
   label{font-size:13px; opacity:.95}
-  input,select,textarea{width:100%; padding:10px 12px; border-radius:10px; border:none; background:var(--card); color:var(--ink); font-size:14px;}
+  input,textarea{width:100%; padding:10px 12px; border-radius:10px; border:none; background:var(--card); color:var(--ink); font-size:14px;}
   textarea{height:86px; resize:none}
   .btn{border:none;border-radius:10px;background:var(--acc);color:#222;padding:9px 14px;cursor:pointer}
   .row{display:grid;gap:10px;margin:10px 0}
@@ -26,9 +26,9 @@
   .grid2{display:grid; grid-template-columns: 1.25fr .95fr; gap:16px;}
   @media (max-width:900px){ .grid2{grid-template-columns: 1fr} }
 
-  /* chips destino */
+  /* chips */
   .chips{display:flex;gap:10px;flex-wrap:wrap}
-  .chip{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:2px solid transparent;border-radius:999px;padding:7px 12px;cursor:pointer}
+  .chip{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:2px solid transparent;border-radius:999px;padding:7px 12px;cursor:pointer;user-select:none}
   .dot{width:12px;height:12px;border-radius:999px}
   .chip[data-cat="discografia"] .dot{background:var(--disc)}
   .chip[data-cat="movie"] .dot{background:var(--mov)}
@@ -36,6 +36,9 @@
   .chip.active[data-cat="discografia"]{border-color:var(--disc)}
   .chip.active[data-cat="movie"]{border-color:var(--mov)}
   .chip.active[data-cat="news"]{border-color:var(--news)}
+  /* chips de N */
+  .chipN{background:var(--card); border:2px solid #23303a; color:#dfe6eb}
+  .chipN.active{border-color:#4fb3ff; box-shadow:0 0 0 2px #4fb3ff22 inset}
 
   /* preview más pequeño */
   .preview{margin-top:8px}
@@ -55,23 +58,21 @@
   .mini-news .tile{
     position:relative; border-radius:12px; background:#161b20; border:1px solid #2a2f33;
     display:flex; align-items:center; justify-content:center; color:#dfe6eb; font-weight:600;
-    overflow:hidden;               /* ⬅ evita que crezca por contenido */
+    overflow:hidden;
   }
   .mini-news .tile.big{ grid-column:1/2; grid-row:1/3; }
-  .mini-news .tile .badge,
-  .mini-news .tile .lbl{ pointer-events:none; } /* ⬅ sin eventos para no romper el hover */
-
   .badge{
     position:absolute; top:8px; left:8px; font-size:12px; background:#0008; padding:3px 8px; border-radius:999px; border:1px solid #fff2;
   }
   .lbl{
     position:absolute; bottom:8px; right:8px; font-size:11px; background:#0008; padding:3px 8px; border-radius:999px; border:1px solid #fff2;
   }
+  .lbl.muted{opacity:.5}
 
-  /* colores por destino */
-  .tile.discografia{ background: color-mix(in hsl, var(--disc) 28%, black); }
-  .tile.movie{        background: color-mix(in hsl, var(--mov) 28%, black); }
-  .tile.news{         background: color-mix(in hsl, var(--news) 28%, black); }
+  /* colores del N seleccionado (solo currentN se pinta) */
+  .tile.sel-discografia{ background: color-mix(in hsl, var(--disc) 35%, black); box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--disc) 70%, white); }
+  .tile.sel-movie{        background: color-mix(in hsl, var(--mov) 35%, black); box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--mov) 70%, white); }
+  .tile.sel-news{         background: color-mix(in hsl, var(--news) 35%, black); box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--news) 70%, white); }
 
   .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
   .legend .leg{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#0c1319;border:1px solid #20303b;font-size:12px}
@@ -104,7 +105,7 @@
 
         <div class="row">
           <label>Selecciona DESTINO</label>
-          <div class="chips" id="chips">
+          <div class="chips" id="chipsDest">
             <div class="chip" data-cat="discografia"><span class="dot"></span>Discografía</div>
             <div class="chip" data-cat="movie"><span class="dot"></span>Movie</div>
             <div class="chip" data-cat="news"><span class="dot"></span>News</div>
@@ -112,21 +113,20 @@
           <small>Se guarda como <code>"destino": "discografia|movie|news"</code>. Tu web lo mapea con <code>SECTION_MAP</code>.</small>
         </div>
 
-        <div class="row" style="grid-template-columns:1fr 160px;gap:10px">
-          <div>
-            <label>Título (opcional)</label>
-            <input id="inTitulo" placeholder="Ej: nueva noticia">
+        <div class="row">
+          <label>Selecciona CLAVE (N1–N5)</label>
+          <div class="chips" id="chipsN">
+            <div class="chip chipN" data-n="n1">N1</div>
+            <div class="chip chipN" data-n="n2">N2</div>
+            <div class="chip chipN" data-n="n3">N3</div>
+            <div class="chip chipN" data-n="n4">N4</div>
+            <div class="chip chipN" data-n="n5">N5</div>
           </div>
-          <div>
-            <label>Clave (N1–N5)</label>
-            <select id="selClave">
-              <option value="n1">n1</option>
-              <option value="n2">n2</option>
-              <option value="n3">n3</option>
-              <option value="n4">n4</option>
-              <option value="n5" selected>n5 (último → sin coma)</option>
-            </select>
-          </div>
+        </div>
+
+        <div class="row">
+          <label>Título (opcional)</label>
+          <input id="inTitulo" placeholder="Ej: nueva noticia">
         </div>
 
         <div class="row">
@@ -154,7 +154,7 @@
           <div class="leg"><span class="dot" style="background:var(--mov)"></span>Movie</div>
           <div class="leg"><span class="dot" style="background:var(--news)"></span>News</div>
         </div>
-        <div class="map-note">Cambia la **clave** o el **destino** para ver cómo quedaría el grid. N5 se copia sin coma automáticamente.</div>
+        <div class="map-note">El color solo marca el **N seleccionado**. Al generar, se guarda para ese N. N5 se copia sin coma automáticamente.</div>
 
         <h2 style="margin-top:14px">Alias válidos → URL en tu web</h2>
         <pre style="background:#0b1116;border:1px solid #20303b;border-radius:10px;padding:10px;overflow:auto">
@@ -200,53 +200,57 @@ news         →  https://jtenshix.github.io/J-tenshi-music/news.html
     img.src = u + (u.includes('?')?'&':'?')+'cb='+Date.now();
   }
 
-  // === Estado: destino por N (para pintar el mapita)
-  const state = { n1:null, n2:null, n3:null, n4:null, n5:null };
+  // === Estado ===
+  const saved = { n1:null, n2:null, n3:null, n4:null, n5:null }; // lo que “guardaste” al generar
   let destinoSel = localStorage.getItem('tenshi_dest') || 'discografia';
+  let currentN = 'n1'; // N seleccionado visualmente
 
-  function renderChips(){
-    $$('#chips .chip').forEach(c=>{
+  // Chips DESTINO
+  function renderDestChips(){
+    $$('#chipsDest .chip').forEach(c=>{
       c.classList.toggle('active', c.dataset.cat===destinoSel);
-      c.onclick = ()=>{
-        destinoSel=c.dataset.cat;
-        localStorage.setItem('tenshi_dest',destinoSel);
-        renderChips();
-        applyCurrentToMap();
-      };
+      c.onclick = ()=>{ destinoSel=c.dataset.cat; localStorage.setItem('tenshi_dest',destinoSel); renderDestChips(); paintMap(); };
     });
   }
-  renderChips();
+  renderDestChips();
 
-  // === Pintar el mapita (FIX: limpiar y reconstruir)
+  // Chips N
+  function renderNChips(){
+    $$('#chipsN .chipN').forEach(c=>{
+      c.classList.toggle('active', c.dataset.n===currentN);
+      c.onclick = ()=>{ currentN=c.dataset.n; renderNChips(); paintMap(); };
+    });
+  }
+  renderNChips();
+
+  // Pintar mapita:
+  // - Solo el N seleccionado se colorea (según destinoSel)
+  // - En cada tile se muestra, en pequeño, lo que esté guardado para ese N (si existe)
   function paintMap() {
     $$('.mini-news .tile').forEach(tile => {
-      const k = tile.dataset.k;       // n1..n5
-      const d = state[k];             // discografia | movie | news | null
+      const k = tile.dataset.k;                 // n1..n5
       const isBig = tile.classList.contains('big');
-
-      // reset a clases base
       tile.className = 'tile' + (isBig ? ' big' : '');
-      if (d) tile.classList.add(d);
 
-      // reconstruir HTML limpio (sin acumular)
+      const lblText = saved[k] ? saved[k] : '';
+      const isCurrent = (k === currentN);
+
+      // color solo para el N actual
+      if (isCurrent) {
+        if (destinoSel === 'discografia') tile.classList.add('sel-discografia');
+        if (destinoSel === 'movie')       tile.classList.add('sel-movie');
+        if (destinoSel === 'news')        tile.classList.add('sel-news');
+      }
+
       tile.innerHTML = `
         <span class="badge">${k.toUpperCase()}</span>
-        <span class="lbl">${d ? d : ''}</span>
+        <span class="lbl ${saved[k] && !isCurrent ? 'muted' : ''}">${lblText}</span>
       `;
     });
   }
+  paintMap();
 
-  function applyCurrentToMap() {
-    const k = $('#selClave').value;   // n1..n5
-    state[k] = destinoSel;
-    paintMap();
-  }
-
-  // inicial
-  $('#selClave').addEventListener('change', applyCurrentToMap);
-  applyCurrentToMap();
-
-  // === Convertir
+  // Convertir
   $('#btnConv').onclick = ()=>{
     $('#preview').innerHTML = ''; $('#outUrl').value = '';
     const id = getDriveId($('#inLink').value);
@@ -259,21 +263,21 @@ news         →  https://jtenshix.github.io/J-tenshi-music/news.html
   };
   $('#btnCopyUrl').onclick = ()=>copy($('#outUrl'));
 
-  // === Generar & Copiar (coma automática: N5 sin coma)
+  // Generar & Copiar (N5 sin coma)
   $('#btnGen').onclick = ()=>{
     const imagen = $('#outUrl').value.trim();
     if(!imagen){ alert('Convierte primero el link para obtener la URL.'); return; }
-    const clave  = $('#selClave').value;   // n1..n5
     const titulo = $('#inTitulo').value.trim();
 
     const obj = { imagen, destino: destinoSel };
     if(titulo) obj.titulo = titulo;
 
-    const frag = `"${clave}": ${JSON.stringify(obj, null, 2)}${clave !== 'n5' ? ',' : ''}`;
+    const frag = `"${currentN}": ${JSON.stringify(obj, null, 2)}${currentN !== 'n5' ? ',' : ''}`;
     $('#outJson').value = frag;
     copy($('#outJson'));
 
-    state[clave] = destinoSel; // reflejar en mapita
+    // Guardar para ese N y repintar
+    saved[currentN] = destinoSel;
     paintMap();
   };
 </script>
