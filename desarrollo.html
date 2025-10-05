@@ -30,7 +30,11 @@
   .card{background:var(--panel);border:1px solid #222;border-radius:14px;box-shadow:0 10px 30px #0008;padding:18px}
   label{font-size:13px}
   input{width:100%; padding:10px 12px; border-radius:10px; border:none; background:var(--card); color:var(--ink); font-size:14px;}
-  .btn{border:none;border-radius:10px;background:var(--acc);color:#222;padding:9px 14px;cursor:pointer}
+  .btn{border:none;border-radius:10px;background:var(--acc);color:#222;padding:9px 14px;cursor:pointer;transition:.2s}
+  .btn:active{transform:translateY(1px)}
+  /* estado deshabilitado (cuando no hay título) */
+  button:disabled{opacity:.45; cursor:not-allowed; filter:grayscale(20%);}
+
   .row{display:grid;gap:10px;margin:10px 0}
   .btns{display:flex;flex-wrap:wrap;gap:8px}
   .btn-row{margin-top:18px}
@@ -169,7 +173,7 @@
         </div>
 
         <div class="btn-row">
-          <button class="btn" id="btnGen">Generar & Copiar</button>
+          <button class="btn" id="btnGen" disabled>Generar & Copiar</button>
         </div>
       </div>
 
@@ -225,6 +229,14 @@
   let destinoSel = localStorage.getItem('tenshi_dest') || 'discografia';
   let currentN = 'n1';
   let currentPreviewUrl = '';
+
+  // ===== Título obligatorio: habilita/deshabilita botón =====
+  function validateReady(){
+    const ok = $('#inTitulo').value.trim().length > 0;
+    $('#btnGen').disabled = !ok;
+  }
+  $('#inTitulo').addEventListener('input', validateReady);
+  document.addEventListener('DOMContentLoaded', validateReady);
 
   // Chips DESTINO
   function renderDestChips(){
@@ -295,15 +307,18 @@
     }
   };
 
-  // Generar & Copiar (N5 sin coma)
+  // Generar & Copiar (N5 sin coma) — con título obligatorio
   $('#btnGen').onclick = async()=>{
-    const imagen = $('#outUrl').value.trim();
-    if(!imagen){ alert('Convierte primero el link para obtener la URL.'); return; }
     const titulo = $('#inTitulo').value.trim();
+    if(!titulo){
+      alert('Primero escribe un nombre/título para la noticia.');
+      $('#inTitulo').focus();
+      return;
+    }
+    const imagen = $('#outUrl').value.trim();
+    if(!imagen){ alert('Convierte el link para obtener la URL de imagen.'); return; }
 
-    const obj = { imagen, destino: destinoSel };
-    if(titulo) obj.titulo = titulo;
-
+    const obj = { imagen, destino: destinoSel, titulo };
     const frag = `"${currentN}": ${JSON.stringify(obj, null, 2)}${currentN !== 'n5' ? ',' : ''}`;
 
     try{
