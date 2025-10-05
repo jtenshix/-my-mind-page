@@ -23,20 +23,6 @@
   .brand b{color:var(--acc)}
   .tag{font-size:12px; opacity:.85}
 
-  /* === Botón a tu sitio (esquina derecha) === */
-  .site-btn{
-    display:inline-flex; align-items:center; gap:8px;
-    padding:8px 12px; border-radius:999px;
-    background:linear-gradient(135deg,#e0c27b,#f7e2a6);
-    color:#111; font-weight:800; font-size:13px; text-decoration:none;
-    box-shadow:0 6px 20px rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,0,0,.08);
-    transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
-    margin-left:12px;
-  }
-  .site-btn:hover{ transform:translateY(-1px); box-shadow:0 10px 28px rgba(0,0,0,.45); filter:saturate(1.05); }
-  .site-btn:active{ transform:translateY(0); }
-  .site-dot{ width:8px; height:8px; border-radius:50%; background:#111; }
-
   .wrap{max-width:1100px;margin:22px auto;padding:0 16px}
   .card{background:var(--panel);border:1px solid #222;border-radius:14px;box-shadow:0 10px 30px #0008;padding:18px}
   label{font-size:13px}
@@ -69,7 +55,10 @@
   .chipN.active{border-color:#4fb3ff; box-shadow:0 0 0 2px #4fb3ff22 inset}
 
   /* panel derecho */
-  .right{background:#0b1116; border:1px solid var(--bd); border-radius:12px; padding:12px}
+  .right{
+    position:relative;                 /* necesario para el botón flotante */
+    background:#0b1116; border:1px solid var(--bd); border-radius:12px; padding:12px
+  }
   .right h2{margin:0 0 10px; font-size:16px; opacity:.85}
 
   /* Mapita: N1 2x2 + N2..N5 1x1 */
@@ -145,18 +134,26 @@
   #inLink::placeholder, #outUrl::placeholder, #inTitulo::placeholder{
     color: #cfd8dcaa;
   }
+
+  /* === Botón flotante (dentro del panel derecho) === */
+  .site-fab{
+    position:absolute; right:12px; bottom:12px;
+    display:inline-flex; align-items:center; justify-content:center;
+    width:44px; height:44px; border-radius:50%;
+    text-decoration:none;
+    background:linear-gradient(135deg,#e0c27b,#f7e2a6);
+    color:#111; font-weight:900; font-size:18px;
+    box-shadow:0 10px 26px rgba(0,0,0,.45), inset 0 0 0 1px rgba(0,0,0,.08);
+    transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
+  }
+  .site-fab:hover{ transform:translateY(-1px); box-shadow:0 14px 32px rgba(0,0,0,.55); filter:saturate(1.05); }
+  .site-fab:active{ transform:translateY(0); }
 </style>
 </head>
 <body>
   <div class="topbar">
     <div class="brand"><b>Tenshi</b></div>
-    <div style="display:flex; align-items:center;">
-      <div class="tag">Media Console</div>
-      <a class="site-btn" href="https://jtenshix.github.io/J-tenshi-music"
-         target="_blank" rel="noopener noreferrer" title="Abrir sitio J-tenshi">
-        <span class="site-dot"></span> Ir al sitio
-      </a>
-    </div>
+    <div class="tag">Media Console</div>
   </div>
 
   <div class="wrap">
@@ -218,6 +215,10 @@
           <div class="tile" data-k="n4"><span class="badge">N4</span><span class="lbl"></span><div class="thumb"></div></div>
           <div class="tile" data-k="n5"><span class="badge">N5</span><span class="lbl"></span><div class="thumb"></div></div>
         </div>
+
+        <!-- Botón flotante hacia tu sitio -->
+        <a class="site-fab" href="https://jtenshix.github.io/J-tenshi-music"
+           target="_blank" rel="noopener noreferrer" title="Abrir sitio J-tenshi">↗</a>
       </div>
     </div>
   </div>
