@@ -9,7 +9,7 @@
     --bg:#0f2027; --panel:#000b; --ink:#f5f5f5; --acc:#ffcc70;
     --disc:#18a558; --mov:#d9534f; --news:#3b82f6; --card:#111; --bd:#222;
     --gap:12px;
-    --cell:130px;           /* << tamaño de cada cuadrito */
+    --cell:130px;           /* tamaño de cada cuadrito del mapa */
     --thumbBg:#0e141a;
   }
   *{box-sizing:border-box}
@@ -56,45 +56,36 @@
   .right{background:#0b1116; border:1px solid var(--bd); border-radius:12px; padding:12px}
   .right h2{margin:0 0 10px; font-size:16px; opacity:.85}
 
-  /* === Mapita N1–N5 — EXACTO a tu web, y 100% CUADRADO ===
+  /* === Mapita N1–N5 — EXACTO a tu web, todo CUADRADO ===
      n1 n1 n2 n3
      n1 n1 n4 n5
-     (celdas de tamaño fijo --cell)                                      */
+  */
   .mini-news{
     display:grid;
-    grid-template-columns: repeat(4, var(--cell)); /* columnas fijas */
-    grid-auto-rows: var(--cell);                  /* filas fijas (cuadrado) */
+    grid-template-columns: repeat(4, var(--cell)); /* columnas fijas cuadradas */
+    grid-auto-rows: var(--cell);                  /* filas fijas cuadradas */
     gap: var(--gap);
     align-items: stretch;
     grid-template-areas:
       "n1 n1 n2 n3"
       "n1 n1 n4 n5";
   }
-
   .tile{
     position:relative;
-    width:100%; height:100%;             /* ocupa toda la celda cuadrada */
-    border-radius:12px;
-    background:#0d1319;
-    border:1px solid #2a2f33;
-    padding:10px;                         /* padding interno sin romper cuadrado */
-    overflow:hidden;
-    display:flex;
+    width:100%; height:100%;
+    border-radius:12px; background:#0d1319; border:1px solid #2a2f33;
+    padding:10px; overflow:hidden; display:flex;
   }
-  /* asignación a sus áreas */
-  .tile[data-k="n1"]{ grid-area: n1; }
-  .tile[data-k="n2"]{ grid-area: n2; }
-  .tile[data-k="n3"]{ grid-area: n3; }
-  .tile[data-k="n4"]{ grid-area: n4; }
-  .tile[data-k="n5"]{ grid-area: n5; }
+  .tile[data-k="n1"]{ grid-area:n1; }
+  .tile[data-k="n2"]{ grid-area:n2; }
+  .tile[data-k="n3"]{ grid-area:n3; }
+  .tile[data-k="n4"]{ grid-area:n4; }
+  .tile[data-k="n5"]{ grid-area:n5; }
 
   .thumb{
-    width:100%; height:100%;             /* llena el cuadrado */
-    background:var(--thumbBg);
-    border-radius:10px;
-    border:1px solid #1d2730;
-    background-size:cover;
-    background-position:center;
+    width:100%; height:100%;
+    background:var(--thumbBg); border-radius:10px; border:1px solid #1d2730;
+    background-size:cover; background-position:center;
     box-shadow: inset 0 0 0 1px #0003;
   }
 
@@ -113,6 +104,19 @@
   .tile.sel-discografia{ box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--disc) 70%, white); }
   .tile.sel-movie{        box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--mov) 70%, white); }
   .tile.sel-news{         box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--news) 70%, white); }
+
+  /* ===== Marcos blancos permanentes para los 3 inputs ===== */
+  #inLink, #outUrl, #inTitulo{
+    border: 2px solid #ffffff2b;   /* marco siempre visible */
+    outline: none;
+  }
+  #inLink:focus, #outUrl:focus, #inTitulo:focus{
+    border-color: #ffffff66;       /* más brillante al enfocar */
+    box-shadow: 0 0 0 3px #ffffff10;
+  }
+  #inLink::placeholder, #outUrl::placeholder, #inTitulo::placeholder{
+    color: #cfd8dcaa;
+  }
 </style>
 </head>
 <body>
