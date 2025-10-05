@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Drive → Imagen → JSON (mapita N1–N5, chips y preview limpio)</title>
+<title>Drive → Imagen → JSON (mapita N1–N5 con preview en el tile)</title>
 <style>
   :root{
     --bg:#0f2027; --panel:#000b; --ink:#f5f5f5; --muted:#b7c1c7; --acc:#ffcc70;
@@ -40,10 +40,6 @@
   .chipN{background:var(--card); border:2px solid #23303a; color:#dfe6eb}
   .chipN.active{border-color:#4fb3ff; box-shadow:0 0 0 2px #4fb3ff22 inset}
 
-  /* preview más pequeño */
-  .preview{margin-top:8px}
-  .preview img{max-width:100%; max-height:160px; border-radius:10px; border:2px solid #333; display:block}
-
   /* panel derecho */
   .right{background:#0b1116; border:1px solid var(--bd); border-radius:12px; padding:12px}
 
@@ -59,20 +55,28 @@
     position:relative; border-radius:12px; background:#161b20; border:1px solid #2a2f33;
     display:flex; align-items:center; justify-content:center; color:#dfe6eb; font-weight:600;
     overflow:hidden;
+    background-size:cover;          /* para preview como fondo */
+    background-position:center;     /* centrado */
+    background-repeat:no-repeat;
   }
   .mini-news .tile.big{ grid-column:1/2; grid-row:1/3; }
+  .tile.has-bg::after{              /* overlay para legibilidad sobre la imagen */
+    content:""; position:absolute; inset:0; background:linear-gradient(180deg,#00000033, #00000066);
+  }
   .badge{
-    position:absolute; top:8px; left:8px; font-size:12px; background:#0008; padding:3px 8px; border-radius:999px; border:1px solid #fff2;
+    position:absolute; top:8px; left:8px; z-index:1;
+    font-size:12px; background:#0008; padding:3px 8px; border-radius:999px; border:1px solid #fff2;
   }
   .lbl{
-    position:absolute; bottom:8px; right:8px; font-size:11px; background:#0008; padding:3px 8px; border-radius:999px; border:1px solid #fff2;
+    position:absolute; bottom:8px; right:8px; z-index:1;
+    font-size:11px; background:#0008; padding:3px 8px; border-radius:999px; border:1px solid #fff2;
   }
-  .lbl.muted{opacity:.5}
+  .lbl.muted{opacity:.55}
 
   /* colores del N seleccionado (solo currentN se pinta) */
-  .tile.sel-discografia{ background: color-mix(in hsl, var(--disc) 35%, black); box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--disc) 70%, white); }
-  .tile.sel-movie{        background: color-mix(in hsl, var(--mov) 35%, black); box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--mov) 70%, white); }
-  .tile.sel-news{         background: color-mix(in hsl, var(--news) 35%, black); box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--news) 70%, white); }
+  .tile.sel-discografia{ box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--disc) 70%, white); }
+  .tile.sel-movie{        box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--mov) 70%, white); }
+  .tile.sel-news{         box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--news) 70%, white); }
 
   .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
   .legend .leg{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#0c1319;border:1px solid #20303b;font-size:12px}
@@ -100,7 +104,6 @@
         <div class="row">
           <label>URL directa (resultado)</label>
           <textarea id="outUrl" readonly></textarea>
-          <div class="preview" id="preview"></div>
         </div>
 
         <div class="row">
@@ -154,7 +157,7 @@
           <div class="leg"><span class="dot" style="background:var(--mov)"></span>Movie</div>
           <div class="leg"><span class="dot" style="background:var(--news)"></span>News</div>
         </div>
-        <div class="map-note">El color solo marca el **N seleccionado**. Al generar, se guarda para ese N. N5 se copia sin coma automáticamente.</div>
+        <div class="map-note">El color y la imagen solo marcan el **N seleccionado**. Al generar, se guarda el destino para ese N. N5 se copia sin coma automáticamente.</div>
 
         <h2 style="margin-top:14px">Alias válidos → URL en tu web</h2>
         <pre style="background:#0b1116;border:1px solid #20303b;border-radius:10px;padding:10px;overflow:auto">
@@ -201,9 +204,10 @@ news         →  https://jtenshix.github.io/J-tenshi-music/news.html
   }
 
   // === Estado ===
-  const saved = { n1:null, n2:null, n3:null, n4:null, n5:null }; // lo que “guardaste” al generar
+  const saved = { n1:null, n2:null, n3:null, n4:null, n5:null }; // lo “guardado” al generar (destino por N)
   let destinoSel = localStorage.getItem('tenshi_dest') || 'discografia';
-  let currentN = 'n1'; // N seleccionado visualmente
+  let currentN = 'n1';                // N seleccionado
+  let currentPreviewUrl = '';         // URL temporal para mostrar en el tile actual
 
   // Chips DESTINO
   function renderDestChips(){
@@ -225,23 +229,34 @@ news         →  https://jtenshix.github.io/J-tenshi-music/news.html
 
   // Pintar mapita:
   // - Solo el N seleccionado se colorea (según destinoSel)
-  // - En cada tile se muestra, en pequeño, lo que esté guardado para ese N (si existe)
+  // - Muestra el destino guardado para cada N como etiqueta gris
+  // - Si hay currentPreviewUrl, la pone de fondo en el N seleccionado
   function paintMap() {
     $$('.mini-news .tile').forEach(tile => {
       const k = tile.dataset.k;                 // n1..n5
       const isBig = tile.classList.contains('big');
-      tile.className = 'tile' + (isBig ? ' big' : '');
-
-      const lblText = saved[k] ? saved[k] : '';
       const isCurrent = (k === currentN);
 
-      // color solo para el N actual
+      // reset base
+      tile.className = 'tile' + (isBig ? ' big' : '');
+      tile.style.backgroundImage = 'none';
+
+      // preview temporal solo en el N actual
+      if (isCurrent && currentPreviewUrl) {
+        tile.style.backgroundImage = `url('${currentPreviewUrl}')`;
+        tile.classList.add('has-bg');
+      } else {
+        tile.classList.remove('has-bg');
+      }
+
+      // color solo para el N actual (borde resaltado)
       if (isCurrent) {
         if (destinoSel === 'discografia') tile.classList.add('sel-discografia');
         if (destinoSel === 'movie')       tile.classList.add('sel-movie');
         if (destinoSel === 'news')        tile.classList.add('sel-news');
       }
 
+      const lblText = saved[k] ? saved[k] : '';
       tile.innerHTML = `
         <span class="badge">${k.toUpperCase()}</span>
         <span class="lbl ${saved[k] && !isCurrent ? 'muted' : ''}">${lblText}</span>
@@ -250,15 +265,17 @@ news         →  https://jtenshix.github.io/J-tenshi-music/news.html
   }
   paintMap();
 
-  // Convertir
+  // Convertir → fija currentPreviewUrl y repinta (preview dentro del tile)
   $('#btnConv').onclick = ()=>{
-    $('#preview').innerHTML = ''; $('#outUrl').value = '';
+    $('#outUrl').value = '';
+    currentPreviewUrl = '';
     const id = getDriveId($('#inLink').value);
     if(!id){ alert('❌ Link/ID de Drive no válido'); return; }
     tryLoad(candidates(id), url=>{
-      if(!url){ alert('No se pudo previsualizar (¿no es imagen?).'); $('#outUrl').value = candidates(id)[0]; return; }
-      $('#outUrl').value = url;
-      $('#preview').innerHTML = `<img src="${url}" alt="preview">`;
+      const use = url || candidates(id)[0];
+      $('#outUrl').value = use;
+      currentPreviewUrl = use;        // preview temporal
+      paintMap();
     });
   };
   $('#btnCopyUrl').onclick = ()=>copy($('#outUrl'));
@@ -276,7 +293,7 @@ news         →  https://jtenshix.github.io/J-tenshi-music/news.html
     $('#outJson').value = frag;
     copy($('#outJson'));
 
-    // Guardar para ese N y repintar
+    // Guardar destino para ese N y repintar (la imagen preview sigue siendo temporal)
     saved[currentN] = destinoSel;
     paintMap();
   };
