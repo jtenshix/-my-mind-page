@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Drive → Imagen → JSON (mapita N1–N5 con preview en el tile)</title>
+<title>J-Tenshi — Media Console</title>
 <style>
   :root{
     --bg:#0f2027; --panel:#000b; --ink:#f5f5f5; --muted:#b7c1c7; --acc:#ffcc70;
@@ -11,9 +11,20 @@
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Arial,sans-serif;}
-  .wrap{max-width:1100px;margin:28px auto;padding:0 16px}
+
+  /* Topbar corporativa */
+  .topbar{
+    position:sticky; top:0; z-index:10;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 20px; background:#0b151c; border-bottom:1px solid #101c24;
+    box-shadow:0 2px 16px #0006;
+  }
+  .brand{font-weight:800; letter-spacing:.3px; font-size:18px}
+  .brand b{color:var(--acc)}
+  .tag{font-size:12px; color:var(--muted); opacity:.9}
+
+  .wrap{max-width:1100px;margin:22px auto;padding:0 16px}
   .card{background:var(--panel);border:1px solid #222;border-radius:14px;box-shadow:0 10px 30px #0008;padding:18px}
-  h1{margin:0 0 12px; font-size:20px; color:var(--acc)}
   h2{margin:0 0 10px; font-size:16px; color:var(--muted)}
   label{font-size:13px; opacity:.95}
   input,textarea{width:100%; padding:10px 12px; border-radius:10px; border:none; background:var(--card); color:var(--ink); font-size:14px;}
@@ -55,12 +66,12 @@
     position:relative; border-radius:12px; background:#161b20; border:1px solid #2a2f33;
     display:flex; align-items:center; justify-content:center; color:#dfe6eb; font-weight:600;
     overflow:hidden;
-    background-size:cover;          /* para preview como fondo */
-    background-position:center;     /* centrado */
+    background-size:cover;
+    background-position:center;
     background-repeat:no-repeat;
   }
   .mini-news .tile.big{ grid-column:1/2; grid-row:1/3; }
-  .tile.has-bg::after{              /* overlay para legibilidad sobre la imagen */
+  .tile.has-bg::after{
     content:""; position:absolute; inset:0; background:linear-gradient(180deg,#00000033, #00000066);
   }
   .badge{
@@ -73,7 +84,7 @@
   }
   .lbl.muted{opacity:.55}
 
-  /* colores del N seleccionado (solo currentN se pinta) */
+  /* solo el N seleccionado se resalta */
   .tile.sel-discografia{ box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--disc) 70%, white); }
   .tile.sel-movie{        box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--mov) 70%, white); }
   .tile.sel-news{         box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--news) 70%, white); }
@@ -86,12 +97,16 @@
 </style>
 </head>
 <body>
+  <!-- Topbar compacta -->
+  <div class="topbar">
+    <div class="brand"><b>J-Tenshi</b></div>
+    <div class="tag">Media Console</div>
+  </div>
+
   <div class="wrap">
     <div class="card grid2">
       <!-- Columna izquierda -->
       <div>
-        <h1>🔗 Drive → URL de imagen → JSON (auto-coma por N)</h1>
-
         <div class="row">
           <label>Link (o ID) de Google Drive</label>
           <input id="inLink" placeholder="https://drive.google.com/file/d/ID/view... o solo el ID">
@@ -113,7 +128,7 @@
             <div class="chip" data-cat="movie"><span class="dot"></span>Movie</div>
             <div class="chip" data-cat="news"><span class="dot"></span>News</div>
           </div>
-          <small>Se guarda como <code>"destino": "discografia|movie|news"</code>. Tu web lo mapea con <code>SECTION_MAP</code>.</small>
+          <small>Se guarda como <code>"destino": "discografia|movie|news"</code>.</small>
         </div>
 
         <div class="row">
@@ -143,7 +158,7 @@
 
       <!-- Columna derecha: visual -->
       <div class="right">
-        <h2>Vista rápida & Mapita N1–N5</h2>
+        <h2>Preview N1–N5</h2>
         <div class="mini-news" id="miniNews">
           <div class="tile big" data-k="n1"><span class="badge">N1</span><span class="lbl"></span></div>
           <div class="tile" data-k="n2"><span class="badge">N2</span><span class="lbl"></span></div>
@@ -157,15 +172,17 @@
           <div class="leg"><span class="dot" style="background:var(--mov)"></span>Movie</div>
           <div class="leg"><span class="dot" style="background:var(--news)"></span>News</div>
         </div>
-        <div class="map-note">El color y la imagen solo marcan el **N seleccionado**. Al generar, se guarda el destino para ese N. N5 se copia sin coma automáticamente.</div>
+        <div class="map-note">Color e imagen muestran solo el **N seleccionado**. Al generar, se guarda el destino para ese N (N5 se copia sin coma).</div>
+      </div>
+    </div>
 
-        <h2 style="margin-top:14px">Alias válidos → URL en tu web</h2>
-        <pre style="background:#0b1116;border:1px solid #20303b;border-radius:10px;padding:10px;overflow:auto">
+    <div class="card" style="margin-top:14px">
+      <h2>Alias válidos → URL en tu web</h2>
+      <pre style="background:#0b1116;border:1px solid #20303b;border-radius:10px;padding:10px;overflow:auto">
 discografia  →  Discography.html
 movie        →  movie.html
 news         →  https://jtenshix.github.io/J-tenshi-music/news.html
-        </pre>
-      </div>
+      </pre>
     </div>
   </div>
 
@@ -204,10 +221,10 @@ news         →  https://jtenshix.github.io/J-tenshi-music/news.html
   }
 
   // === Estado ===
-  const saved = { n1:null, n2:null, n3:null, n4:null, n5:null }; // lo “guardado” al generar (destino por N)
+  const saved = { n1:null, n2:null, n3:null, n4:null, n5:null };
   let destinoSel = localStorage.getItem('tenshi_dest') || 'discografia';
-  let currentN = 'n1';                // N seleccionado
-  let currentPreviewUrl = '';         // URL temporal para mostrar en el tile actual
+  let currentN = 'n1';
+  let currentPreviewUrl = '';
 
   // Chips DESTINO
   function renderDestChips(){
@@ -227,29 +244,25 @@ news         →  https://jtenshix.github.io/J-tenshi-music/news.html
   }
   renderNChips();
 
-  // Pintar mapita:
-  // - Solo el N seleccionado se colorea (según destinoSel)
-  // - Muestra el destino guardado para cada N como etiqueta gris
-  // - Si hay currentPreviewUrl, la pone de fondo en el N seleccionado
+  // Pintar mapita
   function paintMap() {
     $$('.mini-news .tile').forEach(tile => {
-      const k = tile.dataset.k;                 // n1..n5
+      const k = tile.dataset.k;
       const isBig = tile.classList.contains('big');
       const isCurrent = (k === currentN);
 
       // reset base
       tile.className = 'tile' + (isBig ? ' big' : '');
       tile.style.backgroundImage = 'none';
+      tile.classList.remove('has-bg');
 
       // preview temporal solo en el N actual
       if (isCurrent && currentPreviewUrl) {
         tile.style.backgroundImage = `url('${currentPreviewUrl}')`;
         tile.classList.add('has-bg');
-      } else {
-        tile.classList.remove('has-bg');
       }
 
-      // color solo para el N actual (borde resaltado)
+      // borde resaltado solo para el N actual
       if (isCurrent) {
         if (destinoSel === 'discografia') tile.classList.add('sel-discografia');
         if (destinoSel === 'movie')       tile.classList.add('sel-movie');
@@ -265,7 +278,7 @@ news         →  https://jtenshix.github.io/J-tenshi-music/news.html
   }
   paintMap();
 
-  // Convertir → fija currentPreviewUrl y repinta (preview dentro del tile)
+  // Convertir → fija currentPreviewUrl y repinta
   $('#btnConv').onclick = ()=>{
     $('#outUrl').value = '';
     currentPreviewUrl = '';
@@ -274,7 +287,7 @@ news         →  https://jtenshix.github.io/J-tenshi-music/news.html
     tryLoad(candidates(id), url=>{
       const use = url || candidates(id)[0];
       $('#outUrl').value = use;
-      currentPreviewUrl = use;        // preview temporal
+      currentPreviewUrl = use;
       paintMap();
     });
   };
@@ -293,7 +306,7 @@ news         →  https://jtenshix.github.io/J-tenshi-music/news.html
     $('#outJson').value = frag;
     copy($('#outJson'));
 
-    // Guardar destino para ese N y repintar (la imagen preview sigue siendo temporal)
+    // Guardar destino para ese N y repintar (preview sigue temporal)
     saved[currentN] = destinoSel;
     paintMap();
   };
