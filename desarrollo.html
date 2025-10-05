@@ -1,95 +1,172 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Drive → JSON (N1–N5 con coma automática)</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Drive → Imagen → JSON (con mapita N1–N5)</title>
 <style>
-  body{font-family:system-ui,Arial;background:#0f2027;color:#f5f5f5;margin:0;min-height:100vh;display:grid;place-items:center}
-  .card{background:#000b;border:1px solid #222;padding:22px;border-radius:14px;width:min(92vw,760px);box-shadow:0 10px 30px #0008}
-  h1{margin:0 0 12px;color:#ffcc70;font-size:20px}
-  label{font-size:13px;opacity:.9}
-  input,select,textarea{width:100%;padding:10px 12px;border-radius:10px;border:none;background:#111;color:#fff;font-size:14px}
-  textarea{height:90px;resize:none}
-  .row{display:grid;gap:10px;margin:8px 0}
+  :root{
+    --bg:#0f2027; --panel:#000b; --ink:#f5f5f5; --muted:#b7c1c7; --acc:#ffcc70;
+    --disc:#18a558; --mov:#d9534f; --news:#3b82f6; --card:#111; --bd:#222;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Arial,sans-serif;}
+  .wrap{max-width:1100px;margin:28px auto;padding:0 16px}
+  .card{background:var(--panel);border:1px solid #222;border-radius:14px;box-shadow:0 10px 30px #0008;padding:18px}
+  h1{margin:0 0 12px; font-size:20px; color:var(--acc); display:flex; align-items:center; gap:10px}
+  h2{margin:0 0 10px; font-size:16px; color:var(--muted)}
+  label{font-size:13px; opacity:.95}
+  input,select,textarea{width:100%; padding:10px 12px; border-radius:10px; border:none; background:var(--card); color:var(--ink); font-size:14px;}
+  textarea{height:86px; resize:none}
+  .btn{border:none;border-radius:10px;background:var(--acc);color:#222;padding:9px 14px;cursor:pointer}
+  .row{display:grid;gap:10px;margin:10px 0}
   .btns{display:flex;flex-wrap:wrap;gap:8px}
-  button{border:none;border-radius:10px;background:#ffcc70;color:#222;padding:9px 14px;cursor:pointer}
-  .chips{display:flex;gap:10px}
-  .chip{display:inline-flex;align-items:center;gap:8px;background:#111;border:2px solid transparent;border-radius:999px;padding:7px 12px;cursor:pointer}
+
+  /* layout 2 columnas */
+  .grid2{display:grid; grid-template-columns: 1.25fr .95fr; gap:16px;}
+  @media (max-width:900px){ .grid2{grid-template-columns: 1fr} }
+
+  /* chips destino */
+  .chips{display:flex;gap:10px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:2px solid transparent;border-radius:999px;padding:7px 12px;cursor:pointer}
   .dot{width:12px;height:12px;border-radius:999px}
-  .chip[data-cat="discografia"] .dot{background:#18a558}
-  .chip[data-cat="movie"] .dot{background:#d9534f}
-  .chip[data-cat="news"] .dot{background:#3b82f6}
-  .chip.active[data-cat="discografia"]{border-color:#18a558}
-  .chip.active[data-cat="movie"]{border-color:#d9534f}
-  .chip.active[data-cat="news"]{border-color:#3b82f6}
-  .preview img{max-width:100%;border-radius:10px;border:2px solid #333}
-  small{opacity:.8}
+  .chip[data-cat="discografia"] .dot{background:var(--disc)}
+  .chip[data-cat="movie"] .dot{background:var(--mov)}
+  .chip[data-cat="news"] .dot{background:var(--news)}
+  .chip.active[data-cat="discografia"]{border-color:var(--disc)}
+  .chip.active[data-cat="movie"]{border-color:var(--mov)}
+  .chip.active[data-cat="news"]{border-color:var(--news)}
+
+  /* preview más pequeño */
+  .preview{margin-top:8px}
+  .preview img{max-width:100%; max-height:160px; border-radius:10px; border:2px solid #333; display:block}
+
+  /* panel derecho */
+  .right{background:#0b1116; border:1px solid var(--bd); border-radius:12px; padding:12px}
+
+  /* Mapita N1–N5 (mini NEWS layout) */
+  .mini-news{
+    display:grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap:10px;
+    height:260px;
+  }
+  .tile{
+    position:relative; border-radius:12px; background:#161b20; border:1px solid #2a2f33;
+    display:flex; align-items:center; justify-content:center; color:#dfe6eb; font-weight:600;
+  }
+  .tile.big{ grid-column:1/2; grid-row:1/3; }
+  .badge{
+    position:absolute; top:8px; left:8px; font-size:12px; background:#0008; padding:3px 8px; border-radius:999px; border:1px solid #fff2;
+  }
+  .lbl{
+    position:absolute; bottom:8px; right:8px; font-size:11px; background:#0008; padding:3px 8px; border-radius:999px; border:1px solid #fff2;
+  }
+  .tile.discografia{ background: color-mix(in hsl, var(--disc) 28%, black); }
+  .tile.movie{        background: color-mix(in hsl, var(--mov) 28%, black); }
+  .tile.news{         background: color-mix(in hsl, var(--news) 28%, black); }
+
+  .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .legend .leg{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#0c1319;border:1px solid #20303b;font-size:12px}
+  .leg .dot{width:10px;height:10px}
+  .map-note{font-size:12px;color:#9fb0bb;margin-top:6px}
+  code{background:#0b0f12;padding:2px 6px;border-radius:6px;border:1px solid #1f252b}
 </style>
 </head>
 <body>
-<div class="card">
-  <h1>🔗 Drive → URL de imagen → JSON (auto-coma por N)</h1>
+  <div class="wrap">
+    <div class="card grid2">
+      <!-- Columna izquierda -->
+      <div>
+        <h1>🔗 Drive → URL de imagen → JSON (auto-coma por N)</h1>
 
-  <div class="row">
-    <label>Link (o ID) de Google Drive</label>
-    <input id="inLink" placeholder="https://drive.google.com/file/d/ID/view... o solo el ID">
-    <div class="btns">
-      <button id="btnConv">Convertir</button>
-      <button id="btnCopyUrl">Copiar URL</button>
+        <div class="row">
+          <label>Link (o ID) de Google Drive</label>
+          <input id="inLink" placeholder="https://drive.google.com/file/d/ID/view... o solo el ID">
+          <div class="btns">
+            <button class="btn" id="btnConv">Convertir</button>
+            <button class="btn" id="btnCopyUrl">Copiar URL</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <label>URL directa (resultado)</label>
+          <textarea id="outUrl" readonly></textarea>
+          <div class="preview" id="preview"></div>
+        </div>
+
+        <div class="row">
+          <label>Selecciona DESTINO</label>
+          <div class="chips" id="chips">
+            <div class="chip" data-cat="discografia"><span class="dot"></span>Discografía</div>
+            <div class="chip" data-cat="movie"><span class="dot"></span>Movie</div>
+            <div class="chip" data-cat="news"><span class="dot"></span>News</div>
+          </div>
+          <small>Se guarda como <code>"destino": "discografia|movie|news"</code>. Tu web lo mapea con <code>SECTION_MAP</code>.</small>
+        </div>
+
+        <div class="row" style="grid-template-columns:1fr 160px;gap:10px">
+          <div>
+            <label>Título (opcional)</label>
+            <input id="inTitulo" placeholder="Ej: nueva noticia">
+          </div>
+          <div>
+            <label>Clave (N1–N5)</label>
+            <select id="selClave">
+              <option value="n1">n1</option>
+              <option value="n2">n2</option>
+              <option value="n3">n3</option>
+              <option value="n4">n4</option>
+              <option value="n5" selected>n5 (último → sin coma)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="btns">
+            <button class="btn" id="btnGen">Generar & Copiar</button>
+          </div>
+          <label>Fragmento para pegar dentro de <code>"news": { ... }</code></label>
+          <textarea id="outJson" readonly></textarea>
+        </div>
+      </div>
+
+      <!-- Columna derecha: visual -->
+      <div class="right">
+        <h2>Vista rápida & Mapita N1–N5</h2>
+        <div class="mini-news" id="miniNews">
+          <div class="tile big" data-k="n1"><span class="badge">N1</span><span class="lbl"></span></div>
+          <div class="tile" data-k="n2"><span class="badge">N2</span><span class="lbl"></span></div>
+          <div class="tile" data-k="n3"><span class="badge">N3</span><span class="lbl"></span></div>
+          <div class="tile" data-k="n4"><span class="badge">N4</span><span class="lbl"></span></div>
+          <div class="tile" data-k="n5"><span class="badge">N5</span><span class="lbl"></span></div>
+        </div>
+
+        <div class="legend">
+          <div class="leg"><span class="dot" style="background:var(--disc)"></span>Discografía</div>
+          <div class="leg"><span class="dot" style="background:var(--mov)"></span>Movie</div>
+          <div class="leg"><span class="dot" style="background:var(--news)"></span>News</div>
+        </div>
+        <div class="map-note">Haz clic en la **clave** o cambia el **destino** para ver cómo quedaría el grid. N5 se copia sin coma automáticamente.</div>
+
+        <h2 style="margin-top:14px">Alias válidos → URL en tu web</h2>
+        <pre style="background:#0b1116;border:1px solid #20303b;border-radius:10px;padding:10px;overflow:auto">
+discografia  →  Discography.html
+movie        →  movie.html
+news         →  https://jtenshix.github.io/J-tenshi-music/news.html
+        </pre>
+      </div>
     </div>
   </div>
-
-  <div class="row">
-    <label>URL directa (resultado)</label>
-    <textarea id="outUrl" readonly></textarea>
-    <div class="preview" id="preview"></div>
-  </div>
-
-  <div class="row">
-    <label>Selecciona DESTINO</label>
-    <div class="chips" id="chips">
-      <div class="chip" data-cat="discografia"><span class="dot"></span>Discografía</div>
-      <div class="chip" data-cat="movie"><span class="dot"></span>Movie</div>
-      <div class="chip" data-cat="news"><span class="dot"></span>News</div>
-    </div>
-    <small>Se guarda como <code>"destino": "discografia|movie|news"</code>. Tu web lo mapea con <code>SECTION_MAP</code>.</small>
-  </div>
-
-  <div class="row" style="grid-template-columns:1fr 160px;gap:10px">
-    <div>
-      <label>Título (opcional)</label>
-      <input id="inTitulo" placeholder="Ej: nueva noticia">
-    </div>
-    <div>
-      <label>Clave (elige una)</label>
-      <select id="selClave">
-        <option value="n1">n1</option>
-        <option value="n2">n2</option>
-        <option value="n3">n3</option>
-        <option value="n4">n4</option>
-        <option value="n5" selected>n5 (último → sin coma)</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="btns">
-      <button id="btnGen">Generar & Copiar</button>
-    </div>
-    <label>Fragmento para pegar dentro de <code>"news": { ... }</code></label>
-    <textarea id="outJson" readonly></textarea>
-  </div>
-
-  <small>Regla: si eliges **n5** → sin coma. Si eliges **n1–n4** → con coma.</small>
-</div>
 
 <script>
-  // ---- Helpers ----
+  // ===== Helpers comunes =====
   const $ = s => document.querySelector(s);
   const $$ = s => Array.from(document.querySelectorAll(s));
+  function copy(el){ el.select(); document.execCommand('copy'); }
 
-  // Extraer ID de Drive (robusto)
+  // ID de Drive robusto
   function getDriveId(raw){
     if(!raw) return null;
     const s = raw.trim();
@@ -117,19 +194,47 @@
     img.onerror = ()=>tryLoad(urls.slice(1), ok);
     img.src = u + (u.includes('?')?'&':'?')+'cb='+Date.now();
   }
-  function copy(el){ el.select(); document.execCommand('copy'); }
 
-  // ---- Chips de destino ----
-  let destino = localStorage.getItem('tenshi_dest') || 'discografia';
+  // ===== Estado: destino por N (para pintar el mapita) =====
+  const state = { n1:null, n2:null, n3:null, n4:null, n5:null };
+  let destinoSel = localStorage.getItem('tenshi_dest') || 'discografia';
+
   function renderChips(){
     $$('#chips .chip').forEach(c=>{
-      c.classList.toggle('active', c.dataset.cat===destino);
-      c.onclick = ()=>{destino=c.dataset.cat; localStorage.setItem('tenshi_dest',destino); renderChips();}
+      c.classList.toggle('active', c.dataset.cat===destinoSel);
+      c.onclick = ()=>{ destinoSel=c.dataset.cat; localStorage.setItem('tenshi_dest',destinoSel); renderChips(); applyCurrentToMap(); };
     });
   }
   renderChips();
 
-  // ---- Convertir link ----
+  function paintMap(){
+    $$('.mini-news .tile').forEach(tile=>{
+      const k = tile.dataset.k;
+      const d = state[k];
+      tile.classList.remove('discografia','movie','news');
+      if(d) tile.classList.add(d);
+      tile.querySelector('.lbl').textContent = d ? d : '';
+      tile.textContent = tile.textContent; // no-op
+    });
+    // re-add labels (keep simple)
+    $$('.mini-news .tile').forEach(tile=>{
+      const badge = tile.querySelector('.badge'); const lbl = tile.querySelector('.lbl');
+      if(!badge){ const b=document.createElement('span'); b.className='badge'; b.textContent=tile.dataset.k.toUpperCase(); tile.appendChild(b); }
+      if(!lbl){ const l=document.createElement('span'); l.className='lbl'; l.textContent=''; tile.appendChild(l); }
+    });
+  }
+
+  function applyCurrentToMap(){
+    const k = $('#selClave').value;   // n1..n5
+    state[k] = destinoSel;            // set destino para esa N
+    paintMap();
+  }
+
+  // Al cambiar clave, reflejar selección actual
+  $('#selClave').addEventListener('change', applyCurrentToMap);
+  applyCurrentToMap();
+
+  // ===== Convertir link =====
   $('#btnConv').onclick = ()=>{
     $('#preview').innerHTML = ''; $('#outUrl').value = '';
     const id = getDriveId($('#inLink').value);
@@ -137,27 +242,32 @@
     tryLoad(candidates(id), url=>{
       if(!url){ alert('No se pudo previsualizar (¿no es imagen?).'); $('#outUrl').value = candidates(id)[0]; return; }
       $('#outUrl').value = url;
-      $('#preview').innerHTML = `<div style="margin-top:8px"><img src="${url}" alt="preview"></div>`;
+      $('#preview').innerHTML = `<img src="${url}" alt="preview">`;
     });
   };
   $('#btnCopyUrl').onclick = ()=>copy($('#outUrl'));
 
-  // ---- Generar & Copiar JSON (coma automática según N) ----
+  // ===== Generar & Copiar JSON (coma automática según N) =====
   $('#btnGen').onclick = ()=>{
     const imagen = $('#outUrl').value.trim();
     if(!imagen){ alert('Convierte primero el link para obtener la URL.'); return; }
-    const clave  = $('#selClave').value; // n1..n5
+    const clave  = $('#selClave').value;   // n1..n5
     const titulo = $('#inTitulo').value.trim();
+    const destino = destinoSel;
 
     const obj = { imagen, destino };
     if(titulo) obj.titulo = titulo;
 
-    // Regla: si clave === n5 → SIN coma; si no → CON coma
+    // N5 sin coma; demás con coma
     const addComma = (clave !== 'n5');
     const frag = `"${clave}": ${JSON.stringify(obj, null, 2)}${addComma ? ',' : ''}`;
 
     $('#outJson').value = frag;
     copy($('#outJson'));
+
+    // Actualiza mapita para esa N (por si no estaba aplicada)
+    state[clave] = destino;
+    paintMap();
   };
 </script>
 </body>
