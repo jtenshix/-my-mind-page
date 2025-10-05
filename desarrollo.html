@@ -8,8 +8,8 @@
   :root{
     --bg:#0f2027; --panel:#000b; --ink:#f5f5f5; --acc:#ffcc70;
     --disc:#18a558; --mov:#d9534f; --news:#3b82f6; --card:#111; --bd:#222;
-    --gap:10px;            /* separación del grid */
-    --square:130px;        /* tamaño del cuadrado mini en el mapita */
+    --gap:12px;            /* separación del grid */
+    --square:130px;        /* lado del cuadrado (ajusta si quieres) */
     --thumbBg:#0e141a;     /* fondo detrás de la miniatura */
   }
   *{box-sizing:border-box}
@@ -56,14 +56,21 @@
   .right{background:#0b1116; border:1px solid var(--bd); border-radius:12px; padding:12px}
   .right h2{margin:0 0 10px; font-size:16px; opacity:.85}
 
-  /* === Mapita N1–N5 — TODAS LAS TARJETAS CUADRADAS === */
+  /* === Mapita N1–N5 — distribución EXACTA de tu web ===
+     n1 n1 n2 n3
+     n1 n1 n4 n5
+  */
   .mini-news{
     display:grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 columnas iguales */
-    grid-auto-rows: var(--square);         /* cada fila = --square */
+    grid-template-columns: repeat(4, 1fr); /* ¡4 columnas! */
+    grid-auto-rows: var(--square);         /* cada fila cuadrada */
     gap: var(--gap);
     align-items: stretch;
+    grid-template-areas:
+      "n1 n1 n2 n3"
+      "n1 n1 n4 n5";
   }
+
   .tile{
     position:relative;
     border-radius:12px;
@@ -73,14 +80,13 @@
     overflow:hidden;
     display:flex;
   }
-  .tile.big{
-    grid-column: span 2;  /* N1 ocupa 2 columnas */
-    grid-row: span 2;     /* y 2 filas => área 2x2 = cuadrado grande */
-  }
-  .tile.small{
-    grid-column: span 1;
-    grid-row: span 1;
-  }
+
+  /* asignación a sus áreas */
+  .tile[data-k="n1"]{ grid-area: n1; }
+  .tile[data-k="n2"]{ grid-area: n2; }
+  .tile[data-k="n3"]{ grid-area: n3; }
+  .tile[data-k="n4"]{ grid-area: n4; }
+  .tile[data-k="n5"]{ grid-area: n5; }
 
   .thumb{
     width:100%;
@@ -90,13 +96,7 @@
     background-size:cover;
     background-position:center;
     box-shadow: inset 0 0 0 1px #0003;
-  }
-
-  /* cuadrados perfectos para todas las miniaturas */
-  .tile.small .thumb,
-  .tile.big   .thumb{
-    aspect-ratio: 1 / 1;  /* fuerza cuadrado */
-    height:auto;
+    aspect-ratio: 1 / 1; /* TODOS cuadrados (N1 incluido) */
   }
 
   /* Badges */
@@ -174,11 +174,11 @@
       <div class="right">
         <h2>Preview N1–N5</h2>
         <div class="mini-news" id="miniNews">
-          <div class="tile big"   data-k="n1"><span class="badge">N1</span><span class="lbl"></span><div class="thumb"></div></div>
-          <div class="tile small" data-k="n2"><span class="badge">N2</span><span class="lbl"></span><div class="thumb"></div></div>
-          <div class="tile small" data-k="n3"><span class="badge">N3</span><span class="lbl"></span><div class="thumb"></div></div>
-          <div class="tile small" data-k="n4"><span class="badge">N4</span><span class="lbl"></span><div class="thumb"></div></div>
-          <div class="tile small" data-k="n5"><span class="badge">N5</span><span class="lbl"></span><div class="thumb"></div></div>
+          <div class="tile" data-k="n1"><span class="badge">N1</span><span class="lbl"></span><div class="thumb"></div></div>
+          <div class="tile" data-k="n2"><span class="badge">N2</span><span class="lbl"></span><div class="thumb"></div></div>
+          <div class="tile" data-k="n3"><span class="badge">N3</span><span class="lbl"></span><div class="thumb"></div></div>
+          <div class="tile" data-k="n4"><span class="badge">N4</span><span class="lbl"></span><div class="thumb"></div></div>
+          <div class="tile" data-k="n5"><span class="badge">N5</span><span class="lbl"></span><div class="thumb"></div></div>
         </div>
       </div>
     </div>
@@ -248,7 +248,6 @@
       const isCurrent = (k === currentN);
       const thumb = tile.querySelector('.thumb');
 
-      // reset estilos de tile
       tile.classList.remove('sel-discografia','sel-movie','sel-news');
 
       // preview solo en el N actual
@@ -261,7 +260,7 @@
         if (destinoSel === 'news')        tile.classList.add('sel-news');
       }
 
-      // etiqueta (lo último guardado) — se muestra tenue cuando no es el actual
+      // etiqueta de lo último guardado
       const lbl = tile.querySelector('.lbl');
       lbl.textContent = saved[k] ? saved[k] : '';
       lbl.classList.toggle('muted', !!saved[k] && !isCurrent);
