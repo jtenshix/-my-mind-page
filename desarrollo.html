@@ -1,302 +1,158 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Convertidor Links Drive → Imagen (con categorías)</title>
-  <style>
-    :root{
-      --bg1:#0f2027; --bg2:#203a43; --bg3:#2c5364;
-      --panel: rgba(0,0,0,.85);
-      --txt:#f5f5f5; --accent:#ffcc70; --accent-hover:#ffaa00;
-      --disc:#18a558; --movie:#d9534f; --news:#3b82f6;
-    }
-    *{ box-sizing:border-box }
-    body{
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3));
-      color: var(--txt); margin:0; padding:0;
-      min-height:100vh; display:flex; justify-content:center; align-items:center;
-    }
-    .container{
-      background: var(--panel); padding: 26px; border-radius: 14px;
-      width: min(92vw, 780px); box-shadow: 0 10px 30px rgba(0,0,0,.6);
-    }
-    h1{ font-size: 22px; margin: 0 0 18px; color: var(--accent); text-align:center }
-    .row{ display:grid; gap:12px; }
-    label{ font-size:13px; opacity:.9 }
-    input[type="text"], textarea{
-      width: 100%; padding: 10px 12px; border-radius: 10px; border: none;
-      font-size: 14px; background: #111; color: #fff; outline: none;
-    }
-    textarea{ height: 70px; resize: none }
-    .btns{ display:flex; flex-wrap:wrap; gap:8px; margin-top:6px }
-    button{
-      padding: 9px 14px; border: none; border-radius: 10px;
-      background: var(--accent); color:#222; font-size:14px; cursor:pointer; transition:.25s;
-    }
-    button:hover{ background: var(--accent-hover) }
-    .cats{ display:flex; gap:10px; flex-wrap:wrap; margin: 6px 0 2px; }
-    .chip{
-      display:inline-flex; align-items:center; gap:8px; background:#111; border:2px solid transparent;
-      color:#fff; border-radius:999px; padding:7px 12px; cursor:pointer; user-select:none; transition:.2s;
-    }
-    .chip input{ display:none }
-    .dot{ width:12px; height:12px; border-radius:999px }
-    .chip[data-cat="discografia"] .dot{ background: var(--disc) }
-    .chip[data-cat="movie"] .dot{ background: var(--movie) }
-    .chip[data-cat="news"] .dot{ background: var(--news) }
-    .chip.active[data-cat="discografia"]{ border-color: var(--disc) }
-    .chip.active[data-cat="movie"]{ border-color: var(--movie) }
-    .chip.active[data-cat="news"]{ border-color: var(--news) }
-    .preview{ margin-top: 14px; text-align:center }
-    .preview img{ max-width:100%; border-radius:12px; border:2px solid #444 }
-    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:12px }
-    @media (max-width:720px){ .grid2{ grid-template-columns: 1fr } }
-    .small{ font-size:12px; opacity:.8; margin-top:3px }
-    .outblock{ background:#0b0b0b; padding:12px; border-radius:10px; border:1px solid #222 }
-    .title-row{ display:grid; gap:8px; grid-template-columns: 1fr 140px }
-    @media (max-width:560px){ .title-row{ grid-template-columns: 1fr } }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Convertidor Drive → JSON (solo destino)</title>
+<style>
+  body{font-family:system-ui,Arial;background:#0f2027;color:#f5f5f5;margin:0;min-height:100vh;display:grid;place-items:center}
+  .card{background:#000b;border:1px solid #222;padding:22px;border-radius:14px;width:min(92vw,760px);box-shadow:0 10px 30px #0008}
+  h1{margin:0 0 12px;color:#ffcc70;font-size:20px}
+  label{font-size:13px;opacity:.9}
+  input,textarea{width:100%;padding:10px 12px;border-radius:10px;border:none;background:#111;color:#fff;font-size:14px}
+  textarea{height:90px;resize:none}
+  .row{display:grid;gap:10px;margin:8px 0}
+  .btns{display:flex;flex-wrap:wrap;gap:8px}
+  button{border:none;border-radius:10px;background:#ffcc70;color:#222;padding:9px 14px;cursor:pointer}
+  .chips{display:flex;gap:10px}
+  .chip{display:inline-flex;align-items:center;gap:8px;background:#111;border:2px solid transparent;border-radius:999px;padding:7px 12px;cursor:pointer}
+  .dot{width:12px;height:12px;border-radius:999px}
+  .chip[data-cat="discografia"] .dot{background:#18a558}
+  .chip[data-cat="movie"] .dot{background:#d9534f}
+  .chip[data-cat="news"] .dot{background:#3b82f6}
+  .chip.active[data-cat="discografia"]{border-color:#18a558}
+  .chip.active[data-cat="movie"]{border-color:#d9534f}
+  .chip.active[data-cat="news"]{border-color:#3b82f6}
+  .preview img{max-width:100%;border-radius:10px;border:2px solid #333}
+  small{opacity:.8}
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>🔗 Convertidor Google Drive → Imagen</h1>
+<div class="card">
+  <h1>🔗 Drive → URL de imagen → JSON (destino)</h1>
 
-    <div class="row" style="margin-bottom:14px">
-      <label for="driveLink">Pega tu link (cualquier formato de Google Drive o solo el ID)</label>
-      <input id="driveLink" type="text" placeholder="https://drive.google.com/file/d/ID/view?usp=sharing • open?id=ID • uc?id=ID • lh3 • solo ID…" />
-      <div class="btns">
-        <button id="btnConvertir">Convertir</button>
-        <button id="btnCopiarUrl">Copiar URL directa</button>
-      </div>
-    </div>
-
-    <div class="row outblock">
-      <label>Resultado (URL directa de imagen)</label>
-      <textarea id="resultado" readonly></textarea>
-      <div class="small" id="notaModo"></div>
-      <div class="preview" id="preview"></div>
-    </div>
-
-    <div class="row" style="margin-top:16px">
-      <label>Selecciona la categoría (colores):</label>
-      <div class="cats" id="cats">
-        <label class="chip" data-cat="discografia"><input type="radio" name="cat" value="discografia"><span class="dot"></span> Discografía</label>
-        <label class="chip" data-cat="movie"><input type="radio" name="cat" value="movie"><span class="dot"></span> Movie</label>
-        <label class="chip" data-cat="news"><input type="radio" name="cat" value="news"><span class="dot"></span> News</label>
-      </div>
-      <div class="small">Esto solo define el campo <code>"destino"</code> para pegarlo en tu <code>catalogo.json</code>.</div>
-    </div>
-
-    <div class="row grid2" style="margin-top:10px">
-      <div class="outblock">
-        <div class="title-row">
-          <div>
-            <label for="titulo">Título (opcional, para tu JSON)</label>
-            <input id="titulo" type="text" placeholder="Ej: Nuevo wallpaper / Nueva canción" />
-          </div>
-          <div>
-            <label for="clave">Clave de noticia</label>
-            <input id="clave" type="text" value="n1" />
-          </div>
-        </div>
-        <div class="btns" style="margin-top:10px">
-          <button id="btnGenerarJson">Generar JSON</button>
-          <button id="btnCopiarJson">Copiar JSON</button>
-        </div>
-        <label class="small">Fragmento para <code>"news"</code> en tu <code>catalogo.json</code>:</label>
-        <textarea id="salidaJson" readonly></textarea>
-      </div>
-
-      <div class="outblock">
-        <label>Destino directo (si prefieres forzar URL en vez de alias)</label>
-        <div class="btns" style="margin-top:6px">
-          <button id="btnDestinoDisc">discografia</button>
-          <button id="btnDestinoMovie">movie</button>
-          <button id="btnDestinoNews">news</button>
-        </div>
-        <div class="small">También puedes usar <code>"link"</code> directo (por ejemplo tu página de news absoluta).</div>
-        <div class="btns" style="margin-top:10px">
-          <button id="btnGenerarJsonLink">Generar JSON con link</button>
-          <button id="btnCopiarJsonLink">Copiar JSON con link</button>
-        </div>
-        <textarea id="salidaJsonLink" readonly></textarea>
-      </div>
-    </div>
-
-    <div class="row" style="margin-top:16px">
-      <div class="small">Alias válidos y cómo los usas en tu web:</div>
-      <div class="outblock">
-        <pre style="margin:0; white-space:pre-wrap; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12.5px; color:#ddd">
-discografia → "Discography.html"
-movie       → "movie.html"
-news        → "https://jtenshix.github.io/J-tenshi-music/news.html"
-        </pre>
-      </div>
+  <div class="row">
+    <label>Link (o ID) de Google Drive</label>
+    <input id="inLink" placeholder="https://drive.google.com/file/d/ID/view... o solo el ID">
+    <div class="btns">
+      <button id="btnConv">Convertir</button>
+      <button id="btnCopyUrl">Copiar URL</button>
     </div>
   </div>
 
-  <script>
-    // ---------- Utils ----------
-    const $  = (s) => document.querySelector(s);
-    const $$ = (s) => Array.from(document.querySelectorAll(s));
+  <div class="row">
+    <label>URL directa (resultado)</label>
+    <textarea id="outUrl" readonly></textarea>
+    <div class="preview" id="preview"></div>
+  </div>
 
-    // Extrae ID de casi cualquier link de Drive (o acepta ID directo)
-    function extraerIdDrive(raw){
-      if(!raw) return null;
-      const s = raw.trim();
+  <div class="row">
+    <label>Selecciona DESTINO (adónde navegará la tarjeta)</label>
+    <div class="chips" id="chips">
+      <div class="chip" data-cat="discografia"><span class="dot"></span>Discografía</div>
+      <div class="chip" data-cat="movie"><span class="dot"></span>Movie</div>
+      <div class="chip" data-cat="news"><span class="dot"></span>News</div>
+    </div>
+    <small>Se guarda como <code>"destino": "discografia|movie|news"</code>. Tu web lo mapea con <code>SECTION_MAP</code>.</small>
+  </div>
 
-      // 0) Si pegaste solo el ID (25+ chars alfanum/guion/guion bajo)
-      const soloId = s.match(/^[A-Za-z0-9_-]{25,}$/);
-      if (soloId) return soloId[0];
+  <div class="row" style="grid-template-columns:1fr 140px;gap:10px">
+    <div>
+      <label>Título (opcional)</label>
+      <input id="inTitulo" placeholder="Ej: nueva cancion">
+    </div>
+    <div>
+      <label>Clave (n1, n2...)</label>
+      <input id="inClave" value="n1">
+    </div>
+  </div>
 
-      // 1) Si ya es un lh3.googleusercontent con /d/ID
-      try {
-        const u = new URL(s);
+  <div class="row">
+    <div class="btns">
+      <button id="btnGen">Generar JSON</button>
+      <button id="btnCopy">Copiar (sin coma)</button>
+      <button id="btnCopyComma">Copiar (con coma)</button>
+    </div>
+    <label>Fragmento para pegar dentro de <code>"news": { ... }</code></label>
+    <textarea id="outJson" readonly></textarea>
+  </div>
 
-        // /file/d/ID/...
-        const mFile = u.pathname.match(/\/file\/d\/([A-Za-z0-9_-]{10,})/);
-        if (mFile) return mFile[1];
+  <small>Atajo mental: **imagen** (la URL convertida) + **destino** (apodo). Fin. No necesitas “con link”.</small>
+</div>
 
-        // /d/ID/...
-        const mD = u.pathname.match(/\/d\/([A-Za-z0-9_-]{10,})/);
-        if (mD) return mD[1];
+<script>
+  // --- Helpers ---
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
 
-        // ?id=ID (uc, open, thumbnail, export=download…)
-        const byId = u.searchParams.get('id');
-        if (byId && /^[A-Za-z0-9_-]{10,}$/.test(byId)) return byId;
+  // ID de Drive ultrarobusto
+  function getDriveId(raw){
+    if(!raw) return null;
+    const s = raw.trim();
+    const solo = s.match(/^[A-Za-z0-9_-]{25,}$/); if(solo) return solo[0];
+    try{
+      const u = new URL(s);
+      const m1 = u.pathname.match(/\/file\/d\/([A-Za-z0-9_-]{10,})/); if(m1) return m1[1];
+      const m2 = u.pathname.match(/\/d\/([A-Za-z0-9_-]{10,})/); if(m2) return m2[1];
+      const q  = u.searchParams.get('id'); if(q && /^[A-Za-z0-9_-]{10,}$/.test(q)) return q;
+    }catch{}
+    const any = s.match(/[-\w]{25,}/); return any ? any[0] : null;
+  }
+  function candidates(id){
+    return [
+      `https://lh3.googleusercontent.com/d/${id}`,
+      `https://drive.google.com/uc?export=view&id=${id}`,
+      `https://drive.google.com/thumbnail?id=${id}`,
+      `https://drive.google.com/uc?export=download&id=${id}`
+    ];
+  }
+  function tryLoad(urls, ok){
+    if(!urls.length) return ok(null);
+    const u = urls[0]; const img = new Image();
+    img.onload = ()=>ok(u);
+    img.onerror = ()=>tryLoad(urls.slice(1), ok);
+    img.src = u + (u.includes('?')?'&':'?')+'cb='+Date.now();
+  }
+  function copy(el){ el.select(); document.execCommand('copy'); }
 
-        // A veces viene “resourcekey” además; no nos importa para ID.
-
-      } catch (e) {
-        // No era URL válida; seguimos abajo con regex global
-      }
-
-      // 2) Fallback: busca un token largo tipo ID en toda la cadena
-      const any = s.match(/[-\w]{25,}/);
-      return any ? any[0] : null;
-    }
-
-    // Genera candidatos de URL directa (intentamos en cascada)
-    function candidatosDirectos(id){
-      return [
-        { url: `https://lh3.googleusercontent.com/d/${id}`, note: 'lh3 (rápido)' },
-        { url: `https://drive.google.com/uc?export=view&id=${id}`, note: 'uc?export=view' },
-        { url: `https://drive.google.com/thumbnail?id=${id}`, note: 'thumbnail' },
-        { url: `https://drive.google.com/uc?export=download&id=${id}`, note: 'uc?export=download' }
-      ];
-    }
-
-    // Intenta cargar la imagen con fallback entre candidatos
-    function probarCandidatos(cands, onOk, onFail){
-      if (!cands.length) { onFail?.(); return; }
-      const { url, note } = cands[0];
-      const img = new Image();
-      img.onload = () => onOk(url, note);
-      img.onerror = () => probarCandidatos(cands.slice(1), onOk, onFail);
-      img.referrerPolicy = 'no-referrer';
-      img.src = url + (url.includes('?') ? '&' : '?') + 'cachebust=' + Date.now();
-    }
-
-    function copiarTexto(el){
-      el.select();
-      document.execCommand("copy");
-    }
-
-    // ---------- Categorías (chips) ----------
-    const CAT_KEY = "tenshi_cat";
-    function getCat(){ return localStorage.getItem(CAT_KEY) || "discografia"; }
-    function setCat(cat){ localStorage.setItem(CAT_KEY, cat); }
-
-    (function initChips(){
-      const catInicial = getCat();
-      const chips = $$("#cats .chip");
-      chips.forEach(ch => {
-        const val = ch.getAttribute("data-cat");
-        const input = ch.querySelector('input[type="radio"]');
-        if(val === catInicial) { ch.classList.add("active"); input.checked = true; }
-        ch.addEventListener("click", () => {
-          chips.forEach(c => c.classList.remove("active"));
-          ch.classList.add("active");
-          input.checked = true;
-          setCat(val);
-        });
-      });
-    })();
-
-    // ---------- Botones ----------
-    $("#btnConvertir").addEventListener("click", () => {
-      $("#preview").innerHTML = "";
-      $("#resultado").value = "";
-      $("#notaModo").textContent = "";
-
-      const link = $("#driveLink").value.trim();
-      const id = extraerIdDrive(link);
-
-      if(!id){
-        alert("❌ Link no válido. Asegúrate de pegar un link/ID de *archivo* de Google Drive (no carpeta).");
-        return;
-      }
-
-      const cands = candidatosDirectos(id);
-      probarCandidatos(
-        cands,
-        (okUrl, note) => {
-          $("#resultado").value = okUrl;
-          $("#notaModo").textContent = `Modo: ${note}`;
-          $("#preview").innerHTML = `<p style="margin:6px 0 8px">Vista previa:</p><img src="${okUrl}" alt="Preview">`;
-        },
-        () => {
-          $("#resultado").value = cands[0].url; // igualmente te dejo la primera
-          $("#notaModo").textContent = "No se pudo previsualizar (¿no es imagen?). URL generada igualmente.";
-          $("#preview").innerHTML = "";
-        }
-      );
+  // --- UI chips destino ---
+  let destino = localStorage.getItem('tenshi_dest') || 'discografia';
+  function renderChips(){
+    $$('#chips .chip').forEach(c=>{
+      c.classList.toggle('active', c.dataset.cat===destino);
+      c.onclick = ()=>{destino=c.dataset.cat; localStorage.setItem('tenshi_dest',destino); renderChips();}
     });
+  }
+  renderChips();
 
-    $("#btnCopiarUrl").addEventListener("click", () => copiarTexto($("#resultado")));
-
-    // ---------- JSON con destino (alias) ----------
-    $("#btnGenerarJson").addEventListener("click", () => {
-      const url = $("#resultado").value.trim();
-      if(!url){ alert("Convierte primero el link para obtener la URL directa."); return; }
-      const titulo = $("#titulo").value.trim();
-      const clave  = $("#clave").value.trim() || "n1";
-      const destino = getCat();
-
-      const obj = { imagen: url, destino };
-      if(titulo) obj.titulo = titulo;
-
-      const json = `"${clave}": ${JSON.stringify(obj, null, 2)}`;
-      $("#salidaJson").value = json;
+  // --- Convertir ---
+  $('#btnConv').onclick = ()=>{
+    $('#preview').innerHTML = ''; $('#outUrl').value = '';
+    const id = getDriveId($('#inLink').value);
+    if(!id){ alert('❌ Link/ID de Drive no válido'); return; }
+    tryLoad(candidates(id), url=>{
+      if(!url){ alert('No se pudo previsualizar (¿no es imagen?).'); $('#outUrl').value = candidates(id)[0]; return; }
+      $('#outUrl').value = url;
+      $('#preview').innerHTML = `<div style="margin-top:8px"><img src="${url}" alt="preview"></div>`;
     });
-    $("#btnCopiarJson").addEventListener("click", () => copiarTexto($("#salidaJson")));
+  };
+  $('#btnCopyUrl').onclick = ()=>copy($('#outUrl'));
 
-    // ---------- JSON con link directo ----------
-    const DESTINOS = {
-      discografia: "Discography.html",
-      movie: "movie.html",
-      news: "https://jtenshix.github.io/J-tenshi-music/news.html"
-    };
-    $("#btnDestinoDisc").addEventListener("click", ()=> setCat("discografia"));
-    $("#btnDestinoMovie").addEventListener("click", ()=> setCat("movie"));
-    $("#btnDestinoNews").addEventListener("click", ()=> setCat("news"));
-
-    $("#btnGenerarJsonLink").addEventListener("click", () => {
-      const url = $("#resultado").value.trim();
-      if(!url){ alert("Convierte primero el link para obtener la URL directa."); return; }
-      const titulo = $("#titulo").value.trim();
-      const clave  = $("#clave").value.trim() || "n1";
-      const cat    = getCat();
-      const link   = DESTINOS[cat] || "#";
-
-      const obj = { imagen: url, link };
-      if(titulo) obj.titulo = titulo;
-
-      $("#salidaJsonLink").value = `"${clave}": ${JSON.stringify(obj, null, 2)}`;
-    });
-    $("#btnCopiarJsonLink").addEventListener("click", () => copiarTexto($("#salidaJsonLink")));
-  </script>
+  // --- Generar JSON (solo destino) ---
+  function buildJson(addComma=false){
+    const imagen = $('#outUrl').value.trim();
+    if(!imagen){ alert('Convierte primero el link para obtener la URL.'); return; }
+    const clave  = ($('#inClave').value.trim()||'n1');
+    const titulo = $('#inTitulo').value.trim();
+    const obj = { imagen, destino };
+    if(titulo) obj.titulo = titulo;
+    const frag = `"${clave}": ${JSON.stringify(obj, null, 2)}${addComma?',':''}`;
+    $('#outJson').value = frag;
+    return frag;
+  }
+  $('#btnGen').onclick = ()=>buildJson(false);
+  $('#btnCopy').onclick = ()=>{ if(buildJson(false)) copy($('#outJson')); };
+  $('#btnCopyComma').onclick = ()=>{ if(buildJson(true))  copy($('#outJson')); };
+</script>
 </body>
 </html>
