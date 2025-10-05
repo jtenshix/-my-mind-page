@@ -9,24 +9,18 @@
       --bg1:#0f2027; --bg2:#203a43; --bg3:#2c5364;
       --panel: rgba(0,0,0,.85);
       --txt:#f5f5f5; --accent:#ffcc70; --accent-hover:#ffaa00;
-      --disc:#18a558; /* verde discografía */
-      --movie:#d9534f;/* rojo movie */
-      --news:#3b82f6; /* azul news */
+      --disc:#18a558; --movie:#d9534f; --news:#3b82f6;
     }
     *{ box-sizing:border-box }
     body{
       font-family: Arial, sans-serif;
       background: linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3));
-      color: var(--txt);
-      margin:0; padding:0;
+      color: var(--txt); margin:0; padding:0;
       min-height:100vh; display:flex; justify-content:center; align-items:center;
     }
     .container{
-      background: var(--panel);
-      padding: 26px;
-      border-radius: 14px;
-      width: min(92vw, 780px);
-      box-shadow: 0 10px 30px rgba(0,0,0,.6);
+      background: var(--panel); padding: 26px; border-radius: 14px;
+      width: min(92vw, 780px); box-shadow: 0 10px 30px rgba(0,0,0,.6);
     }
     h1{ font-size: 22px; margin: 0 0 18px; color: var(--accent); text-align:center }
     .row{ display:grid; gap:12px; }
@@ -42,29 +36,21 @@
       background: var(--accent); color:#222; font-size:14px; cursor:pointer; transition:.25s;
     }
     button:hover{ background: var(--accent-hover) }
-
-    /* Selector de categoría con “chips” de color */
-    .cats{
-      display:flex; gap:10px; flex-wrap:wrap; margin: 6px 0 2px;
-    }
+    .cats{ display:flex; gap:10px; flex-wrap:wrap; margin: 6px 0 2px; }
     .chip{
-      display:inline-flex; align-items:center; gap:8px;
-      background: #111; border: 2px solid transparent; color:#fff;
-      border-radius: 999px; padding:7px 12px; cursor:pointer; user-select:none;
-      transition:.2s;
+      display:inline-flex; align-items:center; gap:8px; background:#111; border:2px solid transparent;
+      color:#fff; border-radius:999px; padding:7px 12px; cursor:pointer; user-select:none; transition:.2s;
     }
     .chip input{ display:none }
     .dot{ width:12px; height:12px; border-radius:999px }
     .chip[data-cat="discografia"] .dot{ background: var(--disc) }
-    .chip[data-cat="movie"]       .dot{ background: var(--movie) }
-    .chip[data-cat="news"]        .dot{ background: var(--news) }
+    .chip[data-cat="movie"] .dot{ background: var(--movie) }
+    .chip[data-cat="news"] .dot{ background: var(--news) }
     .chip.active[data-cat="discografia"]{ border-color: var(--disc) }
-    .chip.active[data-cat="movie"]      { border-color: var(--movie) }
-    .chip.active[data-cat="news"]       { border-color: var(--news) }
-
+    .chip.active[data-cat="movie"]{ border-color: var(--movie) }
+    .chip.active[data-cat="news"]{ border-color: var(--news) }
     .preview{ margin-top: 14px; text-align:center }
     .preview img{ max-width:100%; border-radius:12px; border:2px solid #444 }
-
     .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:12px }
     @media (max-width:720px){ .grid2{ grid-template-columns: 1fr } }
     .small{ font-size:12px; opacity:.8; margin-top:3px }
@@ -78,8 +64,8 @@
     <h1>🔗 Convertidor Google Drive → Imagen</h1>
 
     <div class="row" style="margin-bottom:14px">
-      <label for="driveLink">Pega tu link de Google Drive</label>
-      <input id="driveLink" type="text" placeholder="https://drive.google.com/file/d/ABC123.../view?usp=sharing" />
+      <label for="driveLink">Pega tu link (cualquier formato de Google Drive o solo el ID)</label>
+      <input id="driveLink" type="text" placeholder="https://drive.google.com/file/d/ID/view?usp=sharing • open?id=ID • uc?id=ID • lh3 • solo ID…" />
       <div class="btns">
         <button id="btnConvertir">Convertir</button>
         <button id="btnCopiarUrl">Copiar URL directa</button>
@@ -89,6 +75,7 @@
     <div class="row outblock">
       <label>Resultado (URL directa de imagen)</label>
       <textarea id="resultado" readonly></textarea>
+      <div class="small" id="notaModo"></div>
       <div class="preview" id="preview"></div>
     </div>
 
@@ -151,19 +138,65 @@ news        → "https://jtenshix.github.io/J-tenshi-music/news.html"
   </div>
 
   <script>
-    // --- Helpers ---
-    const $ = (s) => document.querySelector(s);
+    // ---------- Utils ----------
+    const $  = (s) => document.querySelector(s);
     const $$ = (s) => Array.from(document.querySelectorAll(s));
 
-    function extraerIdDrive(link){
-      if(!link) return null;
-      // Busca ID por patrones comunes
-      const m = link.match(/[-\\w]{25,}/);
-      return m ? m[0] : null;
+    // Extrae ID de casi cualquier link de Drive (o acepta ID directo)
+    function extraerIdDrive(raw){
+      if(!raw) return null;
+      const s = raw.trim();
+
+      // 0) Si pegaste solo el ID (25+ chars alfanum/guion/guion bajo)
+      const soloId = s.match(/^[A-Za-z0-9_-]{25,}$/);
+      if (soloId) return soloId[0];
+
+      // 1) Si ya es un lh3.googleusercontent con /d/ID
+      try {
+        const u = new URL(s);
+
+        // /file/d/ID/...
+        const mFile = u.pathname.match(/\/file\/d\/([A-Za-z0-9_-]{10,})/);
+        if (mFile) return mFile[1];
+
+        // /d/ID/...
+        const mD = u.pathname.match(/\/d\/([A-Za-z0-9_-]{10,})/);
+        if (mD) return mD[1];
+
+        // ?id=ID (uc, open, thumbnail, export=download…)
+        const byId = u.searchParams.get('id');
+        if (byId && /^[A-Za-z0-9_-]{10,}$/.test(byId)) return byId;
+
+        // A veces viene “resourcekey” además; no nos importa para ID.
+
+      } catch (e) {
+        // No era URL válida; seguimos abajo con regex global
+      }
+
+      // 2) Fallback: busca un token largo tipo ID en toda la cadena
+      const any = s.match(/[-\w]{25,}/);
+      return any ? any[0] : null;
     }
 
-    function aDirectLink(fileId){
-      return `https://lh3.googleusercontent.com/d/${fileId}`;
+    // Genera candidatos de URL directa (intentamos en cascada)
+    function candidatosDirectos(id){
+      return [
+        { url: `https://lh3.googleusercontent.com/d/${id}`, note: 'lh3 (rápido)' },
+        { url: `https://drive.google.com/uc?export=view&id=${id}`, note: 'uc?export=view' },
+        { url: `https://drive.google.com/thumbnail?id=${id}`, note: 'thumbnail' },
+        { url: `https://drive.google.com/uc?export=download&id=${id}`, note: 'uc?export=download' }
+      ];
+    }
+
+    // Intenta cargar la imagen con fallback entre candidatos
+    function probarCandidatos(cands, onOk, onFail){
+      if (!cands.length) { onFail?.(); return; }
+      const { url, note } = cands[0];
+      const img = new Image();
+      img.onload = () => onOk(url, note);
+      img.onerror = () => probarCandidatos(cands.slice(1), onOk, onFail);
+      img.referrerPolicy = 'no-referrer';
+      img.src = url + (url.includes('?') ? '&' : '?') + 'cachebust=' + Date.now();
     }
 
     function copiarTexto(el){
@@ -171,16 +204,11 @@ news        → "https://jtenshix.github.io/J-tenshi-music/news.html"
       document.execCommand("copy");
     }
 
-    // --- Persistencia simple de categoría ---
+    // ---------- Categorías (chips) ----------
     const CAT_KEY = "tenshi_cat";
-    function getCat(){
-      return localStorage.getItem(CAT_KEY) || "discografia";
-    }
-    function setCat(cat){
-      localStorage.setItem(CAT_KEY, cat);
-    }
+    function getCat(){ return localStorage.getItem(CAT_KEY) || "discografia"; }
+    function setCat(cat){ localStorage.setItem(CAT_KEY, cat); }
 
-    // --- UI init: activar chip guardado ---
     (function initChips(){
       const catInicial = getCat();
       const chips = $$("#cats .chip");
@@ -197,41 +225,55 @@ news        → "https://jtenshix.github.io/J-tenshi-music/news.html"
       });
     })();
 
-    // --- Botones principales ---
+    // ---------- Botones ----------
     $("#btnConvertir").addEventListener("click", () => {
+      $("#preview").innerHTML = "";
+      $("#resultado").value = "";
+      $("#notaModo").textContent = "";
+
       const link = $("#driveLink").value.trim();
       const id = extraerIdDrive(link);
+
       if(!id){
-        alert("❌ Link no válido. Revisa que sea un link de Google Drive.");
+        alert("❌ Link no válido. Asegúrate de pegar un link/ID de *archivo* de Google Drive (no carpeta).");
         return;
       }
-      const url = aDirectLink(id);
-      $("#resultado").value = url;
-      $("#preview").innerHTML = `<p style="margin:6px 0 8px">Vista previa:</p><img src="${url}" alt="Preview">`;
+
+      const cands = candidatosDirectos(id);
+      probarCandidatos(
+        cands,
+        (okUrl, note) => {
+          $("#resultado").value = okUrl;
+          $("#notaModo").textContent = `Modo: ${note}`;
+          $("#preview").innerHTML = `<p style="margin:6px 0 8px">Vista previa:</p><img src="${okUrl}" alt="Preview">`;
+        },
+        () => {
+          $("#resultado").value = cands[0].url; // igualmente te dejo la primera
+          $("#notaModo").textContent = "No se pudo previsualizar (¿no es imagen?). URL generada igualmente.";
+          $("#preview").innerHTML = "";
+        }
+      );
     });
 
     $("#btnCopiarUrl").addEventListener("click", () => copiarTexto($("#resultado")));
 
-    // --- Generar JSON usando 'destino' (alias de color/categoría) ---
+    // ---------- JSON con destino (alias) ----------
     $("#btnGenerarJson").addEventListener("click", () => {
       const url = $("#resultado").value.trim();
       if(!url){ alert("Convierte primero el link para obtener la URL directa."); return; }
       const titulo = $("#titulo").value.trim();
       const clave  = $("#clave").value.trim() || "n1";
-      const destino = getCat(); // discografia | movie | news
+      const destino = getCat();
 
-      // Construye objeto
       const obj = { imagen: url, destino };
       if(titulo) obj.titulo = titulo;
 
-      // Render bonito
       const json = `"${clave}": ${JSON.stringify(obj, null, 2)}`;
       $("#salidaJson").value = json;
     });
-
     $("#btnCopiarJson").addEventListener("click", () => copiarTexto($("#salidaJson")));
 
-    // --- Botones destino directo (para JSON con 'link') ---
+    // ---------- JSON con link directo ----------
     const DESTINOS = {
       discografia: "Discography.html",
       movie: "movie.html",
@@ -241,7 +283,6 @@ news        → "https://jtenshix.github.io/J-tenshi-music/news.html"
     $("#btnDestinoMovie").addEventListener("click", ()=> setCat("movie"));
     $("#btnDestinoNews").addEventListener("click", ()=> setCat("news"));
 
-    // --- Generar JSON usando 'link' directo en vez de 'destino' ---
     $("#btnGenerarJsonLink").addEventListener("click", () => {
       const url = $("#resultado").value.trim();
       if(!url){ alert("Convierte primero el link para obtener la URL directa."); return; }
@@ -253,10 +294,8 @@ news        → "https://jtenshix.github.io/J-tenshi-music/news.html"
       const obj = { imagen: url, link };
       if(titulo) obj.titulo = titulo;
 
-      const json = `"${clave}": ${JSON.stringify(obj, null, 2)}`;
-      $("#salidaJsonLink").value = json;
+      $("#salidaJsonLink").value = `"${clave}": ${JSON.stringify(obj, null, 2)}`;
     });
-
     $("#btnCopiarJsonLink").addEventListener("click", () => copiarTexto($("#salidaJsonLink")));
   </script>
 </body>
