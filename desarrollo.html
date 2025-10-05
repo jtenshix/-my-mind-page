@@ -7,10 +7,8 @@
 <style>
   :root{
     --bg:#0f2027; --panel:#000b; --ink:#f5f5f5; --acc:#ffcc70;
-    --disc:#18a558; --mov:#d9534f; --news:#3b82f6; --card:#111; --bd:#222;
-    --gap:12px;
-    --cell:130px;           /* tamaño de cada cuadrito del mapa */
-    --thumbBg:#0e141a;
+    --disc:#18a558; --mov:#d9534f; --news:#3b82f6; --gal:#a855f7; /* NEW gallery */
+    --card:#111; --bd:#222; --gap:12px; --cell:130px; --thumbBg:#0e141a;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Arial,sans-serif;}
@@ -40,22 +38,27 @@
   .grid2{display:grid; grid-template-columns: 1.25fr .95fr; gap:16px;}
   @media (max-width:900px){ .grid2{grid-template-columns: 1fr} }
 
+  /* chips */
   .chips{display:flex;gap:10px;flex-wrap:wrap}
   .chip{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:2px solid transparent;border-radius:999px;padding:7px 12px;cursor:pointer;user-select:none}
   .dot{width:12px;height:12px;border-radius:999px}
   .chip[data-cat="discografia"] .dot{background:var(--disc)}
   .chip[data-cat="movie"] .dot{background:var(--mov)}
   .chip[data-cat="news"] .dot{background:var(--news)}
+  .chip[data-cat="gallery"] .dot{background:var(--gal)}        /* NEW */
   .chip.active[data-cat="discografia"]{border-color:var(--disc)}
   .chip.active[data-cat="movie"]{border-color:var(--mov)}
   .chip.active[data-cat="news"]{border-color:var(--news)}
+  .chip.active[data-cat="gallery"]{border-color:var(--gal)}     /* NEW */
+
   .chipN{background:var(--card); border:2px solid #23303a; color:#dfe6eb}
   .chipN.active{border-color:#4fb3ff; box-shadow:0 0 0 2px #4fb3ff22 inset}
 
+  /* panel derecho */
   .right{background:#0b1116; border:1px solid var(--bd); border-radius:12px; padding:12px}
   .right h2{margin:0 0 10px; font-size:16px; opacity:.85}
 
-  /* Mapita (2x2 para N1) + 4 celdas */
+  /* Mapita: N1 2x2 + N2..N5 1x1 */
   .mini-news{
     display:grid;
     grid-template-columns: repeat(4, var(--cell));
@@ -85,6 +88,7 @@
     box-shadow: inset 0 0 0 1px #0003;
   }
 
+  /* Badges */
   .badge{
     position:absolute; top:8px; left:8px; z-index:1;
     font-size:12px; background:#0008; padding:3px 8px; border-radius:999px; border:1px solid #fff2;
@@ -95,11 +99,29 @@
   }
   .lbl.muted{opacity:.55}
 
-  .tile.sel-discografia{ box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--disc) 70%, white); }
-  .tile.sel-movie{        box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--mov) 70%, white); }
-  .tile.sel-news{         box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--news) 70%, white); }
+  /* === Marcos de color (más brillantes) === */
+  .tile.sel-discografia{
+    box-shadow:
+      inset 0 0 0 3px color-mix(in hsl, var(--disc) 80%, white),
+      0 0 18px 2px color-mix(in hsl, var(--disc) 55%, transparent);
+  }
+  .tile.sel-movie{
+    box-shadow:
+      inset 0 0 0 3px color-mix(in hsl, var(--mov) 80%, white),
+      0 0 18px 2px color-mix(in hsl, var(--mov) 55%, transparent);
+  }
+  .tile.sel-news{
+    box-shadow:
+      inset 0 0 0 3px color-mix(in hsl, var(--news) 80%, white),
+      0 0 18px 2px color-mix(in hsl, var(--news) 55%, transparent);
+  }
+  .tile.sel-gallery{ /* NEW */
+    box-shadow:
+      inset 0 0 0 3px color-mix(in hsl, var(--gal) 80%, white),
+      0 0 18px 2px color-mix(in hsl, var(--gal) 55%, transparent);
+  }
 
-  /* Marcos blancos permanentes */
+  /* Marcos blancos permanentes para inputs */
   #inLink, #outUrl, #inTitulo{
     border: 2px solid #ffffff2b; outline: none;
   }
@@ -141,6 +163,7 @@
             <div class="chip" data-cat="discografia"><span class="dot"></span>Discografía</div>
             <div class="chip" data-cat="movie"><span class="dot"></span>Movie</div>
             <div class="chip" data-cat="news"><span class="dot"></span>News</div>
+            <div class="chip" data-cat="gallery"><span class="dot"></span>Gallery</div> <!-- NEW -->
           </div>
         </div>
 
@@ -217,8 +240,7 @@
   let currentPreviewUrl = '';
 
   function validateReady(){
-    const ok = $('#inTitulo').value.trim().length > 0;
-    $('#btnGen').disabled = !ok;
+    $('#btnGen').disabled = $('#inTitulo').value.trim().length === 0;
   }
   $('#inTitulo').addEventListener('input', validateReady);
   document.addEventListener('DOMContentLoaded', validateReady);
@@ -245,16 +267,20 @@
       const isCurrent = (k === currentN);
       const thumb = tile.querySelector('.thumb');
 
-      tile.classList.remove('sel-discografia','sel-movie','sel-news');
+      tile.classList.remove('sel-discografia','sel-movie','sel-news','sel-gallery');
 
+      // preview solo en N actual
       thumb.style.backgroundImage = isCurrent && currentPreviewUrl ? `url('${currentPreviewUrl}')` : 'none';
 
+      // borde según categoría solo en el N actual
       if (isCurrent) {
         if (destinoSel === 'discografia') tile.classList.add('sel-discografia');
         if (destinoSel === 'movie')       tile.classList.add('sel-movie');
         if (destinoSel === 'news')        tile.classList.add('sel-news');
+        if (destinoSel === 'gallery')     tile.classList.add('sel-gallery');   // NEW
       }
 
+      // etiqueta de lo último guardado
       const lbl = tile.querySelector('.lbl');
       lbl.textContent = saved[k] ? saved[k] : '';
       lbl.classList.toggle('muted', !!saved[k] && !isCurrent);
