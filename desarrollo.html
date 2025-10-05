@@ -56,29 +56,31 @@
   .right{background:#0b1116; border:1px solid var(--bd); border-radius:12px; padding:12px}
   .right h2{margin:0 0 10px; font-size:16px; opacity:.85}
 
-  /* === Mapita N1–N5 (mismo grouping que tu web) ===
-     - Col A (2fr) + Col B y C (1fr)
-     - Filas de altura fija (--square). N1 ocupa 2 filas; los demás 1
-     - Cada tile contiene un .thumb cuadrado (o alto completo si es N1)
-  */
+  /* === Mapita N1–N5 — TODAS LAS TARJETAS CUADRADAS === */
   .mini-news{
     display:grid;
-    grid-template-columns: 2fr 1fr 1fr;
-    grid-auto-rows: var(--square);
+    grid-template-columns: repeat(3, 1fr); /* 3 columnas iguales */
+    grid-auto-rows: var(--square);         /* cada fila = --square */
     gap: var(--gap);
     align-items: stretch;
   }
   .tile{
     position:relative;
     border-radius:12px;
-    background:#0d1319;           /* tarjeta */
+    background:#0d1319;
     border:1px solid #2a2f33;
-    padding:10px;                 /* borde interno como en tu UI */
+    padding:10px;
     overflow:hidden;
-    display:flex;                 /* centramos el thumb */
+    display:flex;
   }
-  .tile.big{grid-row: span 2;}    /* N1 ocupa dos filas */
-  .tile.small{grid-row: span 1;}
+  .tile.big{
+    grid-column: span 2;  /* N1 ocupa 2 columnas */
+    grid-row: span 2;     /* y 2 filas => área 2x2 = cuadrado grande */
+  }
+  .tile.small{
+    grid-column: span 1;
+    grid-row: span 1;
+  }
 
   .thumb{
     width:100%;
@@ -89,8 +91,13 @@
     background-position:center;
     box-shadow: inset 0 0 0 1px #0003;
   }
-  .tile.small .thumb{ aspect-ratio: 1 / 1; } /* cuadrados perfectos */
-  .tile.big   .thumb{ height:100%; }          /* alto completo en el panel grande */
+
+  /* cuadrados perfectos para todas las miniaturas */
+  .tile.small .thumb,
+  .tile.big   .thumb{
+    aspect-ratio: 1 / 1;  /* fuerza cuadrado */
+    height:auto;
+  }
 
   /* Badges */
   .badge{
@@ -103,7 +110,7 @@
   }
   .lbl.muted{opacity:.55}
 
-  /* solo el N seleccionado se resalta con borde */
+  /* Resalte solo del N seleccionado */
   .tile.sel-discografia{ box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--disc) 70%, white); }
   .tile.sel-movie{        box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--mov) 70%, white); }
   .tile.sel-news{         box-shadow:inset 0 0 0 2px color-mix(in hsl, var(--news) 70%, white); }
