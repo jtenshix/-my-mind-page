@@ -3,118 +3,261 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Convertidor Links Drive → Imagen</title>
+  <title>Convertidor Links Drive → Imagen (con categorías)</title>
   <style>
-    body {
+    :root{
+      --bg1:#0f2027; --bg2:#203a43; --bg3:#2c5364;
+      --panel: rgba(0,0,0,.85);
+      --txt:#f5f5f5; --accent:#ffcc70; --accent-hover:#ffaa00;
+      --disc:#18a558; /* verde discografía */
+      --movie:#d9534f;/* rojo movie */
+      --news:#3b82f6; /* azul news */
+    }
+    *{ box-sizing:border-box }
+    body{
       font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-      color: #f5f5f5;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+      background: linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3));
+      color: var(--txt);
+      margin:0; padding:0;
+      min-height:100vh; display:flex; justify-content:center; align-items:center;
     }
-    .container {
-      background: rgba(0, 0, 0, 0.8);
-      padding: 30px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 600px;
-      box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.6);
-      text-align: center;
+    .container{
+      background: var(--panel);
+      padding: 26px;
+      border-radius: 14px;
+      width: min(92vw, 780px);
+      box-shadow: 0 10px 30px rgba(0,0,0,.6);
     }
-    h1 {
-      font-size: 22px;
-      margin-bottom: 20px;
-      color: #ffcc70;
+    h1{ font-size: 22px; margin: 0 0 18px; color: var(--accent); text-align:center }
+    .row{ display:grid; gap:12px; }
+    label{ font-size:13px; opacity:.9 }
+    input[type="text"], textarea{
+      width: 100%; padding: 10px 12px; border-radius: 10px; border: none;
+      font-size: 14px; background: #111; color: #fff; outline: none;
     }
-    input {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
-      margin-bottom: 15px;
-      font-size: 14px;
+    textarea{ height: 70px; resize: none }
+    .btns{ display:flex; flex-wrap:wrap; gap:8px; margin-top:6px }
+    button{
+      padding: 9px 14px; border: none; border-radius: 10px;
+      background: var(--accent); color:#222; font-size:14px; cursor:pointer; transition:.25s;
     }
-    button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      background: #ffcc70;
-      color: #222;
-      font-size: 14px;
-      cursor: pointer;
-      margin: 5px;
-      transition: 0.3s;
+    button:hover{ background: var(--accent-hover) }
+
+    /* Selector de categoría con “chips” de color */
+    .cats{
+      display:flex; gap:10px; flex-wrap:wrap; margin: 6px 0 2px;
     }
-    button:hover {
-      background: #ffaa00;
+    .chip{
+      display:inline-flex; align-items:center; gap:8px;
+      background: #111; border: 2px solid transparent; color:#fff;
+      border-radius: 999px; padding:7px 12px; cursor:pointer; user-select:none;
+      transition:.2s;
     }
-    .output {
-      margin-top: 20px;
-    }
-    .output textarea {
-      width: 100%;
-      height: 60px;
-      border-radius: 8px;
-      border: none;
-      padding: 10px;
-      font-size: 13px;
-      resize: none;
-      background: #111;
-      color: #fff;
-    }
-    .preview {
-      margin-top: 15px;
-    }
-    .preview img {
-      max-width: 100%;
-      border-radius: 10px;
-      border: 2px solid #444;
-    }
+    .chip input{ display:none }
+    .dot{ width:12px; height:12px; border-radius:999px }
+    .chip[data-cat="discografia"] .dot{ background: var(--disc) }
+    .chip[data-cat="movie"]       .dot{ background: var(--movie) }
+    .chip[data-cat="news"]        .dot{ background: var(--news) }
+    .chip.active[data-cat="discografia"]{ border-color: var(--disc) }
+    .chip.active[data-cat="movie"]      { border-color: var(--movie) }
+    .chip.active[data-cat="news"]       { border-color: var(--news) }
+
+    .preview{ margin-top: 14px; text-align:center }
+    .preview img{ max-width:100%; border-radius:12px; border:2px solid #444 }
+
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:12px }
+    @media (max-width:720px){ .grid2{ grid-template-columns: 1fr } }
+    .small{ font-size:12px; opacity:.8; margin-top:3px }
+    .outblock{ background:#0b0b0b; padding:12px; border-radius:10px; border:1px solid #222 }
+    .title-row{ display:grid; gap:8px; grid-template-columns: 1fr 140px }
+    @media (max-width:560px){ .title-row{ grid-template-columns: 1fr } }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🔗 Convertidor Google Drive → Imagen</h1>
-    <input id="driveLink" type="text" placeholder="Pega aquí tu link de Google Drive" />
-    <br>
-    <button onclick="convertir()">Convertir</button>
-    <button onclick="copiar()">Copiar</button>
 
-    <div class="output">
-      <textarea id="resultado" readonly></textarea>
+    <div class="row" style="margin-bottom:14px">
+      <label for="driveLink">Pega tu link de Google Drive</label>
+      <input id="driveLink" type="text" placeholder="https://drive.google.com/file/d/ABC123.../view?usp=sharing" />
+      <div class="btns">
+        <button id="btnConvertir">Convertir</button>
+        <button id="btnCopiarUrl">Copiar URL directa</button>
+      </div>
     </div>
 
-    <div class="preview" id="preview"></div>
+    <div class="row outblock">
+      <label>Resultado (URL directa de imagen)</label>
+      <textarea id="resultado" readonly></textarea>
+      <div class="preview" id="preview"></div>
+    </div>
+
+    <div class="row" style="margin-top:16px">
+      <label>Selecciona la categoría (colores):</label>
+      <div class="cats" id="cats">
+        <label class="chip" data-cat="discografia"><input type="radio" name="cat" value="discografia"><span class="dot"></span> Discografía</label>
+        <label class="chip" data-cat="movie"><input type="radio" name="cat" value="movie"><span class="dot"></span> Movie</label>
+        <label class="chip" data-cat="news"><input type="radio" name="cat" value="news"><span class="dot"></span> News</label>
+      </div>
+      <div class="small">Esto solo define el campo <code>"destino"</code> para pegarlo en tu <code>catalogo.json</code>.</div>
+    </div>
+
+    <div class="row grid2" style="margin-top:10px">
+      <div class="outblock">
+        <div class="title-row">
+          <div>
+            <label for="titulo">Título (opcional, para tu JSON)</label>
+            <input id="titulo" type="text" placeholder="Ej: Nuevo wallpaper / Nueva canción" />
+          </div>
+          <div>
+            <label for="clave">Clave de noticia</label>
+            <input id="clave" type="text" value="n1" />
+          </div>
+        </div>
+        <div class="btns" style="margin-top:10px">
+          <button id="btnGenerarJson">Generar JSON</button>
+          <button id="btnCopiarJson">Copiar JSON</button>
+        </div>
+        <label class="small">Fragmento para <code>"news"</code> en tu <code>catalogo.json</code>:</label>
+        <textarea id="salidaJson" readonly></textarea>
+      </div>
+
+      <div class="outblock">
+        <label>Destino directo (si prefieres forzar URL en vez de alias)</label>
+        <div class="btns" style="margin-top:6px">
+          <button id="btnDestinoDisc">discografia</button>
+          <button id="btnDestinoMovie">movie</button>
+          <button id="btnDestinoNews">news</button>
+        </div>
+        <div class="small">También puedes usar <code>"link"</code> directo (por ejemplo tu página de news absoluta).</div>
+        <div class="btns" style="margin-top:10px">
+          <button id="btnGenerarJsonLink">Generar JSON con link</button>
+          <button id="btnCopiarJsonLink">Copiar JSON con link</button>
+        </div>
+        <textarea id="salidaJsonLink" readonly></textarea>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:16px">
+      <div class="small">Alias válidos y cómo los usas en tu web:</div>
+      <div class="outblock">
+        <pre style="margin:0; white-space:pre-wrap; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12.5px; color:#ddd">
+discografia → "Discography.html"
+movie       → "movie.html"
+news        → "https://jtenshix.github.io/J-tenshi-music/news.html"
+        </pre>
+      </div>
+    </div>
   </div>
 
   <script>
-    function convertir() {
-      const link = document.getElementById("driveLink").value.trim();
-      const match = link.match(/[-\w]{25,}/); // captura el ID del archivo
-      if (!match) {
-        alert("❌ Link no válido. Asegúrate de pegar un link de Google Drive.");
+    // --- Helpers ---
+    const $ = (s) => document.querySelector(s);
+    const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+    function extraerIdDrive(link){
+      if(!link) return null;
+      // Busca ID por patrones comunes
+      const m = link.match(/[-\\w]{25,}/);
+      return m ? m[0] : null;
+    }
+
+    function aDirectLink(fileId){
+      return `https://lh3.googleusercontent.com/d/${fileId}`;
+    }
+
+    function copiarTexto(el){
+      el.select();
+      document.execCommand("copy");
+    }
+
+    // --- Persistencia simple de categoría ---
+    const CAT_KEY = "tenshi_cat";
+    function getCat(){
+      return localStorage.getItem(CAT_KEY) || "discografia";
+    }
+    function setCat(cat){
+      localStorage.setItem(CAT_KEY, cat);
+    }
+
+    // --- UI init: activar chip guardado ---
+    (function initChips(){
+      const catInicial = getCat();
+      const chips = $$("#cats .chip");
+      chips.forEach(ch => {
+        const val = ch.getAttribute("data-cat");
+        const input = ch.querySelector('input[type="radio"]');
+        if(val === catInicial) { ch.classList.add("active"); input.checked = true; }
+        ch.addEventListener("click", () => {
+          chips.forEach(c => c.classList.remove("active"));
+          ch.classList.add("active");
+          input.checked = true;
+          setCat(val);
+        });
+      });
+    })();
+
+    // --- Botones principales ---
+    $("#btnConvertir").addEventListener("click", () => {
+      const link = $("#driveLink").value.trim();
+      const id = extraerIdDrive(link);
+      if(!id){
+        alert("❌ Link no válido. Revisa que sea un link de Google Drive.");
         return;
       }
-      const fileId = match[0];
-      const directLink = `https://lh3.googleusercontent.com/d/${fileId}`;
+      const url = aDirectLink(id);
+      $("#resultado").value = url;
+      $("#preview").innerHTML = `<p style="margin:6px 0 8px">Vista previa:</p><img src="${url}" alt="Preview">`;
+    });
 
-      document.getElementById("resultado").value = directLink;
+    $("#btnCopiarUrl").addEventListener("click", () => copiarTexto($("#resultado")));
 
-      // Mostrar preview
-      document.getElementById("preview").innerHTML =
-        `<p>Vista previa:</p><img src="${directLink}" alt="Preview">`;
-    }
+    // --- Generar JSON usando 'destino' (alias de color/categoría) ---
+    $("#btnGenerarJson").addEventListener("click", () => {
+      const url = $("#resultado").value.trim();
+      if(!url){ alert("Convierte primero el link para obtener la URL directa."); return; }
+      const titulo = $("#titulo").value.trim();
+      const clave  = $("#clave").value.trim() || "n1";
+      const destino = getCat(); // discografia | movie | news
 
-    function copiar() {
-      const textArea = document.getElementById("resultado");
-      textArea.select();
-      document.execCommand("copy");
-      alert("✅ Link copiado al portapapeles.");
-    }
+      // Construye objeto
+      const obj = { imagen: url, destino };
+      if(titulo) obj.titulo = titulo;
+
+      // Render bonito
+      const json = `"${clave}": ${JSON.stringify(obj, null, 2)}`;
+      $("#salidaJson").value = json;
+    });
+
+    $("#btnCopiarJson").addEventListener("click", () => copiarTexto($("#salidaJson")));
+
+    // --- Botones destino directo (para JSON con 'link') ---
+    const DESTINOS = {
+      discografia: "Discography.html",
+      movie: "movie.html",
+      news: "https://jtenshix.github.io/J-tenshi-music/news.html"
+    };
+    $("#btnDestinoDisc").addEventListener("click", ()=> setCat("discografia"));
+    $("#btnDestinoMovie").addEventListener("click", ()=> setCat("movie"));
+    $("#btnDestinoNews").addEventListener("click", ()=> setCat("news"));
+
+    // --- Generar JSON usando 'link' directo en vez de 'destino' ---
+    $("#btnGenerarJsonLink").addEventListener("click", () => {
+      const url = $("#resultado").value.trim();
+      if(!url){ alert("Convierte primero el link para obtener la URL directa."); return; }
+      const titulo = $("#titulo").value.trim();
+      const clave  = $("#clave").value.trim() || "n1";
+      const cat    = getCat();
+      const link   = DESTINOS[cat] || "#";
+
+      const obj = { imagen: url, link };
+      if(titulo) obj.titulo = titulo;
+
+      const json = `"${clave}": ${JSON.stringify(obj, null, 2)}`;
+      $("#salidaJsonLink").value = json;
+    });
+
+    $("#btnCopiarJsonLink").addEventListener("click", () => copiarTexto($("#salidaJsonLink")));
   </script>
 </body>
 </html>
